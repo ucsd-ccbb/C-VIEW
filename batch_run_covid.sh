@@ -11,3 +11,7 @@ for SAMPLE in $(aws s3 ls $S3DOWNLOAD/  --recursive | grep fastq | awk '{print $
 		 -S /bin/bash \
 		 /shared/workspace/software/covid_sequencing_analysis_pipeline/covid.sh
 done
+
+# When all samples have finished
+qsub -v S3DOWNLOAD=$S3DOWNLOAD/results \
+	/shared/workspace/software/covid_sequencing_analysis_pipeline/qc_summary.sh
