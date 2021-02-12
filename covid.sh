@@ -52,4 +52,9 @@ done
 # Step 9: Zip
 cd $WORKSPACE && zip -9 "$SAMPLE".zip "$SAMPLE"*
 
-aws s3 cp $WORKSPACE/"$SAMPLE".zip $S3DOWNLOAD/results/
+aws s3 cp $WORKSPACE/"$SAMPLE".zip $S3DOWNLOAD/results/zip/
+aws s3 cp $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.variants.tsv $S3DOWNLOAD/results/variants/
+aws s3 cp $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.consensus.fa $S3DOWNLOAD/results/consensus/
+aws s3 cp $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt $S3DOWNLOAD/results/depth/
+aws s3 cp $WORKSPACE/"$SAMPLE".sorted.stats.tar.gz $S3DOWNLOAD/results/stats/
+aws s3 cp $WORKSPACE/"$SAMPLE".trimmed.sorted.stats.tar.gz $S3DOWNLOAD/results/stats/
