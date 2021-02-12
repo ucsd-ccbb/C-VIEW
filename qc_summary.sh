@@ -2,6 +2,8 @@
 
 results_date=$(date +%F)
 WORKSPACE=/scratch
+STATSDIR=/shared/workspace/software/SD-COVID-Sequencing
+MULTIQCCONFIG=/shared/workspace/software/covid_sequencing_analysis_pipeline/covid_custom_config.yaml
 mkdir -p $WORKSPACE/variants
 mkdir -p $WORKSPACE/consensus
 mkdir -p $WORKSPACE/depth
@@ -21,14 +23,13 @@ cd $WORKSPACE && zip -9 consensus/"$results_date"-consensus.zip consensus/*.cons
 cd $WORKSPACE && zip -9 depth/"$results_date"-depth.zip depth/*.depth.txt
 find $WORKSPACE/qualimap/ -name  '*.sorted.stats.tar.gz' -exec tar -xf '{}' --strip-components=2 -C $WORKSPACE/qualimap \; 
 
-python /shared/workspace/software/SD-COVID-Sequencing/samtools_depth_violinplot.py $WORKSPACE/depth/*.depth.txt && mv depth_violin.pdf $WORKSPACE/summary
-python /shared/workspace/software/SD-COVID-Sequencing/samtools_depth_lineplot.py $WORKSPACE/depth/*.depth.txt && mv depth_lineplot.pdf $WORKSPACE/summary
-python /shared/workspace/software/SD-COVID-Sequencing/samtools_depth_concat.py $WORKSPACE/depth/*.depth.txt > $WORKSPACE/summary/depth.tsv
-python /shared/workspace/software/SD-COVID-Sequencing/samtools_depth_low.py 266 29674 10 $WORKSPACE/depth/*.depth.txt > $WORKSPACE/summary/"$results_date"-depth_below_10.tsv
-python /shared/workspace/software/SD-COVID-Sequencing/qualimap_targz_to_TSV.py $WORKSPACE/stats/*.stats.tar.gz > $WORKSPACE/summary/"$results_date"-qualimap.tsv
-
-aws s3 cp s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/covid_custom_config.yaml .
-multiqc --config covid_custom_config.yaml $WORKSPACE
+# summary figures and stats
+python $STATSDIR/samtools_depth_violinplot.py $WORKSPACE/depth/*.depth.txt && mv depth_violin.pdf $WORKSPACE/summary
+python $STATSDIR/samtools_depth_lineplot.py $WORKSPACE/depth/*.depth.txt && mv depth_lineplot.pdf $WORKSPACE/summary
+python $STATSDIR/samtools_depth_concat.py $WORKSPACE/depth/*.depth.txt > $WORKSPACE/summary/depth.tsv
+python $STATSDIR/samtools_depth_low.py 266 29674 10 $WORKSPACE/depth/*.depth.txt > $WORKSPACE/summary/"$results_date"-depth_below_10.tsv
+# Multiqc
+multiqc --config $MULTIQCCONFIG $WORKSPACE
 
 aws s3 cp $WORKSPACE/variants/"$results_date"-variants.zip $S3DOWNLOAD/
 aws s3 cp $WORKSPACE/consensus/"$results_date"-consensus.zip $S3DOWNLOAD/
