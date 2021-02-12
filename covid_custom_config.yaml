@@ -1,0 +1,13 @@
+table_columns_visible:
+    Qualimap:
+        10_x_pc: True
+        p25_insert_size: True
+
+qualimap_config:
+  general_stats_coverage:
+    - 10
+  general_stats_coverage_hidden:
+    - 1
+    - 5
+    - 30
+    - 50
