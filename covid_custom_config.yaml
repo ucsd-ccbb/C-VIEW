@@ -7,7 +7,7 @@ table_columns_visible:
         mean_coverage: True
         percent_aligned: True
         mapped_reads: True
-        total_reads: True
+        total_reads: False
         general_error_rate: False
     FastQC:
         percent_duplicates: False
@@ -19,7 +19,7 @@ table_columns_visible:
         reads_too_short_after_trimming: False
         reads_outside_primer_region: False
         trimmed_reads: True
-        mapped_reads: False
+        mapped_reads: True
 
 qualimap_config:
   general_stats_coverage:
