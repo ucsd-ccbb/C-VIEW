@@ -1,7 +1,25 @@
 table_columns_visible:
     Qualimap:
+        avg_gc: True
+        median_insert_size: True
         10_x_pc: True
-        p25_insert_size: True
+        median_coverage: True
+        mean_coverage: True
+        percent_aligned: True
+        mapped_reads: True
+        total_reads: True
+        general_error_rate: False
+    FastQC:
+        percent_duplicates: False
+        percent_gc: True
+        avg_sequence_length: True
+        percent_fails: False
+        total_sequences: False
+    iVar:
+        reads_too_short_after_trimming: False
+        reads_outside_primer_region: False
+        trimmed_reads: True
+        mapped_reads: False
 
 qualimap_config:
   general_stats_coverage:
@@ -11,3 +29,9 @@ qualimap_config:
     - 5
     - 30
     - 50
+
+custom_plot_config:
+    qualimap_coverage_histogram:
+        logswitch: True
+        logswitch_active: True
+        logswitch_label: 'Log10'
