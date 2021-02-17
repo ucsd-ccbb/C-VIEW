@@ -5,7 +5,6 @@ export PATH=/shared/workspace/software/ivar/bin:/shared/workspace/software/anaco
 # Set variables
 THREADS=1
 WORKSPACE=/scratch/$SAMPLE
-results_date=$(date +'%Y-%m-%d')
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 REF_FAS="/scratch/reference/NC_045512.2.fas"
 REF_MMI="/scratch/reference/NC_045512.2.fas.mmi"
@@ -26,7 +25,7 @@ fi
 # Step 0: Download fastq
 if [[ "$IS_ARTIC" == true ]]; then
 
-	RESULTS=results_"$results_date"
+	RESULTS=results_"$RESULTSDATE"
 	PRIMER_BED="/scratch/reference/nCoV-2019.primer.bed"
 	if [[ ! -f "$PRIMER_BED" ]]; then
 		cp $PIPELINEDIR/reference_files/nCoV-2019.primer.bed $PRIMER_BED
@@ -35,7 +34,7 @@ if [[ "$IS_ARTIC" == true ]]; then
 
 else
 	if [[ "$IS_ARTIC" == false ]]; then
-		RESULTS="$results_date"_"$MERGED"_"$FQ"
+		RESULTS="$RESULTSDATE"_"$MERGED"_"$FQ"
 		RUNTYPE="$MERGED"_"$FQ"
 		PRIMER_BED="/scratch/reference/sarscov2_v2_primers.bed"
 		if [[ ! -f "$PRIMER_BED" ]]; then
@@ -85,7 +84,7 @@ fastqc $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc
 { time ( samtools depth -d 0 -Q 0 -q 0 -aa $WORKSPACE/"$SAMPLE".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt 2> $WORKSPACE/"$SAMPLE".log.7.depth.log
 
 # # Step 8: Qualimap
-{ time ( qualimap bamqc -bam $WORKSPACE/"$SAMPLE".sorted.bam -nt $THREADS --java-mem-size=4G -outdir $WORKSPACE/"$SAMPLE".sorted.stats ) ; } > $WORKSPACE/"$SAMPLE".log.8.qualimap.$x.log 2>&1
+{ time ( qualimap bamqc -bam $WORKSPACE/"$SAMPLE".sorted.bam -nt $THREADS --java-mem-size=4G -outdir $WORKSPACE/"$SAMPLE".sorted.stats ) ; } > $WORKSPACE/"$SAMPLE".log.8.qualimap.sorted.log 2>&1
 
 # QC
 python $PIPELINEDIR/sarscov2_consensus_acceptance.py $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt $REF_FAS

@@ -14,8 +14,6 @@ aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ \
 	--include "*.sorted.stats" \
 	--include "*.acceptance.tsv"
 
-rm -rf $WORKSPACE/*/*trimmed.sorted.stats
-
 cd $WORKSPACE && zip -9 variants.zip */*.variants.tsv
 cd $WORKSPACE && zip -9 consensus.zip */*.consensus.fa
 cd $WORKSPACE && zip -9 depth.zip */*.depth.txt

@@ -4,6 +4,7 @@ S3DOWNLOAD=$1 # e.g. s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/
 IS_ARTIC=$2 # true or false - is this a pipeline test-running on ARTIC samples?
 FQ=$3 # se or pe - single end or paired end reads
 MERGED=$4 # merged or unmerged - merge lanes
+RESULTSDATE=$(date +'%Y-%m-%d')
 
 if [[ ! "$IS_ARTIC" =~ ^(true|false)$ ]]; then
 	echo "Parameter 2 - IS_ARTIC must be one of true or false"
@@ -47,6 +48,7 @@ for SAMPLE in $SAMPLE_LIST; do
 		-v FQ=$FQ \
 		-v MERGED=$MERGED \
 		-v IS_ARTIC=$IS_ARTIC \
+		-v RESULTSDATE=$RESULTSDATE \
 		-v S3DOWNLOAD=$S3DOWNLOAD \
 		-N Covid19_"$SAMPLE" \
 		-wd /shared/workspace/projects/covid/logs \
