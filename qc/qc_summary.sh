@@ -33,7 +33,7 @@ runQC () {
 	echo "Listing the positions with a depth below 10 reads."
 	python $PIPELINEDIR/qc/samtools_depth_low.py 266 29674 10 $WORKSPACE/*.depth.txt > $WORKSPACE/qc/depth_below_10.tsv
 	echo "Summarizing consensus QC."
-	python $PIPELINEDIR/qc/consensus_acceptance_summary.py 
+	python $PIPELINEDIR/qc/consensus_acceptance_summary.py $WORKSPACE
 	# Multiqc
 	multiqc --config $PIPELINEDIR/qc/covid_custom_config.yaml $WORKSPACE
 
