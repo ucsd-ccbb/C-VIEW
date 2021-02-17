@@ -143,10 +143,10 @@ def _write_acceptance_check_to_file(consensus_fa_fp, is_accepted,
     search_id = _extract_search_id(putative_sample_name)
 
     with open(output_fp, 'w') as output_f:
-        header_line = "search_id\tis_accepted\t" \
-                      "coverage_gte_10_reads\tfastq_id\n"
-        data_line = f"{search_id}\t{is_accepted}\t{depth_pass_fract}\t" \
-                    f"{putative_sample_name}\n"
+        header_line = "fastq_id\tis_accepted\t" \
+                      "coverage_gte_10_reads\tsearch_id\n"
+        data_line = f"{putative_sample_name}\t{is_accepted}" \
+                    f"\t{depth_pass_fract}\t{search_id}\n"
         output_f.writelines([header_line, data_line])
 
     return output_fp
@@ -155,15 +155,15 @@ def _write_acceptance_check_to_file(consensus_fa_fp, is_accepted,
 def _extract_search_id(sample_id):
     # expect sample_id to look something like
     # 002idSEARCH-5329-SAN_L001_L002_L003_L004
-    err_msg = "Cannot extract SEARCH id from sample id '{0}'"
 
+    result = ""
     search_split = sample_id.split(SEARCH_ID_PREFIX)
     if len(search_split) != 2:
-        raise ValueError(err_msg.format(sample_id))
+        return result
 
     underscore_split = search_split[1].split("_")
     if len(underscore_split) < 2:
-        raise ValueError(err_msg.format(sample_id))
+        return result
 
     result = SEARCH_ID_PREFIX + underscore_split[0]
     return result

@@ -30638,12 +30638,14 @@ class SampleQcTest(TestCase):
         real_out = _extract_search_id(input)
         self.assertEqual(expected_out, real_out)
 
-    def test__extract_search_id_error_malformed(self):
-        with self.assertRaises(ValueError):
-            _extract_search_id("002idSERCH-5329-SAN_L001_L002_L003_L004")
+    def test__extract_search_id_empty(self):
+        real_out = _extract_search_id(
+            "002idSERCH-5329-SAN_L001_L002_L003_L004")
+        self.assertEqual("", real_out)
 
-        with self.assertRaises(ValueError):
-            _extract_search_id("002idSEARCH-5329-SAN-L001-L002-L003-L004")
+        real_out = _extract_search_id(
+            "002idSEARCH-5329-SAN-L001-L002-L003-L004")
+        self.assertEqual("", real_out)
 
     def test__write_acceptance_check_to_file(self):
         input_fp = "./002idSEARCH-5329-SAN_L001_L002_L003_L004" \
@@ -30665,7 +30667,7 @@ class SampleQcTest(TestCase):
 
         self.assertEqual(expected_out, real_out)
         self.assertEqual(
-            ["search_id\tis_accepted\tcoverage_gte_10_reads\tfastq_id\n",
-             "SEARCH-5329-SAN\tTrue\t0.987392746\t"
-             "002idSEARCH-5329-SAN_L001_L002_L003_L004\n"],
+            ["fastq_id\tis_accepted\tcoverage_gte_10_reads\tsearch_id\n",
+             "002idSEARCH-5329-SAN_L001_L002_L003_L004\tTrue\t0.987392746\t"
+             "SEARCH-5329-SAN\n"],
             file_lines)
