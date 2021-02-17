@@ -5,6 +5,7 @@ IS_ARTIC=$2 # true or false - is this a pipeline test-running on ARTIC samples?
 FQ=$3 # se or pe - single end or paired end reads
 MERGED=$4 # merged or unmerged - merge lanes
 RESULTSDATE=$(date +'%Y-%m-%d')
+PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 
 if [[ ! "$IS_ARTIC" =~ ^(true|false)$ ]]; then
 	echo "Parameter 2 - IS_ARTIC must be one of true or false"
@@ -54,7 +55,7 @@ for SAMPLE in $SAMPLE_LIST; do
 		-wd /shared/workspace/projects/covid/logs \
 		-pe smp 1 \
 		-S /bin/bash \
-		/shared/workspace/software/covid_sequencing_analysis_pipeline/covid.sh
+		$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
 done
 
 
@@ -63,4 +64,4 @@ done
 # qsub -v S3DOWNLOAD=$S3DOWNLOAD \
 # 	 -v FQ=$FQ \
 # 	 -v MERGED=$MERGED \
-#      /shared/workspace/software/covid_sequencing_analysis_pipeline/qc_summary.sh
+#        $PIPELINEDIR/qc/qc_summary.sh

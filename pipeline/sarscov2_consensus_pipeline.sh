@@ -87,7 +87,7 @@ fastqc $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc
 { time ( qualimap bamqc -bam $WORKSPACE/"$SAMPLE".sorted.bam -nt $THREADS --java-mem-size=4G -outdir $WORKSPACE/"$SAMPLE".sorted.stats ) ; } > $WORKSPACE/"$SAMPLE".log.8.qualimap.sorted.log 2>&1
 
 # QC
-python $PIPELINEDIR/sarscov2_consensus_acceptance.py $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt $REF_FAS
+python $PIPELINEDIR/pipeline/sarscov2_consensus_acceptance.py $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt $REF_FAS
 
 aws s3 cp $WORKSPACE/ $S3DOWNLOAD/$RESULTS/$SAMPLE/ --recursive --include "*" --exclude "*fastq.gz"
 
