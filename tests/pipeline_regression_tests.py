@@ -12,8 +12,6 @@ _CONSENSUS_FNAME = "consensus.fa"
 _VARIANTS_FNAME = "variants.tsv"
 
 _S3_PREFIX = "s3://"
-_AWS_CONSENSUS_DIRNAME = "consensus"
-_AWS_VARIANT_DIRNAME = "variants"
 
 _TEST_FNAME_PREFIX = "test_"
 _GSC = "gs_consensus"
@@ -36,7 +34,7 @@ def regression_test(s3_results_url):
         fnames = _formulate_curr_fnames(curr_gs_basename)
 
         try:
-            _download_files_to_cwd(s3_results_url, fnames)
+            _download_files_to_cwd(s3_results_url, curr_gs_basename, fnames)
 
             curr_match, result_details[curr_gs_basename] = \
                 _compare_files(curr_gs_basename, fnames)
@@ -83,21 +81,21 @@ def _formulate_curr_fnames(curr_gs_basename):
     return fnames
 
 
-def _formulate_aws_fp(s3_results_path, fnames, fname_key):
-    dirname = gs_key = None
+def _formulate_aws_fp(s3_results_path, sample_basename, fnames, fname_key):
+    gs_key = None
     if fname_key == _TC:
-        dirname = _AWS_CONSENSUS_DIRNAME
         gs_key = _GSC
     elif fname_key == _TV:
-        dirname = _AWS_VARIANT_DIRNAME
         gs_key = _GSV
-    return os.path.join(s3_results_path, dirname, fnames[gs_key])
+    return os.path.join(s3_results_path, sample_basename, fnames[gs_key])
 
 
-def _download_files_to_cwd(s3_results_url, fnames):
+def _download_files_to_cwd(s3_results_url, sample_basename, fnames):
     s3_bucket, s3_results_path = _split_s3_url(s3_results_url)
-    aws_results_curr_cons_fp = _formulate_aws_fp(s3_results_path, fnames, _TC)
-    aws_results_curr_var_fp = _formulate_aws_fp(s3_results_path, fnames, _TV)
+    aws_results_curr_cons_fp = _formulate_aws_fp(
+        s3_results_path, sample_basename, fnames, _TC)
+    aws_results_curr_var_fp = _formulate_aws_fp(
+        s3_results_path, sample_basename, fnames, _TV)
 
     s3 = boto3.client('s3')
     s3.download_file(s3_bucket, aws_results_curr_cons_fp, fnames[_TC])
