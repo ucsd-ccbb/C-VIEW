@@ -38,16 +38,18 @@ runQC () {
 	multiqc --config $PIPELINEDIR/qc/covid_custom_config.yaml $WORKSPACE
 
 	echo "Uploading QC results."
-	aws s3 cp $WORKSPACE/variants.zip $S3DOWNLOAD/ --quiet
-	aws s3 cp $WORKSPACE/consensus.zip $S3DOWNLOAD/ --quiet
-	aws s3 cp $WORKSPACE/consensus.fas $S3DOWNLOAD/ --quiet
-	aws s3 cp $WORKSPACE/depth.zip $S3DOWNLOAD/ --quiet
-	aws s3 cp $WORKSPACE/multiqc_data/ $S3DOWNLOAD/qc/multiqc_data/ -quiet --recursive
+	aws s3 cp $WORKSPACE/variants.zip $S3DOWNLOAD/
+	aws s3 cp $WORKSPACE/consensus.zip $S3DOWNLOAD/
+	aws s3 cp $WORKSPACE/consensus.fas $S3DOWNLOAD/
+	aws s3 cp $WORKSPACE/depth.zip $S3DOWNLOAD/
+	aws s3 cp $WORKSPACE/multiqc_data/ $S3DOWNLOAD/qc/multiqc_data/ --recursive
 	aws s3 cp $WORKSPACE/multiqc_report.html $S3DOWNLOAD/qc/
-	aws s3 cp $WORKSPACE/qc/ $S3DOWNLOAD/qc/ --quiet --recursive
-	aws s3 cp $WORKSPACE/summary.acceptance.tsv $S3DOWNLOAD/qc/ --quiet
+	aws s3 cp $WORKSPACE/qc/ $S3DOWNLOAD/qc/ --recursive
+	aws s3 cp $WORKSPACE/summary.acceptance.tsv $S3DOWNLOAD/qc/
 
 }
 
 { time ( runQC ) ; } > $WORKSPACE/qc/qc_summary.log 2>&1
+
+aws s3 cp $WORKSPACE/qc/qc_summary.log $S3DOWNLOAD/qc/
 
