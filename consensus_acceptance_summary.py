@@ -5,9 +5,13 @@ from sys import exit
 ACCEPTANCE_SUFFIX = ".acceptance.tsv"
 header_line = None
 output_lines = []
+output_fp = f"summary{ACCEPTANCE_SUFFIX}"
 curr_dir_contents = os.listdir(".")
 for curr_item_name in sorted(curr_dir_contents):
-    if ".acceptance.tsv" not in curr_item_name:
+    # ignore any previous output of this script and ignore any file that
+    # does not look like a per-sample acceptance file
+    if curr_item_name == output_fp or \
+            not curr_item_name.endswith(".acceptance.tsv"):
         continue
 
     with open(curr_item_name) as curr_acceptance_f:
@@ -28,5 +32,5 @@ if len(output_lines) == 0:
     print("Error: No acceptance summary info found")
     exit(1)
 
-with open(f"summary{ACCEPTANCE_SUFFIX}", "w") as output_f:
+with open(output_fp, "w") as output_f:
     output_f.writelines(output_lines)
