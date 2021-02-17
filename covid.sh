@@ -5,10 +5,15 @@ export PATH=/shared/workspace/software/ivar/bin:/shared/workspace/software/anaco
 # Set variables
 THREADS=1
 WORKSPACE=/scratch/$SAMPLE
+results_date=$(date +'%Y-%m-%d')
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 REF_FAS="/scratch/reference/NC_045512.2.fas"
 REF_MMI="/scratch/reference/NC_045512.2.fas.mmi"
 REF_GFF="/scratch/reference/NC_045512.2.gff3"
+# Clear fastq directory if node is being reused
+rm -rf $WORKSPACE/*
+mkdir -p $WORKSPACE/fastq
+mkdir -p $WORKSPACE/fastqc
 
 # Move reference files to compute node once
 if [[ ! -f "$REF_FAS" ]]; then
@@ -18,41 +23,41 @@ if [[ ! -f "$REF_FAS" ]]; then
     cp $PIPELINEDIR/reference_files/NC_045512.2.gff3 $REF_GFF
 fi
 
+# Step 0: Download fastq
 if [[ "$IS_ARTIC" == true ]]; then
+
+	RESULTS=results_"$results_date"
 	PRIMER_BED="/scratch/reference/nCoV-2019.primer.bed"
 	if [[ ! -f "$PRIMER_BED" ]]; then
 		cp $PIPELINEDIR/reference_files/nCoV-2019.primer.bed $PRIMER_BED
 	fi
+	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*fastq.gz"
+
 else
-	PRIMER_BED="/scratch/reference/sarscov2_v2_primers.bed"
-	if [[ ! -f "$PRIMER_BED" ]]; then
-		cp $PIPELINEDIR/reference_files/sarscov2_v2_primers.bed $PRIMER_BED
+	if [[ "$IS_ARTIC" == false ]]; then
+		RESULTS="$results_date"_"$MERGED"_"$FQ"
+		RUNTYPE="$MERGED"_"$FQ"
+		PRIMER_BED="/scratch/reference/sarscov2_v2_primers.bed"
+		if [[ ! -f "$PRIMER_BED" ]]; then
+			cp $PIPELINEDIR/reference_files/sarscov2_v2_primers.bed $PRIMER_BED
+		fi
+		if [[ "$RUNTYPE" == merged_se ]]; then
+			aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ --recursive --exclude "*" --include "$SAMPLE*"
+			cat $WORKSPACE/"$SAMPLE"*R1_001.fastq.gz > $WORKSPACE/fastq/"$SAMPLE"_R1_001.fastq.gz
+
+		elif [[ "$RUNTYPE" == merged_pe ]]; then
+			aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ --recursive --exclude "*" --include "$SAMPLE*"
+			cat $WORKSPACE/"$SAMPLE"*R1_001.fastq.gz > $WORKSPACE/fastq/"$SAMPLE"_R1_001.fastq.gz
+			cat $WORKSPACE/"$SAMPLE"*R2_001.fastq.gz > $WORKSPACE/fastq/"$SAMPLE"_R2_001.fastq.gz
+
+		elif [[ "$RUNTYPE" == unmerged_se ]]; then
+			aws s3 cp $S3DOWNLOAD/"$SAMPLE"_R1_001.fastq.gz $WORKSPACE/fastq/
+
+		elif [[ "$RUNTYPE" == unmerged_pe ]]; then
+			aws s3 cp $S3DOWNLOAD/"$SAMPLE"_R1_001.fastq.gz $WORKSPACE/fastq/
+			aws s3 cp $S3DOWNLOAD/"$SAMPLE"_R2_001.fastq.gz $WORKSPACE/fastq/
+		fi
 	fi
-fi
-
-# Clear fastq directory if node is being reused
-rm -rf $WORKSPACE/*
-mkdir -p $WORKSPACE/fastq
-mkdir -p $WORKSPACE/fastqc
-
-# Step 0: Download fastq
-RESULTS=results_"$MERGED"_"$FQ"
-
-if [[ "$RESULTS" == results_merged_se ]]; then
-	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ --recursive --exclude "*" --include "$SAMPLE*"
-	cat $WORKSPACE/"$SAMPLE"*R1_001.fastq.gz > $WORKSPACE/fastq/"$SAMPLE"_R1_001.fastq.gz
-
-elif [[ "$RESULTS" == results_merged_pe ]]; then
-	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ --recursive --exclude "*" --include "$SAMPLE*"
-	cat $WORKSPACE/"$SAMPLE"*R1_001.fastq.gz > $WORKSPACE/fastq/"$SAMPLE"_R1_001.fastq.gz
-	cat $WORKSPACE/"$SAMPLE"*R2_001.fastq.gz > $WORKSPACE/fastq/"$SAMPLE"_R2_001.fastq.gz
-
-elif [[ "$RESULTS" == results_unmerged_se ]]; then
-	aws s3 cp $S3DOWNLOAD/"$SAMPLE"_R1_001.fastq.gz $WORKSPACE/fastq/
-
-elif [[ "$RESULTS" == results_unmerged_pe ]]; then
-	aws s3 cp $S3DOWNLOAD/"$SAMPLE"_R1_001.fastq.gz $WORKSPACE/fastq/
-	aws s3 cp $S3DOWNLOAD/"$SAMPLE"_R2_001.fastq.gz $WORKSPACE/fastq/
 fi
 
 # Fastqc
