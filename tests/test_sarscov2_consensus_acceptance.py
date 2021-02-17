@@ -4,6 +4,7 @@ from unittest import TestCase
 from sarscov2_consensus_acceptance import check_consensus_acceptance, \
     _verify_fraction_acceptable_bases, _get_consensus_orfs_start_end, \
     _extract_search_id, _write_acceptance_check_to_file, \
+    check_consensus_acceptance_by_fps, \
     REF_FIRST_ORF_START_1BASED, REF_LAST_ORF_END_1BASED, \
     DEPTH_THRESH, FRACTION_THRESH
 
@@ -30413,21 +30414,48 @@ REF_SHORT_LAST_ORF_END_1BASED = 26
 class SampleQcTest(TestCase):
     # Not testing _read_depths and _read_ref_genome_fas bc they are
     # simple and fully exercised by check_consensus_acceptance tests.
-    # Not testing check_consensus_acceptance_by_fps bc it just wraps
+
+    # Testing ONLY pathological input case for
+    # check_consensus_acceptance_by_fps bc rest of it just wraps
     # check_consensus_acceptance w file-opens on the file paths.
+
+    # NB: Watch out for assertTrue: a tuple, REGARDLESS OF CONTENTS,
+    # evaluates as True
+
+    def test_check_consensus_acceptance_by_fps_no_consensus_file(self):
+        a_file_fp = __file__
+        a_fake_fp = os.path.join(os.path.dirname(__file__),
+                                 "notarealfile.consensus.fa")
+        # NB: NOT passing real depth and reference genome files; correct code
+        # must exit before ever getting to reading them
+        real_accept, real_depth_fract = check_consensus_acceptance_by_fps(
+            a_fake_fp, a_file_fp, a_file_fp)
+
+        self.assertEqual(False, real_accept)
+        self.assertEqual("NA", real_depth_fract)
+
+        # NB: NOT passing real consensus and reference genome files;
+        # correct code must exit before ever getting to reading them
+        real_accept, real_depth_fract = check_consensus_acceptance_by_fps(
+            a_file_fp, a_fake_fp, a_file_fp)
+
+        self.assertEqual(False, real_accept)
+        self.assertEqual("NA", real_depth_fract)
 
     def test_check_consensus_acceptance_true_realistic(self):
         depth_filelike = StringIO(DEPTH_TXT_STR)
         consensus_filelike = StringIO(CONSENSUS_FA_STR)
         ref_genome_filelike = StringIO(REF_GENOME_FAS_STR)
 
-        real_out = check_consensus_acceptance(
+        real_out, real_depth_fract = check_consensus_acceptance(
             consensus_filelike, depth_filelike, ref_genome_filelike,
             REF_FIRST_ORF_START_1BASED,
             REF_LAST_ORF_END_1BASED,
             DEPTH_THRESH, FRACTION_THRESH)
 
-        self.assertTrue(real_out)
+        self.assertEqual(True, real_out)
+        # all depths pass
+        self.assertEqual(1, real_depth_fract)
 
     def test_check_consensus_acceptance_true(self):
         # 34 bases of orfs
@@ -30440,12 +30468,14 @@ class SampleQcTest(TestCase):
         consensus_filelike = StringIO(
             CONSENSUS_SHORT_INDEL_FA_STR.format(test_consensus_str))
         ref_genome_filelike = StringIO(REF_GENOME_SHORT_FAS_STR)
-        real_out = check_consensus_acceptance(
+        real_out, real_depth_fract = check_consensus_acceptance(
             consensus_filelike, depth_filelike, ref_genome_filelike,
             REF_SHORT_FIRST_ORF_START_1BASED, REF_SHORT_LAST_ORF_END_1BASED,
             DEPTH_THRESH, FRACTION_THRESH)
 
-        self.assertTrue(real_out)
+        self.assertEqual(True, real_out)
+        # there is one base fail, but all depths pass
+        self.assertEqual(1, real_depth_fract)
 
     def test_check_consensus_acceptance_false(self):
         # 34 bases of orfs
@@ -30469,8 +30499,8 @@ class SampleQcTest(TestCase):
         self.assertAlmostEqual(0.97058824, real_depth_frac_pass)
 
     def test_check_consensus_acceptance_false_pathological_inputs(self):
-        # if the consensus file contains a fasta header but no actual
-        # sequence line, automatically fail
+        # if the consensus file contains a fasta header but the sequence
+        # line is empty, automatically fail
 
         depth_filelike = StringIO(DEPTH_SHORT_INDEL_TXT_STR.format(
             83, 25, 2000))
@@ -30482,6 +30512,24 @@ class SampleQcTest(TestCase):
             DEPTH_THRESH, FRACTION_THRESH)
 
         self.assertFalse(real_out)
+        self.assertEqual('NA', real_depth_frac_pass)
+
+        # if the consensus file contains a fasta header but no actual
+        # sequence line, automatically fail
+        fa_header_line = ">Consensus_002idSEARCH-5329-SAN_L001_L002_L003" \
+                         "_L004.trimmed.sorted.pileup.consensus_threshold" \
+                         "_0.5_quality_20"
+
+        depth_filelike = StringIO(DEPTH_SHORT_INDEL_TXT_STR.format(
+            83, 25, 2000))
+        consensus_filelike = StringIO(fa_header_line)
+        ref_genome_filelike = StringIO(REF_GENOME_SHORT_FAS_STR)
+        real_out, real_depth_frac_pass = check_consensus_acceptance(
+            consensus_filelike, depth_filelike, ref_genome_filelike,
+            REF_SHORT_FIRST_ORF_START_1BASED, REF_SHORT_LAST_ORF_END_1BASED,
+            DEPTH_THRESH, FRACTION_THRESH)
+
+        self.assertEqual(False, real_out)
         self.assertEqual('NA', real_depth_frac_pass)
 
     def test_check_consensus_acceptance_false_empty_inputs(self):
@@ -30496,7 +30544,7 @@ class SampleQcTest(TestCase):
             REF_SHORT_FIRST_ORF_START_1BASED, REF_SHORT_LAST_ORF_END_1BASED,
             DEPTH_THRESH, FRACTION_THRESH)
 
-        self.assertFalse(real_out)
+        self.assertEqual(False, real_out)
         self.assertEqual('NA', real_depth_frac_pass)
 
     def test__get_consensus_orfs_start_end(self):

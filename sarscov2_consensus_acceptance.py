@@ -15,7 +15,8 @@ NO_DEPTH_PASS_INFO = "NA"
 
 def check_consensus_acceptance_by_fps(consensus_fa_fp, depth_txt_fp,
                                       ref_genome_fas_fp):
-    if not (os.path.isfile(consensus_fa_fp) and os.path.isfile(depth_txt_fp)):
+    if not ((os.path.isfile(consensus_fa_fp)
+             and os.path.isfile(depth_txt_fp))):
         return False, NO_DEPTH_PASS_INFO
 
     with open(consensus_fa_fp) as consensus_file:
@@ -37,7 +38,9 @@ def check_consensus_acceptance(consensus_file, depth_file, ref_genome_file,
     consensus_lines = consensus_file.readlines()
     consensus_depths = _read_depths(depth_file.readlines())
 
-    if len(consensus_lines) == 0 or len(consensus_depths) == 0:
+    # consensus.fa must have at least 2 lines in order to contain
+    # a real fasta record
+    if len(consensus_lines) < 2 or len(consensus_depths) == 0:
         return False, NO_DEPTH_PASS_INFO
 
     consensus_seq = consensus_lines[1].strip()
