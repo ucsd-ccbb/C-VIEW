@@ -30468,6 +30468,22 @@ class SampleQcTest(TestCase):
         self.assertFalse(real_out)
         self.assertAlmostEqual(0.97058824, real_depth_frac_pass)
 
+    def test_check_consensus_acceptance_false_pathological_inputs(self):
+        # if the consensus file contains a fasta header but no actual
+        # sequence line, automatically fail
+
+        depth_filelike = StringIO(DEPTH_SHORT_INDEL_TXT_STR.format(
+            83, 25, 2000))
+        consensus_filelike = StringIO(CONSENSUS_SHORT_INDEL_FA_STR.format(""))
+        ref_genome_filelike = StringIO(REF_GENOME_SHORT_FAS_STR)
+        real_out, real_depth_frac_pass = check_consensus_acceptance(
+            consensus_filelike, depth_filelike, ref_genome_filelike,
+            REF_SHORT_FIRST_ORF_START_1BASED, REF_SHORT_LAST_ORF_END_1BASED,
+            DEPTH_THRESH, FRACTION_THRESH)
+
+        self.assertFalse(real_out)
+        self.assertEqual('NA', real_depth_frac_pass)
+
     def test_check_consensus_acceptance_false_empty_inputs(self):
         # if either or both of the consensus and depth files are empty,
         # skip straight to returning false

@@ -41,6 +41,9 @@ def check_consensus_acceptance(consensus_file, depth_file, ref_genome_file,
         return False, NO_DEPTH_PASS_INFO
 
     consensus_seq = consensus_lines[1].strip()
+    if consensus_seq == "":
+        return False, NO_DEPTH_PASS_INFO
+
     ref_genome_seq = _read_ref_genome_fas(ref_genome_file)
 
     ref_first_orf_start_0based = ref_first_orf_start_1based - 1
