@@ -178,8 +178,6 @@ def _extract_search_id(sample_id):
 if __name__ == '__main__':
     # check command line for validity
     if len(argv) != 4:
-        print(len(argv))
-        print(argv)
         print(USAGE, file=stderr)
         exit(1)
 
