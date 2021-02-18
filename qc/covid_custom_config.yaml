@@ -7,7 +7,7 @@ table_columns_visible:
         mean_coverage: True
         percent_aligned: True
         mapped_reads: True
-        total_reads: False
+        total_reads: True
         general_error_rate: False
     FastQC:
         percent_duplicates: False
@@ -18,8 +18,22 @@ table_columns_visible:
     iVar:
         reads_too_short_after_trimming: False
         reads_outside_primer_region: False
-        trimmed_reads: True
-        mapped_reads: True
+        trimmed_reads: False
+        mapped_reads: False
+
+table_columns_placement:
+    QualiMap:
+        total_reads: 800
+        mapped_reads: 860
+        percentage_aligned: 900
+        10_x_pc: 950
+        median_coverage: 960
+        mean_coverage: 965
+        median_insert_size: 970
+        avg_gc: 990
+    my_genstats:
+        P25 Ins. size: 980
+        Pct >=Q30: 1800
 
 qualimap_config:
   general_stats_coverage:
@@ -32,6 +46,10 @@ qualimap_config:
 
 custom_plot_config:
     qualimap_coverage_histogram:
+        logswitch: True
+        logswitch_active: True
+        logswitch_label: 'Log10'
+    qualimap_genome_fraction:
         logswitch: True
         logswitch_active: True
         logswitch_label: 'Log10'
