@@ -1,10 +1,10 @@
 import os
 from io import StringIO
 from unittest import TestCase
-from sarscov2_consensus_acceptance import check_consensus_acceptance, \
+from pipeline.sarscov2_consensus_acceptance import \
+    check_consensus_acceptance_by_fps, check_consensus_acceptance, \
     _verify_fraction_acceptable_bases, _get_consensus_orfs_start_end, \
     _extract_search_id, _write_acceptance_check_to_file, \
-    check_consensus_acceptance_by_fps, \
     REF_FIRST_ORF_START_1BASED, REF_LAST_ORF_END_1BASED, \
     DEPTH_THRESH, FRACTION_THRESH
 
