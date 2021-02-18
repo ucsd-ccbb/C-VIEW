@@ -34,8 +34,18 @@ runQC () {
 	python $PIPELINEDIR/qc/samtools_depth_low.py 266 29674 10 $WORKSPACE/*.depth.txt > $WORKSPACE/qc/depth_below_10.tsv
 	echo "Summarizing consensus QC."
 	python $PIPELINEDIR/qc/consensus_acceptance_summary.py $WORKSPACE
+	
 	# Multiqc
-	multiqc --config $PIPELINEDIR/qc/covid_custom_config.yaml $WORKSPACE
+	# Get qualimapReport.html paths
+	find $WORKSPACE -name "qualimapReport.html" | sort -n > $PIPELINEDIR/qc/qualimapReport_paths.txt
+	# Unzip fastqc.zip and get fastqc_data.txt paths
+	unzip $WORKSPACE"/qc/fastqc/*_fastqc.zip" -d $WORKSPACE/qc/fastqc
+	find $WORKSPACE -name "fastqc_data.txt" | sort -n > $PIPELINEDIR/qc/fastqc_data_paths.txt
+	# Run script to generate custom stats in multiqc_custom_gen_stats.yaml
+	python $PIPELINEDIR/qc/custom_gen_stats_multiqc.py $PIPELINEDIR/qc/qualimapReport_paths.txt $PIPELINEDIR/qc/fastqc_data_paths.txt
+	cat $PIPELINEDIR/qc/covid_custom_config.yaml multiqc_custom_gen_stats.yaml > $PIPELINEDIR/qc/custom_gen_stats_config.yaml
+	
+	multiqc --config $PIPELINEDIR/qc/custom_gen_stats_config.yaml --ignore *fastqc $WORKSPACE
 
 	echo "Uploading QC results."
 	aws s3 cp $WORKSPACE/variants.zip $S3DOWNLOAD/
