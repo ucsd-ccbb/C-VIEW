@@ -33,6 +33,7 @@ runQC () {
 	# python $PIPELINEDIR/qc/samtools_depth_low.py 266 29674 10 $WORKSPACE/*.depth.txt > $WORKSPACE/qc/depth_below_10.tsv
 	echo "Summarizing consensus QC."
 	python $PIPELINEDIR/qc/consensus_acceptance_summary.py $WORKSPACE
+<<<<<<< HEAD
 
 	# Multiqc
 	find $WORKSPACE -name "qualimapReport.html" | sort -n > $WORKSPACE/qc/qualimapReport_paths.txt

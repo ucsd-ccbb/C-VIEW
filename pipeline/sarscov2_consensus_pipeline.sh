@@ -22,41 +22,33 @@ if [[ ! -f "$REF_FAS" ]]; then
     cp $PIPELINEDIR/reference_files/NC_045512.2.gff3 $REF_GFF
 fi
 
+# Determine which primer bed file to use and ensure it is downloaded
+if [[ "$PRIMER_SET" == artic ]]; then
+	PRIMER_BED_FNAME="nCoV-2019.primer.bed"
+fi
+
+if [[ "$PRIMER_SET" == swift_v2 ]]; then
+	PRIMER_BED_FNAME="sarscov2_v2_primers.bed"
+fi
+
+SCRATCH_PRIMER_FP=/scratch/reference/$PRIMER_BED_FNAME
+if [[ ! -f "$SCRATCH_PRIMER_FP" ]]; then
+  cp $PIPELINEDIR/reference_files/$PRIMER_BED_FNAME $SCRATCH_PRIMER_FP
+fi
+
 # Step 0: Download fastq
-if [[ "$IS_ARTIC" == true ]]; then
+RESULTS="$TIMESTAMP"_"$FQ"
+if [[ "$FQ" == se ]]; then
+  # leave out any files for this sample that
+  # contain in their filename the string "R2" anywhere
+  # after the sample name but before the "fastq.gz"
+	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" \
+	  --include "$SAMPLE*fastq.gz" --exclude "$SAMPLE*R2*fastq.gz"
+fi
 
-	RESULTS=results_"$RESULTSDATE"
-	PRIMER_BED="/scratch/reference/nCoV-2019.primer.bed"
-	if [[ ! -f "$PRIMER_BED" ]]; then
-		cp $PIPELINEDIR/reference_files/nCoV-2019.primer.bed $PRIMER_BED
-	fi
-	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*fastq.gz"
-
-else
-	if [[ "$IS_ARTIC" == false ]]; then
-		RESULTS="$RESULTSDATE"_"$MERGED"_"$FQ"
-		RUNTYPE="$MERGED"_"$FQ"
-		PRIMER_BED="/scratch/reference/sarscov2_v2_primers.bed"
-		if [[ ! -f "$PRIMER_BED" ]]; then
-			cp $PIPELINEDIR/reference_files/sarscov2_v2_primers.bed $PRIMER_BED
-		fi
-		if [[ "$RUNTYPE" == merged_se ]]; then
-			aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ --recursive --exclude "*" --include "$SAMPLE*"
-			cat $WORKSPACE/"$SAMPLE"*R1_001.fastq.gz > $WORKSPACE/fastq/"$SAMPLE"_R1_001.fastq.gz
-
-		elif [[ "$RUNTYPE" == merged_pe ]]; then
-			aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ --recursive --exclude "*" --include "$SAMPLE*"
-			cat $WORKSPACE/"$SAMPLE"*R1_001.fastq.gz > $WORKSPACE/fastq/"$SAMPLE"_R1_001.fastq.gz
-			cat $WORKSPACE/"$SAMPLE"*R2_001.fastq.gz > $WORKSPACE/fastq/"$SAMPLE"_R2_001.fastq.gz
-
-		elif [[ "$RUNTYPE" == unmerged_se ]]; then
-			aws s3 cp $S3DOWNLOAD/"$SAMPLE"_R1_001.fastq.gz $WORKSPACE/fastq/
-
-		elif [[ "$RUNTYPE" == unmerged_pe ]]; then
-			aws s3 cp $S3DOWNLOAD/"$SAMPLE"_R1_001.fastq.gz $WORKSPACE/fastq/
-			aws s3 cp $S3DOWNLOAD/"$SAMPLE"_R2_001.fastq.gz $WORKSPACE/fastq/
-		fi
-	fi
+if [[ "$FQ" == pe ]]; then
+	aws s3 cp $S3DOWNLOAD/"$SAMPLE*R1*fastq.gz" $WORKSPACE/fastq/
+	aws s3 cp $S3DOWNLOAD/"$SAMPLE*R2*fastq.gz" $WORKSPACE/fastq/
 fi
 
 # Fastqc
@@ -90,4 +82,3 @@ fastqc $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc
 python $PIPELINEDIR/pipeline/sarscov2_consensus_acceptance.py $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt $REF_FAS
 
 aws s3 cp $WORKSPACE/ $S3DOWNLOAD/$RESULTS/$SAMPLE/ --recursive --include "*" --exclude "*fastq.gz"
-
