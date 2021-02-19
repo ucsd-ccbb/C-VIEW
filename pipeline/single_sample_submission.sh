@@ -1,47 +1,42 @@
 #!/bin/bash
 
-S3DOWNLOAD=$1 # e.g. s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/
-IS_ARTIC=$2 # true or false - is this a pipeline test-running on ARTIC samples?
-FQ=$3 # se or pe - single end or paired end reads
-MERGED=$4 # merged or unmerged - merge lanes
-SAMPLE=$5
-RESULTSDATE=$6 # Manually input if rerunning a single sample
-PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
+INPUT=$1 # Sample Sheet with header - batch,sample,s3download,s3upload,primers,reads
 
-if [[ ! "$IS_ARTIC" =~ ^(true|false)$ ]]; then
-	echo "Parameter 2 - IS_ARTIC must be one of true or false"
-	exit 1
-fi
+[ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
+sed 1d $INPUT | while IFS=',' read BATCH S3DOWNLOAD S3UPLOAD PRIMER_SET FQ
+do
+	echo "Batch: $BATCH"
+	echo "Sample: $SAMPLE"
+	echo "S3 Fastq path: $S3DOWNLOAD"
+	echo "S3 Results Path: $S3UPLOAD"
+	echo "Primers: $PRIMER_SET"
+	echo "Fastq Reads: $FQ"
 
-if [[ "$IS_ARTIC" == true ]]; then
-	FQ=NA
-	MERGED=NA
-else
-	
-	if [[ "$IS_ARTIC" == false ]]; then
 
-	# Make sure IS_ARTIC/MERGED/FQ parameters work
-		if [[ ! "$FQ" =~ ^(se|pe)$ ]]; then
-			echo "FQ must be one of se or pe"
-			exit 1
-		fi
-		if [[ ! "$MERGED" =~ ^(merged|unmerged)$ ]]; then
-			echo "MERGED must be one of merged or unmerged"
-			exit 1
-		fi
+	TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
+	PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 
+	if [[ ! "$PRIMER_SET" =~ ^(artic|swift_v2)$ ]]; then
+		echo "Parameter 2 - PRIMER_SET must be one of artic or swift_v2"
+		exit 1
 	fi
-fi
+
+	if [[ ! "$FQ" =~ ^(se|pe)$ ]]; then
+	  echo "FQ must be one of se or pe"
+	  exit 1
+	fi
 
 
-qsub -v SAMPLE=$SAMPLE \
-	-v S3DOWNLOAD=$S3DOWNLOAD \
-	-v IS_ARTIC=$IS_ARTIC \
-	-v FQ=$FQ \
-	-v MERGED=$MERGED \
-	-v RESULTSDATE=$RESULTSDATE \
-	-N Covid19_"$SAMPLE" \
-	-wd /shared/workspace/projects/covid/logs \
-	-pe smp 1 \
-	-S /bin/bash \
-	$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
+	qsub -v SAMPLE=$SAMPLE \
+		-v S3DOWNLOAD=$S3DOWNLOAD \
+		-v S3UPLOAD=$S3UPLOAD \
+		-v PRIMER_SET=$PRIMER_SET \
+		-v FQ=$FQ \
+		-v TIMESTAMP=$TIMESTAMP \
+		-N Covid19_"$SAMPLE" \
+		-wd /shared/workspace/projects/covid/logs \
+		-pe smp 1 \
+		-S /bin/bash \
+		$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
+
+done

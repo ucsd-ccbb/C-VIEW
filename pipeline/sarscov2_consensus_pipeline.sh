@@ -42,23 +42,22 @@ if [[ "$FQ" == se ]]; then
   # leave out any files for this sample that
   # contain in their filename the string "R2" anywhere
   # after the sample name but before the "fastq.gz"
-	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" \
-	  --include "$SAMPLE*fastq.gz" --exclude "$SAMPLE*R2*fastq.gz"
+	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*fastq.gz" --exclude "$SAMPLE*R2*fastq.gz"
 fi
 
 if [[ "$FQ" == pe ]]; then
-	aws s3 cp $S3DOWNLOAD/"$SAMPLE*R1*fastq.gz" $WORKSPACE/fastq/
-	aws s3 cp $S3DOWNLOAD/"$SAMPLE*R2*fastq.gz" $WORKSPACE/fastq/
+	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R1*fastq.gz"
+	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R2*fastq.gz"
 fi
 
 # Fastqc
-fastqc $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc
+{ time ( fastqc $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc ) ; } 2> $WORKSPACE/"$SAMPLE".log.0.fastqc.log
 
 # Step 1: Map Reads + Sort
 { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$SAMPLE"*.fastq.gz | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLE".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLE".log.1.map.log
 
 # Step 2: Trim Sorted BAM
-{ time ( ivar trim -x 5 -e -i $WORKSPACE/"$SAMPLE".sorted.bam -b $PRIMER_BED -p $WORKSPACE/"$SAMPLE".trimmed ) ; } > $WORKSPACE/"$SAMPLE".log.2.trim.log 2>&1
+{ time ( ivar trim -x 5 -e -i $WORKSPACE/"$SAMPLE".sorted.bam -b $SCRATCH_PRIMER_FP -p $WORKSPACE/"$SAMPLE".trimmed ) ; } > $WORKSPACE/"$SAMPLE".log.2.trim.log 2>&1
 
 # Step 3: Sort Trimmed BAM
 { time ( samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLE".trimmed.sorted.bam $WORKSPACE/"$SAMPLE".trimmed.bam && rm $WORKSPACE/"$SAMPLE".trimmed.bam ) ; } 2> $WORKSPACE/"$SAMPLE".log.3.sorttrimmed.log
@@ -79,6 +78,6 @@ fastqc $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc
 { time ( qualimap bamqc -bam $WORKSPACE/"$SAMPLE".sorted.bam -nt $THREADS --java-mem-size=4G -outdir $WORKSPACE/"$SAMPLE".sorted.stats ) ; } > $WORKSPACE/"$SAMPLE".log.8.qualimap.sorted.log 2>&1
 
 # QC
-python $PIPELINEDIR/pipeline/sarscov2_consensus_acceptance.py $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt $REF_FAS
+{ time ( python $PIPELINEDIR/pipeline/sarscov2_consensus_acceptance.py $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt $REF_FAS ) ; } 2> $WORKSPACE/"$SAMPLE".log.9.acceptance.log
 
 aws s3 cp $WORKSPACE/ $S3DOWNLOAD/$RESULTS/$SAMPLE/ --recursive --include "*" --exclude "*fastq.gz"

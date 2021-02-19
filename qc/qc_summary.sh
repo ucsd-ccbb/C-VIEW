@@ -27,13 +27,8 @@ runQC () {
 	python $PIPELINEDIR/qc/samtools_depth_violinplot.py $WORKSPACE/*.depth.txt && mv depth_violin.pdf $WORKSPACE/qc
 	echo "Generating line plots of mapping depth across all samples."
 	python $PIPELINEDIR/qc/samtools_depth_lineplot.py $WORKSPACE/*.depth.txt && mv depth_lineplot.pdf $WORKSPACE/qc
-	# echo "Concatenating samtools depth output across all samples into a single TSV."
-	# python $PIPELINEDIR/qc/samtools_depth_concat.py $WORKSPACE/*.depth.txt > $WORKSPACE/qc/depth.tsv
-	# echo "Listing the positions with a depth below 10 reads."
-	# python $PIPELINEDIR/qc/samtools_depth_low.py 266 29674 10 $WORKSPACE/*.depth.txt > $WORKSPACE/qc/depth_below_10.tsv
 	echo "Summarizing consensus QC."
 	python $PIPELINEDIR/qc/consensus_acceptance_summary.py $WORKSPACE
-<<<<<<< HEAD
 
 	# Multiqc
 	find $WORKSPACE -name "qualimapReport.html" | sort -n > $WORKSPACE/qc/qualimapReport_paths.txt
