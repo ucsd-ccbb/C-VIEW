@@ -23,10 +23,10 @@ runQC () {
 	cd $WORKSPACE && zip -9 "$BATCH"-variants.zip *.variants.tsv && zip -9 "$BATCH"-consensus.zip *.consensus.fa && zip -9 "$BATCH"-depth.zip *.depth.txt
 
 	# summary figures and stats
-	echo "Generating a violin plot of mapping depth across all samples."
-	python $PIPELINEDIR/qc/samtools_depth_violinplot.py $WORKSPACE/*.depth.txt && mv depth_violin.pdf $WORKSPACE/qc/"$BATCH"-depth_violin.pdf
-	echo "Generating line plots of mapping depth across all samples."
-	python $PIPELINEDIR/qc/samtools_depth_lineplot.py $WORKSPACE/*.depth.txt && mv depth_lineplot.pdf $WORKSPACE/qc/"$BATCH"-depth_violin.pdf
+	echo "Generating a violin plot of mapping depth across all samples and line plots of mapping depth per sample."
+	python $PIPELINEDIR/qc/samtools_depth_plots.py $WORKSPACE/*.depth.txt
+	mv depth_violin.pdf $WORKSPACE/qc/"$BATCH"-depth_violin.pdf
+	mv depth_violin.pdf $WORKSPACE/qc/"$BATCH"-depth_lineplot.pdf
 	echo "Summarizing consensus QC."
 	python $PIPELINEDIR/qc/consensus_acceptance_summary.py $WORKSPACE
 	mv $WORKSPACE/summary.acceptance.tsv $WORKSPACE/"$BATCH"-summary.acceptance.tsv
