@@ -38,7 +38,7 @@ runQC () {
 	find $WORKSPACE -name "fastqc_data.txt" | sort -n > $WORKSPACE/qc/fastqc_data_paths.txt
 	python $PIPELINEDIR/qc/custom_gen_stats_multiqc.py $WORKSPACE/qc/qualimapReport_paths.txt $WORKSPACE/qc/fastqc_data_paths.txt
 	cat $PIPELINEDIR/qc/covid_custom_config.yaml $WORKSPACE/multiqc_custom_gen_stats.yaml > $WORKSPACE/qc/"$BATCH"-custom_gen_stats_config.yaml
-	multiqc --config $WORKSPACE/qc/"$BATCH"-custom_gen_stats_config.yaml $WORKSPACE
+	multiqc --config $WORKSPACE/qc/"$BATCH"-custom_gen_stats_config.yaml --ignore *fastqc $WORKSPACE
 
 	# Pangolin
 	cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$BATCH".fas
@@ -48,9 +48,11 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$BATCH"-variants.zip $S3DOWNLOAD/
 	aws s3 cp $WORKSPACE/"$BATCH"-consensus.zip $S3DOWNLOAD/
 	aws s3 cp $WORKSPACE/"$BATCH"-depth.zip $S3DOWNLOAD/
+
 	aws s3 cp $WORKSPACE/multiqc_data/ $S3DOWNLOAD/"$BATCH"-qc/multiqc_data/ --recursive --quiet
 	aws s3 cp $WORKSPACE/multiqc_report.html $S3DOWNLOAD/"$BATCH"-qc/
 	aws s3 cp $WORKSPACE/qc/ $S3DOWNLOAD/"$BATCH"-qc/ --recursive --quiet
+	
 	aws s3 cp $WORKSPACE/"$BATCH"-summary.acceptance.tsv $S3DOWNLOAD/"$BATCH"-qc/
 	aws s3 cp $WORKSPACE/"$BATCH"-passQC.samples.tsv $S3DOWNLOAD/
 	aws s3 cp $WORKSPACE/"$BATCH"-passQC.fas $S3DOWNLOAD/
