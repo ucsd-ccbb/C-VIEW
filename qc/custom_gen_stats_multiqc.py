@@ -28,9 +28,8 @@ for qr in qr_paths:
 				stats = re.sub(clean, '', stats)
 				stats = stats.split(" /")
 				# Clean qr to get sample name
-				x = re.search("\/(.*)\/(.*).sorted.stats\/", qr)
-				if x:
-					sample_name = x.group(1)
+				x = str.split("/")
+				sample_name = x[-3]
 				p25sQ30s[sample_name].append(stats[0]) # dict of lists
 file.close()
 
@@ -85,8 +84,9 @@ for R1, R2 in pairwise(fastQCs_paths):
 	S2 = parseSeqQual(R2)
 	combined = Counter(S1) + Counter(S2)
 	# Add %Q30 to list
-	name = re.sub(".+?(\/fastqc\/)", "", R2)
-	name = name.replace("_R2_fastqc/fastqc_data.txt", "")
+	name = R2.split("/")
+	name = name[-2]
+	name = name.replace("_R2_001_fastqc", "")
 	pctQ30 = calcQ30(combined)
 	p25sQ30s[name].append(round(pctQ30, 3)) # Add pctQ30 as the 2nd value in dict
 
