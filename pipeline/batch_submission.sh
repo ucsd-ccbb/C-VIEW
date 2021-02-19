@@ -41,4 +41,8 @@ do
 			$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
 	done
 
+	echo "batch,s3download,s3upload,primers,reads" > "$BATCH"-"$TIMESTAMP".csv
+	echo "$BATCH,$S3DOWNLOAD,$S3UPLOAD,$PRIMER_SET,$FQ" >> "$BATCH"-"$TIMESTAMP".csv
+	aws s3 cp "$BATCH"-"$TIMESTAMP".csv $S3UPLOAD/"$TIMESTAMP"_"$FQ"/
+	rm "$BATCH"-"$TIMESTAMP".csv
 done
