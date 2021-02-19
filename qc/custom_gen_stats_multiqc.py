@@ -30,7 +30,7 @@ for qr in qr_paths:
 				# Clean qr to get sample name
 				x = re.search("\/(.*)\/(.*).sorted.stats\/", qr)
 				if x:
-				# 	sample_name = x.group(1)
+					sample_name = x.group(1)
 				p25sQ30s[sample_name].append(stats[0]) # dict of lists
 file.close()
 
