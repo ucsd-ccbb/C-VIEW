@@ -28,10 +28,8 @@ for qr in qr_paths:
 				stats = re.sub(clean, '', stats)
 				stats = stats.split(" /")
 				# Clean qr to get sample name
-				sample_name = re.sub(".+?(\/qualimap\/)", "", qr)
-				sample_name = sample_name.replace(".sorted.stats/qualimapReport.html", "")
-				# x = re.search("qualimap/(.+?).sorted.stats/", qr)
-				# if x:
+				x = re.search("\/(.*)\/(.*).sorted.stats\/", qr)
+				if x:
 				# 	sample_name = x.group(1)
 				p25sQ30s[sample_name].append(stats[0]) # dict of lists
 file.close()
