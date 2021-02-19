@@ -1,6 +1,5 @@
 from sys import argv, stderr
 import os
-import errno
 import nwalign3 as nw
 
 SEARCH_ID_PREFIX = "SEARCH"
