@@ -8,6 +8,7 @@ Pipeline version 0.2.0 is pre-installed on the snap-0635d84491ed5f318 Amazon Web
 * samtools 1.11
 * QualiMap v.2.2.2-dev
 * FastQC v0.11.9
+* Pangolin (variable version: updated on pipeline run)
 
 Should one wish to set up the pipeline on a fresh instance, follow the below commands.
 Create a conda environment and activate it, then run:
@@ -25,9 +26,14 @@ Followed by:
 ```
 pip install multiqc
 pip install nwalign3
+pip install pandas
+pip install seaborn
 ```
 
-Finally, install ivar from source (see https://github.com/andersen-lab/ivar ).
+Then install ivar from source (see https://github.com/andersen-lab/ivar ).
+
+It is also necessary to create a separate conda environment for Pangolin, following the instructions at 
+https://github.com/cov-lineages/pangolin#install-pangolin .
 
 The pipeline is optimized to run on an AWS EC2 cluster with the following characteristics:
 ```
