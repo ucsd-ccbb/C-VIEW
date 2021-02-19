@@ -28,7 +28,7 @@ for qr in qr_paths:
 				stats = re.sub(clean, '', stats)
 				stats = stats.split(" /")
 				# Clean qr to get sample name
-				x = str.split("/")
+				x = qr.split("/")
 				sample_name = x[-3]
 				p25sQ30s[sample_name].append(stats[0]) # dict of lists
 file.close()
