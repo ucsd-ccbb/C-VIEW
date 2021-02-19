@@ -31,7 +31,7 @@ for qr in qr_paths:
 				x = qr.split("/")
 				sample_name = x[-3]
 				p25sQ30s[sample_name].append(stats[0]) # dict of lists
-file.close()
+	file.close()
 
 # Extract and store per sequence quality scores from fastqc_data.txt
 def parseSeqQual(fastqcFile):
