@@ -15,7 +15,7 @@ runQC () {
 		--include "*.consensus.fa" \
 		--include "*.depth.txt" \
 		--include "*fastqc.zip" \
-		--include "*qualimapReport.html" \
+		--include "*sorted.stats*" \
 		--include "*.acceptance.tsv"
 
 	# Zip files
