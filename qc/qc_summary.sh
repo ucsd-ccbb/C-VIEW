@@ -38,7 +38,7 @@ runQC () {
 	find $WORKSPACE -name "fastqc_data.txt" | sort -n > $WORKSPACE/qc/fastqc_data_paths.txt
 	python $PIPELINEDIR/qc/custom_gen_stats_multiqc.py $WORKSPACE/qc/qualimapReport_paths.txt $WORKSPACE/qc/fastqc_data_paths.txt
 	cat $PIPELINEDIR/qc/covid_custom_config.yaml $WORKSPACE/multiqc_custom_gen_stats.yaml > $WORKSPACE/qc/"$BATCH"-custom_gen_stats_config.yaml
-	multiqc --config $WORKSPACE/qc/"$BATCH"-custom_gen_stats_config.yaml --ignore *fastqc $WORKSPACE
+	multiqc --config $WORKSPACE/qc/"$BATCH"-custom_gen_stats_config.yaml --module qualimap $WORKSPACE
 
 	# Pangolin
 	cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$BATCH".fas
