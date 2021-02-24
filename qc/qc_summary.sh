@@ -39,7 +39,7 @@ runQC () {
 	for z in $WORKSPACE/*/fastqc/*fastqc.zip; do unzip -q $z -d qc/fastqc; done
 	find $WORKSPACE -name "fastqc_data.txt" | sort -n > $WORKSPACE/qc/fastqc_data_paths.txt
 	cat $PIPELINEDIR/qc/covid_custom_config.yaml $WORKSPACE/multiqc_custom_gen_stats.yaml > $WORKSPACE/qc/custom_gen_stats_config.yaml
-	multiqc --config $WORKSPACE/qc/custom_gen_stats_config.yaml --ignore *fastqc $WORKSPACE
+	multiqc --config $WORKSPACE/qc/custom_gen_stats_config.yaml --module qualimap $WORKSPACE
 
 	echo "Uploading QC results."
 	aws s3 cp $WORKSPACE/variants.zip $S3DOWNLOAD/

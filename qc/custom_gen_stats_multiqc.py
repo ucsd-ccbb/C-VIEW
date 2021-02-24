@@ -87,6 +87,7 @@ for R1, R2 in pairwise(fastQCs_paths):
 	name = R2.split("/")
 	name = name[-2]
 	name = name.replace("_R2_001_fastqc", "")
+	name = name.replace("_R2_fastqc", "")
 	pctQ30 = calcQ30(combined)
 	p25sQ30s[name].append(round(pctQ30, 3)) # Add pctQ30 as the 2nd value in dict
 
