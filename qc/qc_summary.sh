@@ -53,9 +53,13 @@ runQC () {
 	aws s3 cp $WORKSPACE/multiqc_report.html $S3DOWNLOAD/"$BATCH"-qc/
 	aws s3 cp $WORKSPACE/qc/ $S3DOWNLOAD/"$BATCH"-qc/ --recursive --quiet
 	
+	aws s3 cp $WORKSPACE/"$BATCH"-summary.acceptance.tsv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/acceptance/
 	aws s3 cp $WORKSPACE/"$BATCH"-summary.acceptance.tsv $S3DOWNLOAD/"$BATCH"-qc/
+
 	aws s3 cp $WORKSPACE/"$BATCH"-passQC.samples.tsv $S3DOWNLOAD/
+	aws s3 cp $WORKSPACE/"$BATCH"-passQC.fas s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/consensus/
 	aws s3 cp $WORKSPACE/"$BATCH"-passQC.fas $S3DOWNLOAD/
+	
 	aws s3 cp $WORKSPACE/"$BATCH".fas $S3DOWNLOAD/
 	aws s3 cp $WORKSPACE/"$BATCH".lineage_report.csv $S3DOWNLOAD/
 }
