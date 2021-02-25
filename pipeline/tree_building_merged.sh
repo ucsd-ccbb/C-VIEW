@@ -12,7 +12,7 @@ buildTree () {
 	aws s3 cp $S3DOWNLOAD/acceptance/ $WORKSPACE/ --recursive
 
 	cat $WORKSPACE/*passQC.fas > $WORKSPACE/merged.fas
-
+	sed -i -e 's/Consensus_//g' -e 's/.trimmed.sorted.pileup.consensus_threshold_0.5_quality_20//g' $WORKSPACE/merged.fas
 	# add the reference sequence
 	cat $PIPELINEDIR/reference_files/RmYN02.fas >> $WORKSPACE/merged.fas
 
@@ -28,21 +28,33 @@ buildTree () {
 
 	python FastRoot.py -i $WORKSPACE/merged.trimmed.aln.treefile -o $WORKSPACE/merged.trimmed.aln.rooted.treefile -m OG -g "hCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25"
 
-	# --- metadata MAY CHANGE ----
+	# pangolin
+	source $ANACONDADIR/activate pangolin
+	pangolin --update
 	pangolin -t $THREADS --outfile $WORKSPACE/merged.lineage_report.csv $WORKSPACE/merged.fas
 
-	awk -F "," '{print $1 "\t" $2 "\t" $3 "\t" $4 "\t" $5}' $WORKSPACE/merged.lineage_report.csv > $WORKSPACE/merged.metadata.txt
+	# Metadata
+	# Get SEQ_RUN from acceptance files to merge with metadata
+	for seq_run in $(ls $WORKSPACE/*acceptance.tsv | awk -F '/' '{print $NF}' | awk -F '-summary' '{print $1}'); do 
+		grep -v "^fastq_id" $WORKSPACE/"$seq_run"-summary.acceptance.tsv \
+		| awk -v seq_run=$seq_run \
+		'OFS="\t"{print $1, seq_run}' \
+		> $WORKSPACE/"$seq_run"-metadata.txt
+	done
+	cat $WORKSPACE/*-metadata.txt > $WORKSPACE/tmp.merged.metadata.txt
+	echo -e "hCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25\thCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25" >> $WORKSPACE/tmp.merged.metadata.txt
+	echo -e "hCoV-19/USA/CA-SEARCH-5574/2020|EPI_ISL_751801|2020-12-29\thCoV-19/USA/CA-SEARCH-5574/2020|EPI_ISL_751801|2020-12-29" >> $WORKSPACE/tmp.merged.metadata.txt
 
-	sed -i '1 a q2:types\tcategorical\tcategorical\tcategorical\tcategorical' $WORKSPACE/merged.metadata.txt
+	# Merge lineage report with sample/seqrun file to make final metadata
+	join <(awk 'BEGIN {FS=",";OFS="\t"} {print $1,$2,$3,$4,$5}' $WORKSPACE/merged.lineage_report.csv | sort -k1) <(sort -k1 $WORKSPACE/tmp.merged.metadata.txt) -t $'\t'  > $WORKSPACE/final.metadata.txt
+	sed -i '1i taxon\tlineage\tprobability\tpangoLEARN_version\run_name' $WORKSPACE/final.metadata.txt
+	sed -i '1 a q2:types\tcategorical\tcategorical\tcategorical\tcategorical\tcategorical' $WORKSPACE/final.metadata.txt
 
 	# note currently adding batch info to metadata on local jupyter notebook... need to improve
 	# -------------------------
-
-	# eval "$(conda shell.bash hook)" # necessary to enter conda env from bash script
-	# the other way, found by amanda
 	source $ANACONDADIR/activate qiime2-2020.11
 
-	empress tree-plot --tree $WORKSPACE/merged.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/merged.metadata.txt --output-dir $WORKSPACE/tree-viz
+	empress tree-plot --tree $WORKSPACE/merged.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/final.metadata.txt --output-dir $WORKSPACE/tree-viz
 
 	aws s3 cp $WORKSPACE/ $S3DOWNLOAD/trees/$TIMESTAMP/ --recursive
 
@@ -51,3 +63,4 @@ buildTree () {
 { time ( buildTree ) ; } > $WORKSPACE/"$TIMESTAMP"-treebuild.log 2>&1
 
 aws s3 cp $WORKSPACE/"$TIMESTAMP"-treebuild.log $S3DOWNLOAD/trees/$TIMESTAMP/
+
