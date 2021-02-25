@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export PATH=/shared/workspace/software/pangolin:/shared/workspace/software/anaconda3/envs/pangolin/bin:$PATH
-PREFIX=$1 # $WORKSPACE/$BATCH
+PREFIX=$1 # $WORKSPACE/$SEQ_RUN
 
 # filter the true samples
 awk '{ if ($2 == "True") { print } }' "$PREFIX"-summary.acceptance.tsv > "$PREFIX"-summary.acceptance.true.tsv
