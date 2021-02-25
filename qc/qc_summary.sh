@@ -15,7 +15,7 @@ runQC () {
 		--include "*.consensus.fa" \
 		--include "*.depth.txt" \
 		--include "*fastqc.zip" \
-		--include "*sorted.stats*" \
+		--include "*.sorted.stats*" \
 		--include "*.acceptance.tsv"
 
 	# Zip files
@@ -40,6 +40,9 @@ runQC () {
 	cat $PIPELINEDIR/qc/covid_custom_config.yaml $WORKSPACE/multiqc_custom_gen_stats.yaml > $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml
 	multiqc --config $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml --module qualimap $WORKSPACE
 
+	# Make QC table
+	python $PIPELINEDIR/qc/makeQCSummaryTable.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$BATCH"-summary.acceptance.tsv $WORKSPACE/"$BATCH".lineage_report.csv
+
 	# Pangolin
 	cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN".fas
 	bash $PIPELINEDIR/qc/pangolin.sh $WORKSPACE/$SEQ_RUN
@@ -52,7 +55,8 @@ runQC () {
 	aws s3 cp $WORKSPACE/multiqc_data/ $S3DOWNLOAD/"$SEQ_RUN"-qc/multiqc_data/ --recursive --quiet
 	aws s3 cp $WORKSPACE/multiqc_report.html $S3DOWNLOAD/"$SEQ_RUN"-qc/
 	aws s3 cp $WORKSPACE/qc/ $S3DOWNLOAD/"$SEQ_RUN"-qc/ --recursive --quiet
-	
+  aws s3 cp $WORKSPACE/QCSummaryTable.csv $S3DOWNLOAD/qc/
+
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $S3DOWNLOAD/"$SEQ_RUN"-qc/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.samples.tsv $S3DOWNLOAD/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3DOWNLOAD/
