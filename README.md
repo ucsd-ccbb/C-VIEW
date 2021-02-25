@@ -1,7 +1,7 @@
 # covid_sequencing_analysis_pipeline
 AWS optimized pipeline based on https://github.com/niemasd/SD-COVID-Sequencing 
 
-Pipeline version 0.3.0 is pre-installed on the snap-XXXXXX Amazon Web Services snapshot in region us-east-2 (Ohio).  It uses the following external software programs:
+Pipeline version 0.3.0 is pre-installed on the snap-02e894454d80986fb Amazon Web Services snapshot in region us-east-2 (Ohio).  It uses the following external software programs:
 
 * ivar 1.3.1
 * minimap2 2.17-r941
