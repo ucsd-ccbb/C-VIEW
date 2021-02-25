@@ -1,11 +1,11 @@
 #!/bin/bash
 
-INPUT=$1 # Sample Sheet with header - batch,sample,s3download,s3upload,primers,reads
+INPUT=$1 # Sample Sheet with header - seq_run,sample,s3download,s3upload,primers,reads
 
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
-sed 1d $INPUT | while IFS=',' read BATCH S3DOWNLOAD S3UPLOAD PRIMER_SET FQ
+sed 1d $INPUT | while IFS=',' read SEQ_RUN S3DOWNLOAD S3UPLOAD PRIMER_SET FQ
 do
-	echo "Batch: $BATCH"
+	echo "Seq_Run: $SEQ_RUN"
 	echo "Sample: $SAMPLE"
 	echo "S3 Fastq path: $S3DOWNLOAD"
 	echo "S3 Results Path: $S3UPLOAD"

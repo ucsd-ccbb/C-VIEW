@@ -1,21 +1,21 @@
 #!/bin/bash
 
-INPUT=$1 # Sample Sheet with header - batch,s3download,s3upload,primers,reads
+INPUT=$1 # Sample Sheet with header - seq_run,s3download,s3upload,primers,reads
 TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 QSUBSAMPLEPARAMS=''
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
-sed 1d $INPUT | while IFS=',' read BATCH S3DOWNLOAD S3UPLOAD PRIMER_SET FQ MERGE_LANES
+sed 1d $INPUT | while IFS=',' read SEQ_RUN S3DOWNLOAD S3UPLOAD PRIMER_SET FQ MERGE_LANES
 do
-	echo "Batch: $BATCH"
+	echo "Seq_Run: $SEQ_RUN"
 	echo "S3 Fastq path: $S3DOWNLOAD"
 	echo "S3 Results Path: $S3UPLOAD"
 	echo "Primers: $PRIMER_SET"
 	echo "Fastq Reads: $FQ"
 	echo "Merge Lanes: $MERGE_LANES"
 
-	WORKSPACE=/scratch/$BATCH/$TIMESTAMP
+	WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP
 	# Append Results URL
 	RESULTS="$TIMESTAMP"_"$FQ"
 
@@ -36,16 +36,16 @@ do
 
 	# Merge fastq files from multiple lanes
 	if [[ "$MERGE_LANES" == true ]]; then
-		qsub -v BATCH=$BATCH \
+		qsub -v SEQ_RUN=$SEQ_RUN \
 			 -v WORKSPACE=$WORKSPACE \
 			 -v S3DOWNLOAD=$S3DOWNLOAD \
 			 -wd /shared/workspace/projects/covid/logs \
-			 -N merge_lanes_"$BATCH" \
+			 -N merge_lanes_"$SEQ_RUN" \
 			 -pe smp 16 \
 			 $PIPELINEDIR/pipeline/merge_lanes.sh
 		S3DOWNLOAD=$S3DOWNLOAD/merged_lanes
 		S3UPLOAD=$S3UPLOAD/merged_lanes
-		QSUBSAMPLEPARAMS=' -hold_jid merge_lanes_'$BATCH''
+		QSUBSAMPLEPARAMS=' -hold_jid merge_lanes_'$SEQ_RUN''
 	fi
 
 	SAMPLE_LIST=$(aws s3 ls $S3DOWNLOAD/ | grep fastq | awk '{print $NF}' | awk -F '_R' '{print $1}' | sort | uniq | grep -v Undetermined)
@@ -59,7 +59,7 @@ do
 			-v PRIMER_SET=$PRIMER_SET \
 			-v FQ=$FQ \
 			-v TIMESTAMP=$TIMESTAMP \
-			-N Covid19_"$BATCH"_"$SAMPLE" \
+			-N Covid19_"$SEQ_RUN"_"$SAMPLE" \
 			-wd /shared/workspace/projects/covid/logs \
 			-pe smp 1 \
 			-S /bin/bash \
@@ -67,21 +67,21 @@ do
 	done
 
 
-	# Perform QC and summary on batch when all samples have completed
+	# Perform QC and summary on seq_run when all samples have completed
 	qsub \
-		-hold_jid 'Covid19_'$BATCH'_*' \
+		-hold_jid 'Covid19_'$SEQ_RUN'_*' \
 		-v S3DOWNLOAD=$S3UPLOAD/$RESULTS \
 		-v S3UPLOAD=$S3UPLOAD/$RESULTS \
-		-v BATCH=$BATCH \
+		-v SEQ_RUN=$SEQ_RUN \
 		-v WORKSPACE=$WORKSPACE \
-		-N QC_summary_"$BATCH" \
+		-N QC_summary_"$SEQ_RUN" \
 		-wd /shared/workspace/projects/covid/logs \
 		-pe smp 32 \
 		-S /bin/bash \
     	$PIPELINEDIR/qc/qc_summary.sh
 
-	echo "batch,s3download,s3upload,primers,reads" > "$BATCH"-"$TIMESTAMP".csv
-	echo "$BATCH,$S3DOWNLOAD,$S3UPLOAD,$PRIMER_SET,$FQ" >> "$BATCH"-"$TIMESTAMP".csv
-	aws s3 cp "$BATCH"-"$TIMESTAMP".csv $S3UPLOAD/"$TIMESTAMP"_"$FQ"/
-	rm "$BATCH"-"$TIMESTAMP".csv
+	echo "seq_run,s3download,s3upload,primers,reads" > "$SEQ_RUN"-"$TIMESTAMP".csv
+	echo "$SEQ_RUN,$S3DOWNLOAD,$S3UPLOAD,$PRIMER_SET,$FQ" >> "$SEQ_RUN"-"$TIMESTAMP".csv
+	aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3UPLOAD/"$TIMESTAMP"_"$FQ"/
+	rm "$SEQ_RUN"-"$TIMESTAMP".csv
 done
