@@ -41,6 +41,9 @@ runQC () {
 	cat $PIPELINEDIR/qc/covid_custom_config.yaml $WORKSPACE/multiqc_custom_gen_stats.yaml > $WORKSPACE/qc/custom_gen_stats_config.yaml
 	multiqc --config $WORKSPACE/qc/custom_gen_stats_config.yaml --module qualimap $WORKSPACE
 
+	# Make QC table
+	python $PIPELINEDIR/qc/makeQCSummaryTable.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$BATCH"-summary.acceptance.tsv $WORKSPACE/"$BATCH".lineage_report.csv 
+
 	echo "Uploading QC results."
 	aws s3 cp $WORKSPACE/variants.zip $S3DOWNLOAD/
 	aws s3 cp $WORKSPACE/consensus.zip $S3DOWNLOAD/
@@ -50,6 +53,7 @@ runQC () {
 	aws s3 cp $WORKSPACE/multiqc_report.html $S3DOWNLOAD/qc/
 	aws s3 cp $WORKSPACE/qc/ $S3DOWNLOAD/qc/ --recursive
 	aws s3 cp $WORKSPACE/summary.acceptance.tsv $S3DOWNLOAD/qc/
+	aws s3 cp $WORKSPACE/QCSummaryTable.csv $S3DOWNLOAD/qc/
 
 }
 
