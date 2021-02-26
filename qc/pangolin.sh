@@ -1,6 +1,10 @@
 #!/bin/bash
 
-export PATH=/shared/workspace/software/pangolin:/shared/workspace/software/anaconda3/envs/pangolin/bin:$PATH
+export PATH=/shared/workspace/software/pangolin:$PATH
+# Activate conda env covid1.2
+ANACONDADIR=/shared/workspace/software/anaconda3/bin
+source $ANACONDADIR/activate pangolin
+
 PREFIX=$1 # $WORKSPACE/$SEQ_RUN
 
 # filter the true samples

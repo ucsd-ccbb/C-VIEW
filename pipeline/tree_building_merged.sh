@@ -1,5 +1,5 @@
 
-export PATH=$PATH:/shared/workspace/software/IQTree/iqtree-2.1.2-Linux/bin:/shared/workspace/software/viralMSA:/shared/workspace/software/MinVar-Rooting-master:/shared/workspace/software/anaconda3/envs/pangolin/bin
+export PATH=$PATH:/shared/workspace/software/IQTree/iqtree-2.1.2-Linux/bin:/shared/workspace/software/viralMSA:/shared/workspace/software/MinVar-Rooting-master
 mkdir -p $WORKSPACE
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
@@ -48,8 +48,8 @@ buildTree () {
 	join <(awk 'BEGIN {FS=",";OFS="\t"} {print $1,$2,$3,$4,$5}' $WORKSPACE/merged.lineage_report.csv | sort -k1) <(sort -k1 $WORKSPACE/tmp.merged.metadata.txt) -t $'\t'  > $WORKSPACE/merged.final.metadata.txt
 	sed -i '1i taxon\tlineage\tprobability\tpangoLEARN_version\run_name' $WORKSPACE/merged.final.metadata.txt
 	sed -i '1 a q2:types\tcategorical\tcategorical\tcategorical\tcategorical\tcategorical' $WORKSPACE/merged.final.metadata.txt
-	# -------------------------
-
+	
+	# tree building 
 	source $ANACONDADIR/activate qiime2-2020.11
 
 	empress tree-plot --tree $WORKSPACE/merged.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/merged.final.metadata.txt --output-dir $WORKSPACE/tree-viz

@@ -79,7 +79,7 @@ do
 		-hold_jid 'Covid19_'$SEQ_RUN'_*' \
 		-v SEQ_RUN=$SEQ_RUN \
 		-v S3DOWNLOAD=$S3DOWNLOAD \
-		-v WORKSPACE=/scratch/qc/$SEQ_RUN/$TIMESTAMP \
+		-v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
 		-v FQ=$FQ \
 		-v TIMESTAMP=$TIMESTAMP \
 		-N QC_summary_"$SEQ_RUN" \
