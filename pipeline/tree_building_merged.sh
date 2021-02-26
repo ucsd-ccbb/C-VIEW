@@ -1,7 +1,6 @@
 
 export PATH=$PATH:/shared/workspace/software/IQTree/iqtree-2.1.2-Linux/bin:/shared/workspace/software/viralMSA:/shared/workspace/software/MinVar-Rooting-master:/shared/workspace/software/anaconda3/envs/pangolin/bin
 mkdir -p $WORKSPACE
-# S3DOWNLOAD=s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 THREADS=96
@@ -33,7 +32,7 @@ buildTree () {
 	pangolin --update
 	pangolin -t $THREADS --outfile $WORKSPACE/merged.lineage_report.csv $WORKSPACE/merged.fas
 
-	# Metadata
+	# Metadata -------------------------
 	# Get SEQ_RUN from acceptance files to merge with metadata
 	for seq_run in $(ls $WORKSPACE/*acceptance.tsv | awk -F '/' '{print $NF}' | awk -F '-summary' '{print $1}'); do 
 		grep -v "^fastq_id" $WORKSPACE/"$seq_run"-summary.acceptance.tsv \
@@ -49,9 +48,8 @@ buildTree () {
 	join <(awk 'BEGIN {FS=",";OFS="\t"} {print $1,$2,$3,$4,$5}' $WORKSPACE/merged.lineage_report.csv | sort -k1) <(sort -k1 $WORKSPACE/tmp.merged.metadata.txt) -t $'\t'  > $WORKSPACE/final.metadata.txt
 	sed -i '1i taxon\tlineage\tprobability\tpangoLEARN_version\run_name' $WORKSPACE/final.metadata.txt
 	sed -i '1 a q2:types\tcategorical\tcategorical\tcategorical\tcategorical\tcategorical' $WORKSPACE/final.metadata.txt
-
-	# note currently adding batch info to metadata on local jupyter notebook... need to improve
 	# -------------------------
+
 	source $ANACONDADIR/activate qiime2-2020.11
 
 	empress tree-plot --tree $WORKSPACE/merged.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/final.metadata.txt --output-dir $WORKSPACE/tree-viz
