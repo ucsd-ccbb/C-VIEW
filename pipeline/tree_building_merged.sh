@@ -45,15 +45,16 @@ buildTree () {
 	echo -e "hCoV-19/USA/CA-SEARCH-5574/2020|EPI_ISL_751801|2020-12-29\thCoV-19/USA/CA-SEARCH-5574/2020|EPI_ISL_751801|2020-12-29" >> $WORKSPACE/tmp.merged.metadata.txt
 
 	# Merge lineage report with sample/seqrun file to make final metadata
-	join <(awk 'BEGIN {FS=",";OFS="\t"} {print $1,$2,$3,$4,$5}' $WORKSPACE/merged.lineage_report.csv | sort -k1) <(sort -k1 $WORKSPACE/tmp.merged.metadata.txt) -t $'\t'  > $WORKSPACE/final.metadata.txt
-	sed -i '1i taxon\tlineage\tprobability\tpangoLEARN_version\run_name' $WORKSPACE/final.metadata.txt
-	sed -i '1 a q2:types\tcategorical\tcategorical\tcategorical\tcategorical\tcategorical' $WORKSPACE/final.metadata.txt
+	join <(awk 'BEGIN {FS=",";OFS="\t"} {print $1,$2,$3,$4,$5}' $WORKSPACE/merged.lineage_report.csv | sort -k1) <(sort -k1 $WORKSPACE/tmp.merged.metadata.txt) -t $'\t'  > $WORKSPACE/merged.final.metadata.txt
+	sed -i '1i taxon\tlineage\tprobability\tpangoLEARN_version\run_name' $WORKSPACE/merged.final.metadata.txt
+	sed -i '1 a q2:types\tcategorical\tcategorical\tcategorical\tcategorical\tcategorical' $WORKSPACE/merged.final.metadata.txt
 	# -------------------------
 
 	source $ANACONDADIR/activate qiime2-2020.11
 
-	empress tree-plot --tree $WORKSPACE/merged.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/final.metadata.txt --output-dir $WORKSPACE/tree-viz
+	empress tree-plot --tree $WORKSPACE/merged.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/merged.final.metadata.txt --output-dir $WORKSPACE/tree-viz
 
+	rename 's/^/'$TIMESTAMP'-/' $WORKSPACE/merged.*
 	aws s3 cp $WORKSPACE/ $S3DOWNLOAD/trees/$TIMESTAMP/ --recursive
 
 }

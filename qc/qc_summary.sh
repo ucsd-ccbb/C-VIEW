@@ -1,13 +1,16 @@
 #!/bin/bash
 
-export PATH=/shared/workspace/software/anaconda3/envs/covid1.1/bin:$PATH
-
+ANACONDADIR=/shared/workspace/software/anaconda3/bin
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 mkdir -p $WORKSPACE/qc/fastqc
+PHYLORESULTS=$S3DOWNLOAD/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_phylogenetic_results
+QCRESULTS=$S3DOWNLOAD/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_quality_control
+
+source $ANACONDADIR/activate covid1.1
 
 runQC () {
 
-	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ \
+	aws s3 cp $S3DOWNLOAD/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_samples/ $WORKSPACE/ \
 		--quiet \
 		--recursive \
 		--exclude "*" \
@@ -41,7 +44,7 @@ runQC () {
 	multiqc --config $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml --module qualimap $WORKSPACE
 
 	# Make QC table
-	python $PIPELINEDIR/qc/makeQCSummaryTable.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$BATCH"-summary.acceptance.tsv $WORKSPACE/"$BATCH".lineage_report.csv
+	python $PIPELINEDIR/qc/makeQCSummaryTable.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $WORKSPACE/"$BATCH".lineage_report.csv
 
 	# Make merged consensus of passing samples
 	cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN".fas
@@ -60,30 +63,30 @@ runQC () {
 	done
 
 	# Upload Results
-	echo "Uploading QC results."
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-variants.zip $S3DOWNLOAD/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-consensus.zip $S3DOWNLOAD/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-depth.zip $S3DOWNLOAD/
+	echo "Uploading QC and summary results."
+	# phylogenetic results folder
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-variants.zip $PHYLORESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-consensus.zip $PHYLORESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-depth.zip $PHYLORESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.samples.tsv $PHYLORESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $PHYLORESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $PHYLORESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $PHYLORESULTS/
 
-	aws s3 cp $WORKSPACE/multiqc_data/ $S3DOWNLOAD/"$SEQ_RUN"-qc/multiqc_data/ --recursive --quiet
-	aws s3 cp $WORKSPACE/multiqc_report.html $S3DOWNLOAD/"$SEQ_RUN"-qc/
-	aws s3 cp $WORKSPACE/qc/ $S3DOWNLOAD/"$SEQ_RUN"-qc/ --recursive --quiet
-  aws s3 cp $WORKSPACE/QCSummaryTable.csv $S3DOWNLOAD/qc/
+	# quality control folder
+	aws s3 cp $WORKSPACE/multiqc_data/ $QCRESULTS/multiqc_data/ --recursive --quiet
+	aws s3 cp $WORKSPACE/multiqc_report.html $QCRESULTS/
+	aws s3 cp $WORKSPACE/qc/ $QCRESULTS/ --recursive --quiet
+  	aws s3 cp $WORKSPACE/QCSummaryTable.csv $QCRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $QCRESULTS/
 
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $S3DOWNLOAD/"$SEQ_RUN"-qc/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.samples.tsv $S3DOWNLOAD/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3DOWNLOAD/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $S3DOWNLOAD/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/acceptance/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $S3DOWNLOAD/"$SEQ_RUN"-qc/
-
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.samples.tsv $S3DOWNLOAD/
+	# Tree building data
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/consensus/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3DOWNLOAD/
-
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/acceptance/
+	
 }
 
 { time ( runQC ) ; } > $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log 2>&1
 
-aws s3 cp $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log $S3UPLOAD/"$SEQ_RUN"-qc/
+aws s3 cp $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log $QCRESULTS/
 
