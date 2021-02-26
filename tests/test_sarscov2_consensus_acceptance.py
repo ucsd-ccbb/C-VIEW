@@ -4,7 +4,8 @@ from unittest import TestCase
 from pipeline.sarscov2_consensus_acceptance import \
     check_consensus_acceptance_by_fps, check_consensus_acceptance, \
     _verify_fraction_acceptable_bases, _get_consensus_orfs_start_end, \
-    _extract_search_id, _write_acceptance_check_to_file, \
+    _attempt_extract_search_id, _extract_putative_sample_id, \
+    _write_acceptance_check_to_file, \
     REF_FIRST_ORF_START_1BASED, REF_LAST_ORF_END_1BASED, \
     DEPTH_THRESH, FRACTION_THRESH
 
@@ -30428,26 +30429,31 @@ class SampleQcTest(TestCase):
                                  "notarealfile.consensus.fa")
         # NB: NOT passing real depth and reference genome files; correct code
         # must exit before ever getting to reading them
-        real_accept, real_depth_fract = check_consensus_acceptance_by_fps(
-            a_fake_fp, a_file_fp, a_file_fp)
+        real_accept, real_depth_fract, real_len_insert = \
+            check_consensus_acceptance_by_fps(
+                a_fake_fp, a_file_fp, a_file_fp)
 
         self.assertEqual(False, real_accept)
         self.assertEqual("NA", real_depth_fract)
+        self.assertEqual("NA", real_len_insert)
 
         # NB: NOT passing real consensus and reference genome files;
         # correct code must exit before ever getting to reading them
-        real_accept, real_depth_fract = check_consensus_acceptance_by_fps(
-            a_file_fp, a_fake_fp, a_file_fp)
+        real_accept, real_depth_fract, real_len_insert = \
+            check_consensus_acceptance_by_fps(
+                a_file_fp, a_fake_fp, a_file_fp)
 
         self.assertEqual(False, real_accept)
         self.assertEqual("NA", real_depth_fract)
+        self.assertEqual("NA", real_len_insert)
 
     def test_check_consensus_acceptance_true_realistic(self):
         depth_filelike = StringIO(DEPTH_TXT_STR)
         consensus_filelike = StringIO(CONSENSUS_FA_STR)
         ref_genome_filelike = StringIO(REF_GENOME_FAS_STR)
 
-        real_out, real_depth_fract = check_consensus_acceptance(
+        real_out, real_depth_fract, real_len_insert = \
+            check_consensus_acceptance(
             consensus_filelike, depth_filelike, ref_genome_filelike,
             REF_FIRST_ORF_START_1BASED,
             REF_LAST_ORF_END_1BASED,
@@ -30456,6 +30462,8 @@ class SampleQcTest(TestCase):
         self.assertEqual(True, real_out)
         # all depths pass
         self.assertEqual(1, real_depth_fract)
+        # no insertions relative to reference
+        self.assertEqual(0, real_len_insert)
 
     def test_check_consensus_acceptance_true(self):
         # 34 bases of orfs
@@ -30468,7 +30476,8 @@ class SampleQcTest(TestCase):
         consensus_filelike = StringIO(
             CONSENSUS_SHORT_INDEL_FA_STR.format(test_consensus_str))
         ref_genome_filelike = StringIO(REF_GENOME_SHORT_FAS_STR)
-        real_out, real_depth_fract = check_consensus_acceptance(
+        real_out, real_depth_fract, real_len_insert = \
+            check_consensus_acceptance(
             consensus_filelike, depth_filelike, ref_genome_filelike,
             REF_SHORT_FIRST_ORF_START_1BASED, REF_SHORT_LAST_ORF_END_1BASED,
             DEPTH_THRESH, FRACTION_THRESH)
@@ -30476,6 +30485,31 @@ class SampleQcTest(TestCase):
         self.assertEqual(True, real_out)
         # there is one base fail, but all depths pass
         self.assertEqual(1, real_depth_fract)
+        # consensus has 34 bases of orfs, reference has 20
+        self.assertEqual(14, real_len_insert)
+
+    def test_check_consensus_acceptance_true_no_insert(self):
+        # 6 bases 5' utr, 20 bases of orfs, 8 bases 3' utr
+        # 1 mismatch relative to reference, no insertions or deletions
+        readable_consensus = "ATTAA A GGTTT ATACC GTCCC AGGTA ACAAGTAC"
+        test_consensus_str = readable_consensus.replace(" ", "")
+        depth_filelike = StringIO(DEPTH_SHORT_INDEL_TXT_STR.format(
+            83, 25, 2000))
+        consensus_filelike = StringIO(
+            CONSENSUS_SHORT_INDEL_FA_STR.format(test_consensus_str))
+        ref_genome_filelike = StringIO(REF_GENOME_SHORT_FAS_STR)
+        real_out, real_depth_fract, real_len_insert = \
+            check_consensus_acceptance(
+                consensus_filelike, depth_filelike, ref_genome_filelike,
+                REF_SHORT_FIRST_ORF_START_1BASED,
+                REF_SHORT_LAST_ORF_END_1BASED,
+                DEPTH_THRESH, FRACTION_THRESH)
+
+        self.assertEqual(True, real_out)
+        # there is one base fail, but all depths pass
+        self.assertEqual(1, real_depth_fract)
+        # consensus has 20 bases of orfs, reference has 20 also
+        self.assertEqual(0, real_len_insert)
 
     def test_check_consensus_acceptance_false(self):
         # 34 bases of orfs
@@ -30490,13 +30524,17 @@ class SampleQcTest(TestCase):
         consensus_filelike = StringIO(
             CONSENSUS_SHORT_INDEL_FA_STR.format(test_consensus_str))
         ref_genome_filelike = StringIO(REF_GENOME_SHORT_FAS_STR)
-        real_out, real_depth_frac_pass = check_consensus_acceptance(
-            consensus_filelike, depth_filelike, ref_genome_filelike,
-            REF_SHORT_FIRST_ORF_START_1BASED, REF_SHORT_LAST_ORF_END_1BASED,
-            DEPTH_THRESH, FRACTION_THRESH)
+        real_out, real_depth_frac_pass, real_len_insert = \
+            check_consensus_acceptance(
+                consensus_filelike, depth_filelike, ref_genome_filelike,
+                REF_SHORT_FIRST_ORF_START_1BASED,
+                REF_SHORT_LAST_ORF_END_1BASED,
+                DEPTH_THRESH, FRACTION_THRESH)
 
         self.assertFalse(real_out)
         self.assertAlmostEqual(0.97058824, real_depth_frac_pass)
+        # consensus has 34 bases of orfs, reference has 20
+        self.assertEqual(14, real_len_insert)
 
     def test_check_consensus_acceptance_false_pathological_inputs(self):
         # if the consensus file contains a fasta header but the sequence
@@ -30506,13 +30544,16 @@ class SampleQcTest(TestCase):
             83, 25, 2000))
         consensus_filelike = StringIO(CONSENSUS_SHORT_INDEL_FA_STR.format(""))
         ref_genome_filelike = StringIO(REF_GENOME_SHORT_FAS_STR)
-        real_out, real_depth_frac_pass = check_consensus_acceptance(
-            consensus_filelike, depth_filelike, ref_genome_filelike,
-            REF_SHORT_FIRST_ORF_START_1BASED, REF_SHORT_LAST_ORF_END_1BASED,
-            DEPTH_THRESH, FRACTION_THRESH)
+        real_out, real_depth_frac_pass, real_len_insert = \
+            check_consensus_acceptance(
+                consensus_filelike, depth_filelike, ref_genome_filelike,
+                REF_SHORT_FIRST_ORF_START_1BASED,
+                REF_SHORT_LAST_ORF_END_1BASED,
+                DEPTH_THRESH, FRACTION_THRESH)
 
         self.assertFalse(real_out)
         self.assertEqual('NA', real_depth_frac_pass)
+        self.assertEqual('NA', real_len_insert)
 
         # if the consensus file contains a fasta header but no actual
         # sequence line, automatically fail
@@ -30524,13 +30565,16 @@ class SampleQcTest(TestCase):
             83, 25, 2000))
         consensus_filelike = StringIO(fa_header_line)
         ref_genome_filelike = StringIO(REF_GENOME_SHORT_FAS_STR)
-        real_out, real_depth_frac_pass = check_consensus_acceptance(
-            consensus_filelike, depth_filelike, ref_genome_filelike,
-            REF_SHORT_FIRST_ORF_START_1BASED, REF_SHORT_LAST_ORF_END_1BASED,
-            DEPTH_THRESH, FRACTION_THRESH)
+        real_out, real_depth_frac_pass, real_len_insert = \
+            check_consensus_acceptance(
+                consensus_filelike, depth_filelike, ref_genome_filelike,
+                REF_SHORT_FIRST_ORF_START_1BASED,
+                REF_SHORT_LAST_ORF_END_1BASED,
+                DEPTH_THRESH, FRACTION_THRESH)
 
         self.assertEqual(False, real_out)
         self.assertEqual('NA', real_depth_frac_pass)
+        self.assertEqual('NA', real_len_insert)
 
     def test_check_consensus_acceptance_false_empty_inputs(self):
         # if either or both of the consensus and depth files are empty,
@@ -30539,13 +30583,16 @@ class SampleQcTest(TestCase):
         depth_filelike = StringIO("")
         consensus_filelike = StringIO("")
         ref_genome_filelike = StringIO(REF_GENOME_SHORT_FAS_STR)
-        real_out, real_depth_frac_pass = check_consensus_acceptance(
-            consensus_filelike, depth_filelike, ref_genome_filelike,
-            REF_SHORT_FIRST_ORF_START_1BASED, REF_SHORT_LAST_ORF_END_1BASED,
-            DEPTH_THRESH, FRACTION_THRESH)
+        real_out, real_depth_frac_pass, real_len_insert = \
+            check_consensus_acceptance(
+                consensus_filelike, depth_filelike, ref_genome_filelike,
+                REF_SHORT_FIRST_ORF_START_1BASED,
+                REF_SHORT_LAST_ORF_END_1BASED,
+                DEPTH_THRESH, FRACTION_THRESH)
 
         self.assertEqual(False, real_out)
         self.assertEqual('NA', real_depth_frac_pass)
+        self.assertEqual('NA', real_len_insert)
 
     def test__get_consensus_orfs_start_end(self):
         ref_first_orf_start_0based = 6
@@ -30696,20 +30743,44 @@ class SampleQcTest(TestCase):
         self.assertFalse(real_out)
         self.assertEqual(0.96, real_depth_frac_pass)
 
-    def test__extract_search_id(self):
+    def test__extract_putative_sample_id_search_id(self):
         input = "002idSEARCH-5329-SAN_L001_L002_L003_L004"
         expected_out = "SEARCH-5329-SAN"
-        real_out = _extract_search_id(input)
+        real_out = _extract_putative_sample_id(input)
         self.assertEqual(expected_out, real_out)
 
-    def test__extract_search_id_empty(self):
-        real_out = _extract_search_id(
-            "002idSERCH-5329-SAN_L001_L002_L003_L004")
-        self.assertEqual("", real_out)
+    def test__extract_putative_sample_id_other_ids(self):
+        input = "EXC_Pt_MTM_014170_MINI_PLUS_S39_L001"
+        expected_out = "EXC_Pt_MTM_014170_MINI_PLUS_S39"
+        real_out = _extract_putative_sample_id(input)
+        self.assertEqual(expected_out, real_out)
 
-        real_out = _extract_search_id(
-            "002idSEARCH-5329-SAN-L001-L002-L003-L004")
-        self.assertEqual("", real_out)
+        input = "CALM_SEP_001970_01_S137_L001"
+        expected_out = "CALM_SEP_001970_01_S137"
+        real_out = _extract_putative_sample_id(input)
+        self.assertEqual(expected_out, real_out)
+
+        input = "STM-0000027-A2_S76_L001"
+        expected_out = "STM-0000027-A2_S76"
+        real_out = _extract_putative_sample_id(input)
+        self.assertEqual(expected_out, real_out)
+
+    def test__attempt_extract_search_id(self):
+        input = "002idSEARCH-5329-SAN"
+        expected_out = "SEARCH-5329-SAN"
+        real_out = _attempt_extract_search_id(input)
+        self.assertEqual(expected_out, real_out)
+
+    def test__attempt_extract_search_id_partial_extraction(self):
+        input = "002idSEARCH-5329-SAN_L001_L002_L003_L004"
+        expected_out = "SEARCH-5329-SAN_L001_L002_L003_L004"
+        real_out = _attempt_extract_search_id(input)
+        self.assertEqual(expected_out, real_out)
+
+    def test__attempt_extract_search_id_no_extraction(self):
+        input = "002idSERCH-5329-SAN_L001_L002_L003_L004"
+        real_out = _attempt_extract_search_id(input)
+        self.assertEqual(input, real_out)
 
     def test__write_acceptance_check_to_file(self):
         input_fp = "./002idSEARCH-5329-SAN_L001_L002_L003_L004" \
@@ -30720,7 +30791,7 @@ class SampleQcTest(TestCase):
         real_out = None
         try:
             real_out = _write_acceptance_check_to_file(input_fp, True,
-                                                       0.987392746)
+                                                       0.987392746, -1)
             with open(real_out) as real_f:
                 file_lines = real_f.readlines()
         finally:
@@ -30731,7 +30802,8 @@ class SampleQcTest(TestCase):
 
         self.assertEqual(expected_out, real_out)
         self.assertEqual(
-            ["fastq_id\tis_accepted\tcoverage_gte_10_reads\tsearch_id\n",
-             "002idSEARCH-5329-SAN_L001_L002_L003_L004\tTrue\t0.987392746\t"
-             "SEARCH-5329-SAN\n"],
+            ["fastq_id\tis_accepted\t"
+             "coverage_gte_10_reads\tnet_len_insert\tsample_id\n",
+             "002idSEARCH-5329-SAN_L001_L002_L003_L004\tTrue\t"
+             "0.987392746\t-1\tSEARCH-5329-SAN\n"],
             file_lines)
