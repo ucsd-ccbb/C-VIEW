@@ -44,7 +44,7 @@ runQC () {
 	multiqc --config $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml --module qualimap $WORKSPACE
 
 	# Make QC table
-	python $PIPELINEDIR/qc/makeQCSummaryTable.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $WORKSPACE/"$BATCH".lineage_report.csv
+	python $PIPELINEDIR/qc/makeQCSummaryTable.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $WORKSPACE/"$SEQ_RUN".lineage_report.csv
 
 	# Make merged consensus of passing samples
 	cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN".fas

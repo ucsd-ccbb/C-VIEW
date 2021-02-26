@@ -1,7 +1,8 @@
 #!/bin/bash
 
-export PATH=/shared/workspace/software/ivar/bin:/shared/workspace/software/anaconda3/envs/covid1.1/bin:$PATH
-
+export PATH=/shared/workspace/software/ivar/bin:$PATH
+ANACONDADIR=/shared/workspace/software/anaconda3/bin
+source $ANACONDADIR/activate covid1.1
 # Set variables
 THREADS=1
 WORKSPACE=/scratch/$SAMPLE
