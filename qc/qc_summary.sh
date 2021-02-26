@@ -43,10 +43,23 @@ runQC () {
 	# Make QC table
 	python $PIPELINEDIR/qc/makeQCSummaryTable.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$BATCH"-summary.acceptance.tsv $WORKSPACE/"$BATCH".lineage_report.csv
 
-	# Pangolin
+	# Make merged consensus of passing samples
 	cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN".fas
-	bash $PIPELINEDIR/qc/pangolin.sh $WORKSPACE/$SEQ_RUN
+	# filter the true samples
+	awk '{ if ($2 == "True") { print } }' $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv > $WORKSPACE/"$SEQ_RUN"-summary.acceptance.true.tsv
+	awk '{print $1}' $WORKSPACE/"$SEQ_RUN"-summary.acceptance.true.tsv > $WORKSPACE/"$SEQ_RUN"-passQC.samples.tsv
 
+	# loop over individual .fa files, keep the ones which are in passQC.samples.tsv
+	touch $WORKSPACE/"$SEQ_RUN"-passQC.fas # initialize the file
+	for f in *.fa; do
+	    fshort="$(cut -d'.' -f1 <<<$f)"
+	    echo $fshort
+	    if (grep -qF $fshort $WORKSPACE/"$SEQ_RUN"-passQC.samples.tsv); then
+	       cat $f >> $WORKSPACE/"$SEQ_RUN"-passQC.fas
+	    fi
+	done
+
+	# Upload Results
 	echo "Uploading QC results."
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-variants.zip $S3DOWNLOAD/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-consensus.zip $S3DOWNLOAD/
@@ -61,7 +74,6 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.samples.tsv $S3DOWNLOAD/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3DOWNLOAD/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $S3DOWNLOAD/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".lineage_report.csv $S3DOWNLOAD/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/acceptance/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $S3DOWNLOAD/"$SEQ_RUN"-qc/
 
@@ -69,8 +81,6 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3DOWNLOAD/
 
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $S3DOWNLOAD/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".lineage_report.csv $S3DOWNLOAD/
 }
 
 { time ( runQC ) ; } > $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log 2>&1
