@@ -1,7 +1,7 @@
 # covid_sequencing_analysis_pipeline
 AWS optimized pipeline based on https://github.com/niemasd/SD-COVID-Sequencing 
 
-Pipeline version 0.3.0 is pre-installed on the snap-02e894454d80986fb Amazon Web Services snapshot in region us-east-2 (Ohio).  It uses the following external software programs:
+Pipeline version 0.4.0 is pre-installed on the snap-04d515fb08f736cc4 Amazon Web Services snapshot in region us-east-2 (Ohio).  It uses the following external software programs:
 
 * ivar 1.3.1
 * minimap2 2.17-r941
@@ -9,6 +9,9 @@ Pipeline version 0.3.0 is pre-installed on the snap-02e894454d80986fb Amazon Web
 * QualiMap v.2.2.2-dev
 * FastQC v0.11.9
 * Pangolin (variable version: updated on pipeline run)
+* viralMSA 1.1.11
+* IQTree 2.1.2
+* EMPress 1.1.0
 
 Should one wish to set up the pipeline on a fresh instance, follow the below commands.
 Create a conda environment and activate it, then run:
@@ -34,6 +37,46 @@ Then install ivar from source (see https://github.com/andersen-lab/ivar ).
 
 It is also necessary to create a separate conda environment for Pangolin, following the instructions at 
 https://github.com/cov-lineages/pangolin#install-pangolin .
+
+Finally, viralMSA, IQTree, and EMPress must be installed:
+
+```
+# viralMSA 1.1.11
+cd /shared/workspace/software
+mkdir viralMSA
+cd viralMSA
+
+wget "https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py"
+chmod a+x ViralMSA.py
+sudo mv ViralMSA.py /usr/local/bin/ViralMSA.py # optional step to install globally
+
+# biopython
+conda install -c anaconda biopython
+
+# iqtree version 2.1.2
+cd /shared/workspace/software
+mkdir IQTree
+cd IQTree
+wget https://github.com/iqtree/iqtree2/releases/download/v2.1.2/iqtree-2.1.2-Linux.tar.gz
+tar -xvf iqtree-2.1.2-Linux.tar.gz
+
+# add to path
+export PATH=$PATH:/shared/workspace/software/IQTree/iqtree-2.1.2-Linux/bin
+
+git clone https://github.com/cov-ert/datafunk.git && cd datafunk && python setup.py install && cd .. && rm -rf datafunk
+pip install snakemake
+
+# note they just updated to v.3, which requires gofasta (2/17/21)
+conda install -c bioconda gofasta
+
+# empress v1.1.0
+
+# Unable to install alone- try using empress through qiime environment instead
+wget https://data.qiime2.org/distro/core/qiime2-2020.11-py36-linux-conda.yml
+conda env create -n qiime2-2020.11 --file qiime2-2020.11-py36-linux-conda.yml
+# OPTIONAL CLEANUP
+rm qiime2-2020.11-py36-linux-conda.yml
+```
 
 The pipeline is optimized to run on an AWS EC2 cluster with the following characteristics:
 ```
