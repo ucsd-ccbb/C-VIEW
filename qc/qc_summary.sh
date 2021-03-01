@@ -73,8 +73,8 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $QCRESULTS/
 
 	# Tree building data
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/consensus/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/acceptance/
+	# aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/consensus/
+	# aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/acceptance/
 	
 }
 
