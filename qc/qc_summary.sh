@@ -1,7 +1,6 @@
 #!/bin/bash
 
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
-mkdir -p $WORKSPACE/qc/fastqc
 PHYLORESULTS=$S3DOWNLOAD/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_phylogenetic_results
 QCRESULTS=$S3DOWNLOAD/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_quality_control
 # Activate conda env covid1.2
@@ -9,6 +8,7 @@ ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate covid1.2
 # clear workspace if node is being reused
 rm -rf $WORKSPACE/*
+mkdir -p $WORKSPACE/qc/fastqc
 
 runQC () {
 
