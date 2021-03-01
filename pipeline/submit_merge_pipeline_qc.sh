@@ -3,6 +3,7 @@
 INPUT=$1 # Sample Sheet with header - seq_run,s3download,s3upload,primers,reads
 TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
+S3_TREEBUILD=s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building
 QSUBSAMPLEPARAMS=''
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
@@ -100,7 +101,7 @@ do
 			-wd /shared/workspace/projects/covid/logs \
 			-pe smp 96 \
 			-S /bin/bash \
-	    	$PIPELINEDIR/pipeline/tree_building_merge.sh
+	    	$PIPELINEDIR/pipeline/tree_building_merged.sh
     fi
 
 	echo "seq_run,s3download,primers,reads" > "$SEQ_RUN"-"$TIMESTAMP".csv

@@ -1,14 +1,16 @@
+#!/bin/bash
 
-export PATH=$PATH:/shared/workspace/software/IQTree/iqtree-2.1.2-Linux/bin:/shared/workspace/software/viralMSA:/shared/workspace/software/MinVar-Rooting-master
-mkdir -p $WORKSPACE
+export PATH=$PATH:/shared/workspace/software/IQTree/iqtree-2.1.2-Linux/bin:/shared/workspace/software/viralMSA:/shared/workspace/software/MinVar-Rooting-master:/shared/workspace/software/anaconda3/envs/covid1.2/bin
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
-THREADS=96
+THREADS=16
+rm -rf $WORKSPACE
+mkdir -p $WORKSPACE
 
 buildTree () {
 
-	aws s3 cp $S3DOWNLOAD/consensus/ $WORKSPACE/ --recursive
-	aws s3 cp $S3DOWNLOAD/acceptance/ $WORKSPACE/ --recursive
+	aws s3 cp $S3DOWNLOAD/consensus/ $WORKSPACE/ --recursive --quiet
+	aws s3 cp $S3DOWNLOAD/acceptance/ $WORKSPACE/ --recursive --quiet
 
 	cat $WORKSPACE/*passQC.fas > $WORKSPACE/merged.fas
 	sed -i -e 's/Consensus_//g' -e 's/.trimmed.sorted.pileup.consensus_threshold_0.5_quality_20//g' $WORKSPACE/merged.fas
@@ -18,14 +20,15 @@ buildTree () {
 	# add B.1.1.7 sequence
 	cat $PIPELINEDIR/reference_files/hCoV-19_USA_CA-SEARCH-5574_2020.fasta >> $WORKSPACE/merged.fas
 
-	source $ANACONDADIR/activate covid1.1
-	ViralMSA.py -s $WORKSPACE/merged.fas -r SARS-CoV-2 -o viralmsa_out -t $THREADS -e aws-CCBB@health.ucsd.edu
+	# Must use biopy env due to numpy conflicts
+	source $ANACONDADIR/activate biopy
+	ViralMSA.py -s $WORKSPACE/merged.fas -r SARS-CoV-2 -o $WORKSPACE/viralmsa_out -t $THREADS -e aws-CCBB@health.ucsd.edu
 
 	python $PIPELINEDIR/pipeline/trim_msa.py -i $WORKSPACE/viralmsa_out/merged.fas.aln -s 100 -e 50 -o $WORKSPACE/merged.trimmed.aln
 
 	iqtree2 -T $THREADS -m GTR+F+G4 --polytomy -blmin 1e-9 -s $WORKSPACE/merged.trimmed.aln
 
-	python FastRoot.py -i $WORKSPACE/merged.trimmed.aln.treefile -o $WORKSPACE/merged.trimmed.aln.rooted.treefile -m OG -g "hCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25"
+	python /shared/workspace/software/MinVar-Rooting-master/FastRoot.py -i $WORKSPACE/merged.trimmed.aln.treefile -o $WORKSPACE/merged.trimmed.aln.rooted.treefile -m OG -g "hCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25"
 
 	# pangolin
 	source $ANACONDADIR/activate pangolin
@@ -55,7 +58,7 @@ buildTree () {
 	empress tree-plot --tree $WORKSPACE/merged.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/merged.final.metadata.txt --output-dir $WORKSPACE/tree-viz
 
 	rename 's/^/'$TIMESTAMP'-/' $WORKSPACE/merged.*
-	aws s3 cp $WORKSPACE/ $S3DOWNLOAD/trees/$TIMESTAMP/ --recursive
+	aws s3 cp $WORKSPACE/ $S3DOWNLOAD/trees/$TIMESTAMP/ --recursive --exclude "merged*"
 
 }
 
