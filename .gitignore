@@ -72,3 +72,6 @@ venv.bak/
 
 # osx system files
 **/.DS_Store
+
+# Thumbnails
+._*
