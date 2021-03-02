@@ -11,8 +11,8 @@ table_columns_visible:
         general_error_rate: False
     FastQC:
         percent_duplicates: False
-        percent_gc: True
-        avg_sequence_length: True
+        percent_gc: False
+        avg_sequence_length: False
         percent_fails: False
         total_sequences: False
     iVar:

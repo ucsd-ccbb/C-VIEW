@@ -1,7 +1,9 @@
 #!/bin/bash
 
-export PATH=/shared/workspace/software/ivar/bin:/shared/workspace/software/anaconda3/envs/covid1.1/bin:$PATH
-
+export PATH=/shared/workspace/software/ivar/bin:$PATH
+# Activate conda env covid1.2
+ANACONDADIR=/shared/workspace/software/anaconda3/bin
+source $ANACONDADIR/activate covid1.2
 # Set variables
 THREADS=1
 WORKSPACE=/scratch/$SAMPLE
@@ -9,6 +11,7 @@ PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 REF_FAS="/scratch/reference/NC_045512.2.fas"
 REF_MMI="/scratch/reference/NC_045512.2.fas.mmi"
 REF_GFF="/scratch/reference/NC_045512.2.gff3"
+RESULTS=$S3DOWNLOAD/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_samples/$SAMPLE
 # Clear fastq directory if node is being reused
 rm -rf $WORKSPACE/*
 mkdir -p $WORKSPACE/fastq
@@ -36,8 +39,13 @@ if [[ ! -f "$SCRATCH_PRIMER_FP" ]]; then
   cp $PIPELINEDIR/reference_files/$PRIMER_BED_FNAME $SCRATCH_PRIMER_FP
 fi
 
+if [[ "$MERGE_LANES" == true ]]; then
+  S3DOWNLOAD=$S3DOWNLOAD/"$SEQ_RUN"_fastq/"$SEQ_RUN"_lane_merged_fastq
+else
+  S3DOWNLOAD=$S3DOWNLOAD/"$SEQ_RUN"_fastq
+fi
+
 # Step 0: Download fastq
-RESULTS="$TIMESTAMP"_"$FQ"
 if [[ "$FQ" == se ]]; then
   # leave out any files for this sample that
   # contain in their filename the string "R2" anywhere
@@ -80,4 +88,5 @@ fi
 # QC
 { time ( python $PIPELINEDIR/pipeline/sarscov2_consensus_acceptance.py $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt $REF_FAS ) ; } 2> $WORKSPACE/"$SAMPLE".log.9.acceptance.log
 
-aws s3 cp $WORKSPACE/ $S3DOWNLOAD/$RESULTS/$SAMPLE/ --recursive --include "*" --exclude "*fastq.gz"
+
+aws s3 cp $WORKSPACE/ $RESULTS/ --recursive --include "*" --exclude "*fastq.gz"

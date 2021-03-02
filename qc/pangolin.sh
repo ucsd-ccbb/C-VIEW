@@ -1,7 +1,11 @@
 #!/bin/bash
 
-export PATH=/shared/workspace/software/pangolin:/shared/workspace/software/anaconda3/envs/pangolin/bin:$PATH
-PREFIX=$1 # $WORKSPACE/$BATCH
+export PATH=/shared/workspace/software/pangolin:$PATH
+# Activate conda env covid1.2
+ANACONDADIR=/shared/workspace/software/anaconda3/bin
+source $ANACONDADIR/activate pangolin
+
+PREFIX=$1 # $WORKSPACE/$SEQ_RUN
 
 # filter the true samples
 awk '{ if ($2 == "True") { print } }' "$PREFIX"-summary.acceptance.tsv > "$PREFIX"-summary.acceptance.true.tsv
@@ -19,11 +23,6 @@ for f in *.fa; do
     fi
 
 done
-
-# print out file lengths for sanity check
-echo $str | wc -l "$PREFIX"-summary.acceptance.tsv
-echo $str | wc -l "$PREFIX"-passQC.samples.tsv
-echo $str | wc -l "$PREFIX"-passQC.fas
 
 
 # note: should always update pangolin to get the most recent variant classifications... but this updates code as well as data... may be problematic

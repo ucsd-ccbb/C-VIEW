@@ -1,14 +1,14 @@
 # covid_sequencing_analysis_pipeline
 AWS optimized pipeline based on https://github.com/niemasd/SD-COVID-Sequencing 
 
-Pipeline version 0.3.0 is pre-installed on the snap-02e894454d80986fb Amazon Web Services snapshot in region us-east-2 (Ohio).  It uses the following external software programs:
+Pipeline version 0.3.6 is pre-installed on the snap-0df542f888cbbf483 Amazon Web Services snapshot in region us-east-2 (Ohio).  It uses the following external software programs:
 
 * ivar 1.3.1
 * minimap2 2.17-r941
 * samtools 1.11
 * QualiMap v.2.2.2-dev
 * FastQC v0.11.9
-* Pangolin (variable version: updated on pipeline run)
+* Pangolin (variable version)
 
 Should one wish to set up the pipeline on a fresh instance, follow the below commands.
 Create a conda environment and activate it, then run:
