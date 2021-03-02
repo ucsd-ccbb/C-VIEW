@@ -67,13 +67,18 @@ def _load_depths(fps_list):
 
 
 def _save_line_plot(depths_by_fname, output_fname):
-    YMAX = max([max(curr_depths) for curr_depths in depths_by_fname.values()])
+    filtered_depths_by_fname = {}
+    for curr_name, curr_depths in depths_by_fname:
+        if len(curr_depths) > 0:
+            filtered_depths_by_fname[curr_name] = curr_depths
+
+    YMAX = max([max(curr_depths) for curr_depths
+                in filtered_depths_by_fname.values()])
     with PdfPages(output_fname) as pdf_pages:
-        for i, curr_fname in enumerate(sorted(depths_by_fname.keys())):
-            curr_depths = depths_by_fname[curr_fname]
+        for i, curr_fname \
+                in enumerate(sorted(filtered_depths_by_fname.keys())):
+            curr_depths = filtered_depths_by_fname[curr_fname]
             num_positions = len(curr_depths)
-            if num_positions == 0:
-                continue
 
             fig = plt.figure(i)
             plt.plot([1 + i for i in range(num_positions)], curr_depths)
