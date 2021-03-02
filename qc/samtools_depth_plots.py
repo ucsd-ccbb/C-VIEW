@@ -68,7 +68,7 @@ def _load_depths(fps_list):
 
 def _save_line_plot(depths_by_fname, output_fname):
     filtered_depths_by_fname = {}
-    for curr_name, curr_depths in depths_by_fname:
+    for curr_name, curr_depths in depths_by_fname.items():
         if len(curr_depths) > 0:
             filtered_depths_by_fname[curr_name] = curr_depths
 
