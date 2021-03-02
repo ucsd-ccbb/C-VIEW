@@ -16,18 +16,20 @@ def check_consensus_acceptance_by_fps(consensus_fa_fp, depth_txt_fp,
                                       ref_genome_fas_fp):
     if not ((os.path.isfile(consensus_fa_fp)
              and os.path.isfile(depth_txt_fp))):
-        return False, COL_NA, COL_NA
+        return False, COL_NA, COL_NA, COL_NA
 
     with open(consensus_fa_fp) as consensus_file:
         with open(depth_txt_fp) as depth_file:
             with open(ref_genome_fas_fp) as ref_genome_file:
-                result, depth_pass_fraction, net_len_insert = \
+                result, depth_pass_fraction, num_ref_gaps_in_orf_region, \
+                num_cons_gaps_in_orf_region = \
                     check_consensus_acceptance(
                         consensus_file, depth_file, ref_genome_file,
                         REF_FIRST_ORF_START_1BASED, REF_LAST_ORF_END_1BASED,
                         DEPTH_THRESH, FRACTION_THRESH)
 
-    return result, depth_pass_fraction, net_len_insert
+    return result, depth_pass_fraction, num_ref_gaps_in_orf_region, \
+           num_cons_gaps_in_orf_region
 
 
 def check_consensus_acceptance(consensus_file, depth_file, ref_genome_file,
@@ -41,36 +43,29 @@ def check_consensus_acceptance(consensus_file, depth_file, ref_genome_file,
     # consensus.fa must have at least 2 lines in order to contain
     # a real fasta record
     if len(consensus_lines) < 2 or len(consensus_depths) == 0:
-        return False, COL_NA, COL_NA
+        return False, COL_NA, COL_NA, COL_NA
 
     consensus_seq = consensus_lines[1].strip()
     if consensus_seq == "":
-        return False, COL_NA, COL_NA
+        return False, COL_NA, COL_NA, COL_NA
 
     ref_genome_seq = _read_ref_genome_fas(ref_genome_file)
 
     ref_first_orf_start_0based = ref_first_orf_start_1based - 1
     ref_last_orf_end_0based = ref_last_orf_end_1based - 1
-    cons_first_orf_start_0based, cons_last_orf_end_0based = \
+    cons_first_orf_start_0based, cons_last_orf_end_0based, \
+    num_ref_gaps_in_orf_region, num_cons_gaps_in_orf_region = \
         _get_consensus_orfs_start_end(consensus_seq, ref_genome_seq,
                                       ref_first_orf_start_0based,
                                       ref_last_orf_end_0based)
-
-    # NET length of insert in non-utr region of consensus sequence relative
-    # to reference sequence.  Probably going to be zero most of the time, and
-    # occasionally negative (when there are deletions). Note that this COULD
-    # in theory come out to zero or negative for a consensus sequence that
-    # actually DID have an insertion relative to the reference IF it ALSO had
-    # deletions of the same or greater total length than that of the insertions
-    net_len_insert = (cons_last_orf_end_0based-cons_first_orf_start_0based) - \
-                     (ref_last_orf_end_0based-ref_first_orf_start_0based)
 
     result, depth_pass_fraction = _verify_fraction_acceptable_bases(
         consensus_seq, consensus_depths,
         cons_first_orf_start_0based, cons_last_orf_end_0based,
         depth_threshold, fraction_threshold)
 
-    return result, depth_pass_fraction, net_len_insert
+    return result, depth_pass_fraction, num_ref_gaps_in_orf_region, \
+           num_cons_gaps_in_orf_region
 
 
 def _read_depths(depth_lines):
@@ -107,11 +102,20 @@ def _get_consensus_orfs_start_end(consensus_seq, ref_genome_seq,
     ref_gapped_seq, consensus_gapped_seq = nw.global_align(
         ref_genome_seq, consensus_seq)
 
+    num_ref_gaps_in_orf_region = num_cons_gaps_in_orf_region = 0
     curr_ref_index = curr_cons_index = -1
     cons_first_orf_start_0based = cons_last_orf_end_0based = None
     for gapped_index in range(len(ref_gapped_seq)):
         curr_cons_base = consensus_gapped_seq[gapped_index]
-        curr_cons_index += 1 if curr_cons_base != "-" else 0
+
+        if curr_cons_base != "-":
+            curr_cons_index += 1
+        else:
+            # if we are within the orf-containing region, keep
+            # track of how many gap bases we see
+            if cons_first_orf_start_0based is not None and \
+                    cons_last_orf_end_0based is None:
+                num_cons_gaps_in_orf_region += 1
 
         curr_ref_base = ref_gapped_seq[gapped_index]
         if curr_ref_base != "-":
@@ -121,8 +125,13 @@ def _get_consensus_orfs_start_end(consensus_seq, ref_genome_seq,
             elif curr_ref_index == ref_last_orf_end_0based:
                 cons_last_orf_end_0based = curr_cons_index
                 break
+        else:
+            if cons_first_orf_start_0based is not None and \
+                    cons_last_orf_end_0based is None:
+                num_ref_gaps_in_orf_region += 1
 
-    return cons_first_orf_start_0based, cons_last_orf_end_0based
+    return cons_first_orf_start_0based, cons_last_orf_end_0based, \
+           num_ref_gaps_in_orf_region, num_cons_gaps_in_orf_region
 
 
 def _verify_fraction_acceptable_bases(consensus_seq, consensus_depths,
@@ -149,7 +158,9 @@ def _verify_fraction_acceptable_bases(consensus_seq, consensus_depths,
 
 
 def _write_acceptance_check_to_file(consensus_fa_fp, is_accepted,
-                                    depth_pass_fract, net_len_insert):
+                                    depth_pass_fract,
+                                    num_ref_gaps_in_orf_region,
+                                    num_cons_gaps_in_orf_region):
     dir_fp = os.path.dirname(consensus_fa_fp)
     base_name = os.path.splitext(os.path.basename(consensus_fa_fp))[0]
     putative_sample_name = base_name.replace(
@@ -159,9 +170,11 @@ def _write_acceptance_check_to_file(consensus_fa_fp, is_accepted,
 
     with open(output_fp, 'w') as output_f:
         header_line = "fastq_id\tis_accepted\t" \
-                      "coverage_gte_10_reads\tnet_len_insert\tsample_id\n"
+                      "coverage_gte_10_reads\tnum_inserts_in_consensus\t" \
+                      "num_deletions_in_consensus\tputative_sample_id\n"
         data_line = f"{putative_sample_name}\t{is_accepted}" \
-                    f"\t{depth_pass_fract}\t{net_len_insert}\t{search_id}\n"
+                    f"\t{depth_pass_fract}\t{num_ref_gaps_in_orf_region}" \
+                    f"\t{num_cons_gaps_in_orf_region}\t{search_id}\n"
         output_f.writelines([header_line, data_line])
 
     return output_fp
@@ -169,7 +182,7 @@ def _write_acceptance_check_to_file(consensus_fa_fp, is_accepted,
 
 # this sucker is a heuristic ... don't expect too much
 def _extract_putative_sample_id(putative_sample_name):
-    result = ""
+    result = putative_sample_name
 
     lane_split = putative_sample_name.split("_L00")
     if len(lane_split) < 2:

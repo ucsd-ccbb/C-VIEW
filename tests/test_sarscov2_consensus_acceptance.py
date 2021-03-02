@@ -30429,30 +30429,32 @@ class SampleQcTest(TestCase):
                                  "notarealfile.consensus.fa")
         # NB: NOT passing real depth and reference genome files; correct code
         # must exit before ever getting to reading them
-        real_accept, real_depth_fract, real_len_insert = \
+        real_accept, real_depth_fract, real_ref_gaps, real_cons_gaps = \
             check_consensus_acceptance_by_fps(
                 a_fake_fp, a_file_fp, a_file_fp)
 
         self.assertEqual(False, real_accept)
         self.assertEqual("NA", real_depth_fract)
-        self.assertEqual("NA", real_len_insert)
+        self.assertEqual("NA", real_ref_gaps)
+        self.assertEqual("NA", real_cons_gaps)
 
         # NB: NOT passing real consensus and reference genome files;
         # correct code must exit before ever getting to reading them
-        real_accept, real_depth_fract, real_len_insert = \
+        real_accept, real_depth_fract, real_ref_gaps, real_cons_gaps = \
             check_consensus_acceptance_by_fps(
                 a_file_fp, a_fake_fp, a_file_fp)
 
         self.assertEqual(False, real_accept)
         self.assertEqual("NA", real_depth_fract)
-        self.assertEqual("NA", real_len_insert)
+        self.assertEqual("NA", real_ref_gaps)
+        self.assertEqual("NA", real_cons_gaps)
 
     def test_check_consensus_acceptance_true_realistic(self):
         depth_filelike = StringIO(DEPTH_TXT_STR)
         consensus_filelike = StringIO(CONSENSUS_FA_STR)
         ref_genome_filelike = StringIO(REF_GENOME_FAS_STR)
 
-        real_out, real_depth_fract, real_len_insert = \
+        real_out, real_depth_fract, real_ref_gaps, real_cons_gaps = \
             check_consensus_acceptance(
             consensus_filelike, depth_filelike, ref_genome_filelike,
             REF_FIRST_ORF_START_1BASED,
@@ -30462,21 +30464,29 @@ class SampleQcTest(TestCase):
         self.assertEqual(True, real_out)
         # all depths pass
         self.assertEqual(1, real_depth_fract)
-        # no insertions relative to reference
-        self.assertEqual(0, real_len_insert)
+        # no insertions or deletions relative to reference
+        self.assertEqual(0, real_ref_gaps)
+        self.assertEqual(0, real_cons_gaps)
 
     def test_check_consensus_acceptance_true(self):
         # 34 bases of orfs
         # to pass 95% of 34, 33 or 34 bases must pass;
         # this test has one base fail so 33 pass so the sequence passes
-        readable_consensus = "CATTA GGTTTATTCCAAAAAAANAAAAAAATTCCAGGTA ACTAAAC"
+
+        # first orf start/last orf end indexes (0-based) re UNgapped reference
+        #          6                                       25
+        # -ATTAA A GGTTT ATTCC ----- ----- ----- TTCCC AGGTA AC-AAGTAC
+        # CATT-- A GGTTT ATACC AAAAA AANAA AAAAA TT-CC AGGTA ACTAA--AC
+        #          5
+        readable_consensus = "CATTA GGTTT ATTCC AAAAA AANAA AAAAA TT CC " \
+                             "AGGTA ACTAAAC"
         test_consensus_str = readable_consensus.replace(" ", "")
         depth_filelike = StringIO(DEPTH_SHORT_INDEL_TXT_STR.format(
             83, 25, 2000))
         consensus_filelike = StringIO(
             CONSENSUS_SHORT_INDEL_FA_STR.format(test_consensus_str))
         ref_genome_filelike = StringIO(REF_GENOME_SHORT_FAS_STR)
-        real_out, real_depth_fract, real_len_insert = \
+        real_out, real_depth_fract, real_ref_gaps, real_cons_gaps = \
             check_consensus_acceptance(
             consensus_filelike, depth_filelike, ref_genome_filelike,
             REF_SHORT_FIRST_ORF_START_1BASED, REF_SHORT_LAST_ORF_END_1BASED,
@@ -30486,11 +30496,19 @@ class SampleQcTest(TestCase):
         # there is one base fail, but all depths pass
         self.assertEqual(1, real_depth_fract)
         # consensus has 34 bases of orfs, reference has 20
-        self.assertEqual(14, real_len_insert)
+        self.assertEqual(15, real_ref_gaps)
+        self.assertEqual(1, real_cons_gaps)
 
     def test_check_consensus_acceptance_true_no_insert(self):
         # 6 bases 5' utr, 20 bases of orfs, 8 bases 3' utr
         # 1 mismatch relative to reference, no insertions or deletions
+
+        # first orf start/last orf end indexes (0-based) re UNgapped reference
+        #       6                       25
+        # ATTAA A GGTTT ATTCC TTCCC AGGTA ACAAGTAC
+        # ATTAA A GGTTT ATACC GTCCC AGGTA ACAAGTAC
+        #       6                       25
+
         readable_consensus = "ATTAA A GGTTT ATACC GTCCC AGGTA ACAAGTAC"
         test_consensus_str = readable_consensus.replace(" ", "")
         depth_filelike = StringIO(DEPTH_SHORT_INDEL_TXT_STR.format(
@@ -30498,7 +30516,7 @@ class SampleQcTest(TestCase):
         consensus_filelike = StringIO(
             CONSENSUS_SHORT_INDEL_FA_STR.format(test_consensus_str))
         ref_genome_filelike = StringIO(REF_GENOME_SHORT_FAS_STR)
-        real_out, real_depth_fract, real_len_insert = \
+        real_out, real_depth_fract, real_ref_gaps, real_cons_gaps = \
             check_consensus_acceptance(
                 consensus_filelike, depth_filelike, ref_genome_filelike,
                 REF_SHORT_FIRST_ORF_START_1BASED,
@@ -30509,7 +30527,8 @@ class SampleQcTest(TestCase):
         # there is one base fail, but all depths pass
         self.assertEqual(1, real_depth_fract)
         # consensus has 20 bases of orfs, reference has 20 also
-        self.assertEqual(0, real_len_insert)
+        self.assertEqual(0, real_ref_gaps)
+        self.assertEqual(0, real_cons_gaps)
 
     def test_check_consensus_acceptance_false(self):
         # 34 bases of orfs
@@ -30517,14 +30536,21 @@ class SampleQcTest(TestCase):
         # this test has one base fail and one depth fail (at different
         # positions) so only 32 pass so the sequence fails
         # one depth fail = 33/34 depth pass =~ 0.97058824
-        readable_consensus = "CATTA GGTTTATTCCAAAAAAANAAAAAAATTCCAGGTA ACTAAAC"
+
+        # first orf start/last orf end indexes (0-based) re UNgapped reference
+        #          6                                       25
+        # -ATTAA A GGTTT ATTCC ----- ----- ----- TTCCC AGGTA AC-AAGTAC
+        # CATT-- A GGTTT ATACC AAAAA AANAA AAAAA TT-CC AGGTA ACTAA--AC
+        #          5                                       38
+        readable_consensus = "CATTA GGTTT ATTCC AAAAA AANAA AAAAA TT CC " \
+                             "AGGTA ACTAAAC"
         test_consensus_str = readable_consensus.replace(" ", "")
         depth_filelike = StringIO(DEPTH_SHORT_INDEL_TXT_STR.format(
             83, 2, 2000))
         consensus_filelike = StringIO(
             CONSENSUS_SHORT_INDEL_FA_STR.format(test_consensus_str))
         ref_genome_filelike = StringIO(REF_GENOME_SHORT_FAS_STR)
-        real_out, real_depth_frac_pass, real_len_insert = \
+        real_out, real_depth_frac_pass, real_ref_gaps, real_cons_gaps = \
             check_consensus_acceptance(
                 consensus_filelike, depth_filelike, ref_genome_filelike,
                 REF_SHORT_FIRST_ORF_START_1BASED,
@@ -30534,7 +30560,8 @@ class SampleQcTest(TestCase):
         self.assertFalse(real_out)
         self.assertAlmostEqual(0.97058824, real_depth_frac_pass)
         # consensus has 34 bases of orfs, reference has 20
-        self.assertEqual(14, real_len_insert)
+        self.assertEqual(15, real_ref_gaps)
+        self.assertEqual(1, real_cons_gaps)
 
     def test_check_consensus_acceptance_false_pathological_inputs(self):
         # if the consensus file contains a fasta header but the sequence
@@ -30544,7 +30571,7 @@ class SampleQcTest(TestCase):
             83, 25, 2000))
         consensus_filelike = StringIO(CONSENSUS_SHORT_INDEL_FA_STR.format(""))
         ref_genome_filelike = StringIO(REF_GENOME_SHORT_FAS_STR)
-        real_out, real_depth_frac_pass, real_len_insert = \
+        real_out, real_depth_frac_pass, real_ref_gaps, real_cons_gaps = \
             check_consensus_acceptance(
                 consensus_filelike, depth_filelike, ref_genome_filelike,
                 REF_SHORT_FIRST_ORF_START_1BASED,
@@ -30553,7 +30580,8 @@ class SampleQcTest(TestCase):
 
         self.assertFalse(real_out)
         self.assertEqual('NA', real_depth_frac_pass)
-        self.assertEqual('NA', real_len_insert)
+        self.assertEqual('NA', real_ref_gaps)
+        self.assertEqual('NA', real_cons_gaps)
 
         # if the consensus file contains a fasta header but no actual
         # sequence line, automatically fail
@@ -30565,7 +30593,7 @@ class SampleQcTest(TestCase):
             83, 25, 2000))
         consensus_filelike = StringIO(fa_header_line)
         ref_genome_filelike = StringIO(REF_GENOME_SHORT_FAS_STR)
-        real_out, real_depth_frac_pass, real_len_insert = \
+        real_out, real_depth_frac_pass, real_ref_gaps, real_cons_gaps = \
             check_consensus_acceptance(
                 consensus_filelike, depth_filelike, ref_genome_filelike,
                 REF_SHORT_FIRST_ORF_START_1BASED,
@@ -30574,7 +30602,8 @@ class SampleQcTest(TestCase):
 
         self.assertEqual(False, real_out)
         self.assertEqual('NA', real_depth_frac_pass)
-        self.assertEqual('NA', real_len_insert)
+        self.assertEqual('NA', real_ref_gaps)
+        self.assertEqual('NA', real_cons_gaps)
 
     def test_check_consensus_acceptance_false_empty_inputs(self):
         # if either or both of the consensus and depth files are empty,
@@ -30583,7 +30612,7 @@ class SampleQcTest(TestCase):
         depth_filelike = StringIO("")
         consensus_filelike = StringIO("")
         ref_genome_filelike = StringIO(REF_GENOME_SHORT_FAS_STR)
-        real_out, real_depth_frac_pass, real_len_insert = \
+        real_out, real_depth_frac_pass, real_ref_gaps, real_cons_gaps = \
             check_consensus_acceptance(
                 consensus_filelike, depth_filelike, ref_genome_filelike,
                 REF_SHORT_FIRST_ORF_START_1BASED,
@@ -30592,7 +30621,8 @@ class SampleQcTest(TestCase):
 
         self.assertEqual(False, real_out)
         self.assertEqual('NA', real_depth_frac_pass)
-        self.assertEqual('NA', real_len_insert)
+        self.assertEqual('NA', real_ref_gaps)
+        self.assertEqual('NA', real_cons_gaps)
 
     def test__get_consensus_orfs_start_end(self):
         ref_first_orf_start_0based = 6
@@ -30619,12 +30649,15 @@ class SampleQcTest(TestCase):
         # CATT-- A GGTTT ATACC AAAAA AANAA AAAAA TT-CC AGGTA ACTAA--AC
         #          5                                       38
 
-        real_out_orf_start, real_out_orf_end = _get_consensus_orfs_start_end(
-            test_cons, test_ref, ref_first_orf_start_0based,
-            ref_last_orf_end_0based)
+        real_out_orf_start, real_out_orf_end, real_ref_gaps, real_cons_gaps = \
+            _get_consensus_orfs_start_end(
+                test_cons, test_ref, ref_first_orf_start_0based,
+                ref_last_orf_end_0based)
 
         self.assertEqual(cons_orf_start_0based, real_out_orf_start)
         self.assertEqual(cons_orf_end_0based, real_out_orf_end)
+        self.assertEqual(15, real_ref_gaps)
+        self.assertEqual(1, real_cons_gaps)
 
     def test__verify_fraction_acceptable_bases_pass_depth(self):
         # 2 bases 5' utr, 25 bases of orfs, 3 bases 3' utr
@@ -30765,6 +30798,11 @@ class SampleQcTest(TestCase):
         real_out = _extract_putative_sample_id(input)
         self.assertEqual(expected_out, real_out)
 
+    def test__extract_putative_sample_id_no_extraction(self):
+        input = "002idSERCH-5329-SAN_L001_L002_L003_L004"
+        real_out = _attempt_extract_search_id(input)
+        self.assertEqual(input, real_out)
+
     def test__attempt_extract_search_id(self):
         input = "002idSEARCH-5329-SAN"
         expected_out = "SEARCH-5329-SAN"
@@ -30791,7 +30829,7 @@ class SampleQcTest(TestCase):
         real_out = None
         try:
             real_out = _write_acceptance_check_to_file(input_fp, True,
-                                                       0.987392746, -1)
+                                                       0.987392746, 15, 1)
             with open(real_out) as real_f:
                 file_lines = real_f.readlines()
         finally:
@@ -30803,7 +30841,8 @@ class SampleQcTest(TestCase):
         self.assertEqual(expected_out, real_out)
         self.assertEqual(
             ["fastq_id\tis_accepted\t"
-             "coverage_gte_10_reads\tnet_len_insert\tsample_id\n",
+             "coverage_gte_10_reads\tnum_inserts_in_consensus\t"
+             "num_deletions_in_consensus\tputative_sample_id\n",
              "002idSEARCH-5329-SAN_L001_L002_L003_L004\tTrue\t"
-             "0.987392746\t-1\tSEARCH-5329-SAN\n"],
+             "0.987392746\t15\t1\tSEARCH-5329-SAN\n"],
             file_lines)

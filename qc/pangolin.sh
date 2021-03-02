@@ -24,11 +24,6 @@ for f in *.fa; do
 
 done
 
-# print out file lengths for sanity check
-echo $str | wc -l "$PREFIX"-summary.acceptance.tsv
-echo $str | wc -l "$PREFIX"-passQC.samples.tsv
-echo $str | wc -l "$PREFIX"-passQC.fas
-
 
 # note: should always update pangolin to get the most recent variant classifications... but this updates code as well as data... may be problematic
 # pangolin --update
