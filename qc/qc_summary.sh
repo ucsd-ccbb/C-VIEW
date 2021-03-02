@@ -66,8 +66,8 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".lineage_report.csv $PHYLORESULTS/
 
 	# quality control folder
-	aws s3 cp $WORKSPACE/multiqc_data/ $QCRESULTS/multiqc_data/ --recursive --quiet
-	aws s3 cp $WORKSPACE/multiqc_report.html $QCRESULTS/
+	aws s3 cp $WORKSPACE/multiqc_data/ $QCRESULTS/"$SEQ_RUN"_multiqc_data/ --recursive --quiet
+	aws s3 cp $WORKSPACE/multiqc_report.html $QCRESULTS/"$SEQ_RUN"_multiqc_report.html
 	aws s3 cp $WORKSPACE/qc/ $QCRESULTS/ --recursive --quiet
   	aws s3 cp $WORKSPACE/"$SEQ_RUN"-QCSummaryTable.csv $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $QCRESULTS/
