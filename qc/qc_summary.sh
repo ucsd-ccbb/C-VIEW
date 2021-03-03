@@ -66,7 +66,7 @@ runQC () {
 	bash $PIPELINEDIR/qc/pangolin.sh $WORKSPACE/$SEQ_RUN
 
 	# Make QC table
-	python $PIPELINEDIR/qc/makeQCSummaryTable.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $WORKSPACE/"$SEQ_RUN".lineage_report.csv
+	python $PIPELINEDIR/qc/makeQCSummaryTable.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv #$WORKSPACE/"$SEQ_RUN".lineage_report.csv
 	mv $WORKSPACE/QCSummaryTable.csv $WORKSPACE/"$SEQ_RUN"-QCSummaryTable.csv
 
 	# Upload Results
