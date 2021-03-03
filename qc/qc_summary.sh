@@ -46,27 +46,23 @@ runQC () {
 	multiqc --config $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml --module qualimap $WORKSPACE
 
 	# # Make merged consensus of passing samples
-	# cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN".fas
-	# # filter the true samples
-	# awk '{ if ($2 == "True") { print } }' $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv > $WORKSPACE/"$SEQ_RUN"-summary.acceptance.true.tsv
-	# awk '{print $1}' $WORKSPACE/"$SEQ_RUN"-summary.acceptance.true.tsv > $WORKSPACE/"$SEQ_RUN"-passQC.samples.tsv
-
-	# # loop over individual .fa files, keep the ones which are in passQC.samples.tsv
-	# touch $WORKSPACE/"$SEQ_RUN"-passQC.fas # initialize the file
-	# for f in *.fa; do
-	#     fshort="$(cut -d'.' -f1 <<<$f)"
-	#     echo $fshort
-	#     if (grep -qF $fshort $WORKSPACE/"$SEQ_RUN"-passQC.samples.tsv); then
-	#        cat $f >> $WORKSPACE/"$SEQ_RUN"-passQC.fas
-	#     fi
-	# done
-
-	# Pangolin
 	cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN".fas
-	bash $PIPELINEDIR/qc/pangolin.sh $WORKSPACE/$SEQ_RUN
+	# filter the true samples
+	awk '{ if ($2 == "True") { print } }' $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv > $WORKSPACE/"$SEQ_RUN"-summary.acceptance.true.tsv
+	awk '{print $1}' $WORKSPACE/"$SEQ_RUN"-summary.acceptance.true.tsv > $WORKSPACE/"$SEQ_RUN"-passQC.samples.tsv
+
+	# loop over individual .fa files, keep the ones which are in passQC.samples.tsv
+	touch $WORKSPACE/"$SEQ_RUN"-passQC.fas # initialize the file
+	for f in *.fa; do
+	    fshort="$(cut -d'.' -f1 <<<$f)"
+	    echo $fshort
+	    if (grep -qF $fshort $WORKSPACE/"$SEQ_RUN"-passQC.samples.tsv); then
+	       cat $f >> $WORKSPACE/"$SEQ_RUN"-passQC.fas
+	    fi
+	done
 
 	# Make QC table
-	python $PIPELINEDIR/qc/makeQCSummaryTable.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $WORKSPACE/"$SEQ_RUN".lineage_report.csv
+	python $PIPELINEDIR/qc/makeQCSummaryTable.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv
 	mv $WORKSPACE/QCSummaryTable.csv $WORKSPACE/"$SEQ_RUN"-QCSummaryTable.csv
 
 	# Upload Results
@@ -79,7 +75,6 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $PHYLORESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $PHYLORESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $PHYLORESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".lineage_report.csv $PHYLORESULTS/
 
 	# quality control folder
 	aws s3 cp $WORKSPACE/multiqc_data/ $QCRESULTS/multiqc_data/ --recursive --quiet
@@ -91,7 +86,7 @@ runQC () {
 	# Tree building data
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/acceptance/
-	
+  	aws s3 cp $WORKSPACE/"$SEQ_RUN"-QCSummaryTable.csv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/qc_summary/
 }
 
 { time ( runQC ) ; } > $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log 2>&1

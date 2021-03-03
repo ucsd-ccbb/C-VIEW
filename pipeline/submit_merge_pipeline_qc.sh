@@ -94,14 +94,14 @@ do
 	    qsub \
 			-hold_jid 'QC_summary_'$SEQ_RUN'' \
 			-v S3DOWNLOAD=$S3_TREEBUILD \
-			-v SEQ_RUN=$SEQ_RUN \
 			-v TIMESTAMP=$TIMESTAMP \
-			-v WORKSPACE=/scratch/tree_build/$SEQ_RUN \
-			-N tree_building_"$SEQ_RUN" \
+			-v WORKSPACE=/scratch/tree_build \
+			-N tree_building \
 			-wd /shared/workspace/projects/covid/logs \
 			-pe smp 96 \
 			-S /bin/bash \
 	    	$PIPELINEDIR/pipeline/tree_building_merged.sh
+
     fi
 
 	echo "seq_run,s3download,primers,reads" > "$SEQ_RUN"-"$TIMESTAMP".csv
