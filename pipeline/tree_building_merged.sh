@@ -43,13 +43,14 @@ buildTree () {
 		'OFS="\t"{print $1, seq_run}' \
 		> $WORKSPACE/"$seq_run"-metadata.txt
 	done
+	
 	cat $WORKSPACE/*-metadata.txt > $WORKSPACE/tmp.merged.metadata.txt
 	echo -e "hCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25\thCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25" >> $WORKSPACE/tmp.merged.metadata.txt
 	echo -e "hCoV-19/USA/CA-SEARCH-5574/2020|EPI_ISL_751801|2020-12-29\thCoV-19/USA/CA-SEARCH-5574/2020|EPI_ISL_751801|2020-12-29" >> $WORKSPACE/tmp.merged.metadata.txt
 
 	# Merge lineage report with sample/seqrun file to make final metadata
 	join <(awk 'BEGIN {FS=",";OFS="\t"} {print $1,$2,$3,$4,$5}' $WORKSPACE/merged.lineage_report.csv | sort -k1) <(sort -k1 $WORKSPACE/tmp.merged.metadata.txt) -t $'\t'  > $WORKSPACE/merged.final.metadata.txt
-	sed -i '1i taxon\tlineage\tprobability\tpangoLEARN_version\run_name' $WORKSPACE/merged.final.metadata.txt
+	sed -i '1i taxon\tlineage\tprobability\tpangoLEARN_version\tqc\trun_name' $WORKSPACE/merged.final.metadata.txt
 	sed -i '1 a q2:types\tcategorical\tcategorical\tcategorical\tcategorical\tcategorical' $WORKSPACE/merged.final.metadata.txt
 	
 	# tree building 
@@ -57,8 +58,9 @@ buildTree () {
 
 	empress tree-plot --tree $WORKSPACE/merged.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/merged.final.metadata.txt --output-dir $WORKSPACE/tree-viz
 
-	rename 's/^/'$TIMESTAMP'-/' $WORKSPACE/merged.*
-	aws s3 cp $WORKSPACE/ $S3DOWNLOAD/trees/$TIMESTAMP/ --recursive --exclude "merged*"
+	rename 's/merged/'$TIMESTAMP'/' $WORKSPACE/merged.*
+	rename 's/merged/'$TIMESTAMP'/' $WORKSPACE/viralmsa_out/merged.*
+	aws s3 cp $WORKSPACE/ $S3DOWNLOAD/trees/$TIMESTAMP/ --recursive
 
 }
 
