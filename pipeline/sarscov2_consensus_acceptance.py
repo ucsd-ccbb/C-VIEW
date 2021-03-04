@@ -220,8 +220,11 @@ if __name__ == '__main__':
         print(f"Error parsing arguments: {e}")
         exit(1)
 
-    input_is_accepted, i_depth_pass_fract, i_net_insert_len = \
+    input_is_accepted, i_depth_pass_fract,\
+    i_num_ref_gaps_in_orf_region, i_num_cons_gaps_in_orf_region = \
         check_consensus_acceptance_by_fps(
             input_consensus_fa_fp, input_depth_txt_fp, input_ref_genome_fas_fp)
     _write_acceptance_check_to_file(input_consensus_fa_fp, input_is_accepted,
-                                    i_depth_pass_fract, i_net_insert_len)
+                                    i_depth_pass_fract,
+                                    i_num_ref_gaps_in_orf_region,
+                                    i_num_cons_gaps_in_orf_region)
