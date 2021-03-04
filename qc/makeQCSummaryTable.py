@@ -15,8 +15,8 @@ sumAcc = pd.read_csv(sys.argv[2], sep = "\t")
 # Remove QualiMap_mqc-generalstats-qualimap-general_error_rate
 mqc = mqc.drop("QualiMap_mqc-generalstats-qualimap-general_error_rate", axis = 1)
 
-# Take is_accepted and coverage_gte_10_reads from sumAcc
-combined = mqc.merge(sumAcc[["fastq_id", "is_accepted", "coverage_gte_10_reads"]], left_on = "Sample", right_on = "fastq_id", how = "outer")
+# Take is_accepted, coverage_gte_10_reads, num_inserts_in_consensus, and num_deletions_in_consensus from sumAcc
+combined = mqc.merge(sumAcc[["fastq_id", "is_accepted", "coverage_gte_10_reads", "num_inserts_in_consensus", "num_deletions_in_consensus"]], left_on = "Sample", right_on = "fastq_id", how = "outer")
 
 # # Extract sample name from linRep[["taxon"]]
 # def format_taxon(x):
