@@ -7,13 +7,16 @@ S3_TREEBUILD=s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_buildin
 QSUBSAMPLEPARAMS=''
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
-sed 1d $INPUT | while IFS=',' read SEQ_RUN S3DOWNLOAD PRIMER_SET FQ MERGE_LANES TREE_BUILD
+sed 1d $INPUT | while IFS=',' read SEQ_RUN S3DOWNLOAD PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD
 do
 	echo "Seq_Run: $SEQ_RUN"
 	echo "S3 Fastq path: $S3DOWNLOAD/"$SEQ_RUN"_fastq"
 	echo "Primers: $PRIMER_SET"
 	echo "Fastq Reads: $FQ"
 	echo "Merge Lanes: $MERGE_LANES"
+	echo "Call Variants: $VARIANTS"
+	echo "Run QC: $QC"
+	echo "Lineage with Pangolin: $LINEAGE"
 	echo "Run tree building: $TREE_BUILD" 
 
 	# Append Results URL
@@ -31,6 +34,21 @@ do
 
 	if [[ ! "$MERGE_LANES" =~ ^(true|false)$ ]]; then
 	  echo "Error: MERGE_LANES must be one of true or false"
+	  exit 1
+	fi
+
+	if [[ ! "$VARIANTS" =~ ^(true|false)$ ]]; then
+	  echo "Error: VARIANTS must be one of true or false"
+	  exit 1
+	fi
+	
+	if [[ ! "$QC" =~ ^(true|false)$ ]]; then
+	  echo "Error: QC must be one of true or false"
+	  exit 1
+	fi
+	
+	if [[ ! "$LINEAGE" =~ ^(true|false)$ ]]; then
+	  echo "Error: LINEAGE must be one of true or false"
 	  exit 1
 	fi
 
@@ -57,55 +75,60 @@ do
 
 	SAMPLE_LIST=$(aws s3 ls $S3DOWNLOAD/"$SEQ_RUN"_fastq/ | grep fastq.gz | awk '{print $NF}' | awk -F $DELIMITER '{print $1}' | sort | uniq | grep -v Undetermined)
 
-	# Run pipeline on each sample
-	for SAMPLE in $SAMPLE_LIST; do
-		qsub $QSUBSAMPLEPARAMS \
-			-v SEQ_RUN="$SEQ_RUN" \
-			-v SAMPLE=$SAMPLE \
-			-v S3DOWNLOAD=$S3DOWNLOAD \
-			-v PRIMER_SET=$PRIMER_SET \
-			-v MERGE_LANES=$MERGE_LANES \
-			-v FQ=$FQ \
-			-v TIMESTAMP=$TIMESTAMP \
-			-N Covid19_"$SEQ_RUN"_"$SAMPLE" \
-			-wd /shared/workspace/projects/covid/logs \
-			-pe smp 1 \
-			-S /bin/bash \
-			$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
-	done
+	if [[ "$VARIANTS" == true ]]; then
+		
+		# Run pipeline on each sample
+		for SAMPLE in $SAMPLE_LIST; do
+			qsub $QSUBSAMPLEPARAMS \
+				-v SEQ_RUN="$SEQ_RUN" \
+				-v SAMPLE=$SAMPLE \
+				-v S3DOWNLOAD=$S3DOWNLOAD \
+				-v PRIMER_SET=$PRIMER_SET \
+				-v MERGE_LANES=$MERGE_LANES \
+				-v FQ=$FQ \
+				-v TIMESTAMP=$TIMESTAMP \
+				-N Covid19_"$SEQ_RUN"_"$SAMPLE" \
+				-wd /shared/workspace/projects/covid/logs \
+				-pe smp 1 \
+				-S /bin/bash \
+				$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
+		done
+	fi
 
-
-	# Perform QC and summary on seq_run when all samples have completed
-	qsub \
-		-hold_jid 'Covid19_'$SEQ_RUN'_*' \
-		-v SEQ_RUN=$SEQ_RUN \
-		-v S3DOWNLOAD=$S3DOWNLOAD \
-		-v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
-		-v FQ=$FQ \
-		-v TIMESTAMP=$TIMESTAMP \
-		-N QC_summary_"$SEQ_RUN" \
-		-wd /shared/workspace/projects/covid/logs \
-		-pe smp 32 \
-		-S /bin/bash \
-    	$PIPELINEDIR/qc/qc_summary.sh
+	if [[ "$QC" == true ]]; then
+			qsub \
+				-hold_jid 'Covid19_'$SEQ_RUN'_*' \
+				-v SEQ_RUN=$SEQ_RUN \
+				-v S3DOWNLOAD=$S3DOWNLOAD \
+				-v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
+				-v FQ=$FQ \
+				-v TIMESTAMP=$TIMESTAMP \
+				-N QC_summary_"$SEQ_RUN" \
+				-wd /shared/workspace/projects/covid/logs \
+				-pe smp 32 \
+				-S /bin/bash \
+		    	$PIPELINEDIR/qc/qc_summary.sh
+	fi
 
     # Tree building
-    if [[ "$TREE_BUILD" == true ]]; then
+    if [[ "$LINEAGE" == true ]]; then
 	    qsub \
 			-hold_jid 'QC_summary_'$SEQ_RUN'' \
 			-v S3DOWNLOAD=$S3_TREEBUILD \
+			-v S3UPLOAD=$S3DOWNLOAD/Cumulative_phylogeny/$TIMESTAMP \
+			-v TREE_BUILD=$TREE_BUILD \
 			-v TIMESTAMP=$TIMESTAMP \
-			-v WORKSPACE=/scratch/tree_build \
+			-v WORKSPACE=/scratch/lineage/$TIMESTAMP \
 			-N tree_building \
 			-wd /shared/workspace/projects/covid/logs \
 			-pe smp 96 \
 			-S /bin/bash \
-	    	$PIPELINEDIR/pipeline/tree_building_merged.sh
+	    	$PIPELINEDIR/pipeline/phylogeny.sh
 
     fi
 
-	echo "seq_run,s3download,primers,reads" > "$SEQ_RUN"-"$TIMESTAMP".csv
-	echo "$SEQ_RUN,$S3DOWNLOAD,$PRIMER_SET,$FQ" >> "$SEQ_RUN"-"$TIMESTAMP".csv
+	echo "seq_run,s3download,primers,reads,merge,variants,qc,lineage,tree_build" > "$SEQ_RUN"-"$TIMESTAMP".csv
+	echo "$SEQ_RUN,$S3DOWNLOAD,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD" >> "$SEQ_RUN"-"$TIMESTAMP".csv
 	aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3DOWNLOAD/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
 	rm "$SEQ_RUN"-"$TIMESTAMP".csv
 done
