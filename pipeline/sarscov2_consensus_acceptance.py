@@ -241,21 +241,22 @@ if __name__ == '__main__':
             "<depth.txt file path> <reference genome.fas file path> " \
             % argv[0]
 
-    argv = ["python sarscov2_consensus_acceptance.py",
-            "2021-02-08-ARTIC",
-            "2021-02-26_19-40-24",
-            "pe",
-            "iVar version 1.3.1\nPlease raise issues and bug reports at "
-            "https://github.com/andersen-lab/ivar/",
-            "039idSEARCH-5366-SAN_L001_L002_L003_L004",
-            #"/Users/amandabirmingham/Downloads/SU002_S13_L001.trimmed."
-            #"sorted.pileup.consensus.fa",
-            "/Users/amandabirmingham/Downloads/039idSEARCH-5366-SAN_L001_L002"
-            "_L003_L004.trimmed.sorted.pileup.consensus.fa",
-            "/Users/amandabirmingham/Downloads/039idSEARCH-5366-SAN_L001_L002"
-            "_L003_L004.trimmed.sorted.depth.txt",
-            "/Users/amandabirmingham/Work/Repositories/covid_sequencing_"
-            "analysis_pipeline/reference_files/NC_045512.2.fas"]
+    # Test values
+    # argv = ["python sarscov2_consensus_acceptance.py",
+    #         "2021-02-08-ARTIC",
+    #         "2021-02-26_19-40-24",
+    #         "pe",
+    #         "iVar version 1.3.1\nPlease raise issues and bug reports at "
+    #         "https://github.com/andersen-lab/ivar/",
+    #         "039idSEARCH-5366-SAN_L001_L002_L003_L004",
+    #         #"/Users/amandabirmingham/Downloads/SU002_S13_L001.trimmed."
+    #         #"sorted.pileup.consensus.fa",
+    #         "/Users/amandabirmingham/Downloads/039idSEARCH-5366-SAN_L001_L002"
+    #         "_L003_L004.trimmed.sorted.pileup.consensus.fa",
+    #         "/Users/amandabirmingham/Downloads/039idSEARCH-5366-SAN_L001_L002"
+    #         "_L003_L004.trimmed.sorted.depth.txt",
+    #         "/Users/amandabirmingham/Work/Repositories/covid_sequencing_"
+    #         "analysis_pipeline/reference_files/NC_045512.2.fas"]
 
     # check command line for validity
     if len(argv) != 9:
