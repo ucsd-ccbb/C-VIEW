@@ -53,10 +53,10 @@ runQC () {
 
 	# loop over individual .fa files, keep the ones which are in passQC.samples.tsv
 	touch $WORKSPACE/"$SEQ_RUN"-passQC.fas # initialize the file
-	for f in *.fa; do 
+	for f in *.fa; do
 	    fshort="$(cut -d'.' -f1 <<<$f)"
 	    echo $fshort
-	    
+
 	    if (grep -qF $fshort $WORKSPACE/"$SEQ_RUN"-passQC.samples.tsv); then
 	       #echo "Found it"
 	       cat $f >> $WORKSPACE/"$SEQ_RUN"-passQC.fas
