@@ -9,20 +9,21 @@ DEPTH_THRESH = 10
 FRACTION_THRESH = 0.95
 
 COL_NA = "NA"
-SAMP_NAME = "sample_name"
+SAMP_SEQUENCING_ID = "fastq_id"
 IS_ACCEPTED = "is_accepted"
+INDELS_FLAGGED = "indels_flagged"
 COVERAGE = "coverage_gte_10_reads"
 NUM_INSERTS = "num_inserts_in_consensus"
 NUM_DELS = "num_deletions_in_consensus"
-PUTATIVE_SAMP_ID = "putative_sample_id"
+SAMPLE_ID = "sample_id"
 SEQ_RUN = "seq_run"
 TIMESTAMP = "timestamp"
 SE_OR_PE = "se_or_pe"
 IVAR_VER = "assembly_method"
 CONS_SEQ_NAME = "consensus_seq_name"
-FIELD_ORDER = [SAMP_NAME, IS_ACCEPTED, COVERAGE, NUM_INSERTS, NUM_DELS,
-               PUTATIVE_SAMP_ID, CONS_SEQ_NAME, IVAR_VER, TIMESTAMP,
-               SE_OR_PE, SEQ_RUN]
+FIELD_ORDER = [SAMP_SEQUENCING_ID, IS_ACCEPTED, INDELS_FLAGGED, COVERAGE,
+               NUM_INSERTS, NUM_DELS, SAMPLE_ID, CONS_SEQ_NAME, IVAR_VER,
+               TIMESTAMP, SE_OR_PE, SEQ_RUN]
 
 
 def check_consensus_acceptance(consensus_seq, consensus_depths, ref_genome_seq,
@@ -39,16 +40,28 @@ def check_consensus_acceptance(consensus_seq, consensus_depths, ref_genome_seq,
                                       ref_first_orf_start_0based,
                                       ref_last_orf_end_0based)
 
-    is_accepted, depth_pass_fraction = _verify_fraction_acceptable_bases(
-        consensus_seq, consensus_depths,
-        cons_first_orf_start_0based, cons_last_orf_end_0based,
-        depth_threshold, fraction_threshold)
+    # if the number of ref gaps (consensus insertions) and/or
+    # the number of consensus gaps (consensus deletions) is NOT
+    # a perfect multiple of 3, flag this consensus sequence as
+    # possibly suspicious
+    indels_flagged = num_ref_gaps_in_orf_region % 3 != 0 or \
+                     num_cons_gaps_in_orf_region % 3 != 0
+
+
+    fractions_acceptable, depth_pass_fraction = \
+        _verify_fraction_acceptable_bases(
+            consensus_seq, consensus_depths,
+            cons_first_orf_start_0based, cons_last_orf_end_0based,
+            depth_threshold, fraction_threshold)
+
+    is_accepted = (not indels_flagged) and fractions_acceptable
 
     result = {}
     result[NUM_INSERTS] = num_ref_gaps_in_orf_region
     result[NUM_DELS] = num_cons_gaps_in_orf_region
-    result[IS_ACCEPTED] = is_accepted
+    result[INDELS_FLAGGED] = indels_flagged
     result[COVERAGE] = depth_pass_fraction
+    result[IS_ACCEPTED] = is_accepted
 
     return result
 
@@ -237,7 +250,7 @@ def _generate_header_and_data_lines(output_dict):
 
 if __name__ == '__main__':
     USAGE = "USAGE: %s <sequencing run name> <timestamp> <se or pe> " \
-            "<ivar version> <sample name> <consensus.fa file path> " \
+            "<ivar version> <sample sequencing id> <consensus.fa file path> " \
             "<depth.txt file path> <reference genome.fas file path> " \
             % argv[0]
 
@@ -263,7 +276,7 @@ if __name__ == '__main__':
         print(USAGE, file=stderr)
         exit(1)
 
-    seq_run = timestamp = se_or_pe = ivar_ver_string = sample_name = None
+    seq_run = timestamp = se_or_pe = ivar_ver_string = sample_sequencing_id = None
     input_consensus_fa_fp = input_depth_txt_fp = input_ref_genome_fas_fp = None
 
     try:
@@ -271,7 +284,7 @@ if __name__ == '__main__':
         timestamp = argv[2]
         se_or_pe = argv[3]
         ivar_ver_string = argv[4]
-        sample_name = argv[5]
+        sample_sequencing_id = argv[5]
         input_consensus_fa_fp = argv[6]
         input_depth_txt_fp = argv[7]
         input_ref_genome_fas_fp = argv[8]
@@ -280,9 +293,9 @@ if __name__ == '__main__':
         exit(1)
 
     ivar_version = ivar_ver_string.splitlines()[0].strip()
-    putative_sample_id = _extract_putative_sample_id(sample_name)
-    output_fields = {SAMP_NAME: sample_name,
-                     PUTATIVE_SAMP_ID: putative_sample_id,
+    putative_sample_id = _extract_putative_sample_id(sample_sequencing_id)
+    output_fields = {SAMP_SEQUENCING_ID: sample_sequencing_id,
+                     SAMPLE_ID: putative_sample_id,
                      SEQ_RUN: seq_run,
                      TIMESTAMP: timestamp,
                      SE_OR_PE: se_or_pe,
@@ -307,6 +320,6 @@ if __name__ == '__main__':
     output_lines = _generate_header_and_data_lines(output_fields)
 
     dir_fp = os.path.dirname(input_consensus_fa_fp)
-    output_fp = os.path.join(dir_fp, f"{sample_name}.acceptance.tsv")
+    output_fp = os.path.join(dir_fp, f"{sample_sequencing_id}.acceptance.tsv")
     with open(output_fp, 'w') as output_f:
         output_f.writelines(output_lines)
