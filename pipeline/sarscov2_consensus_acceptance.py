@@ -262,10 +262,10 @@ if __name__ == '__main__':
     #         "iVar version 1.3.1\nPlease raise issues and bug reports at "
     #         "https://github.com/andersen-lab/ivar/",
     #         "039idSEARCH-5366-SAN_L001_L002_L003_L004",
-    #         #"/Users/amandabirmingham/Downloads/SU002_S13_L001.trimmed."
-    #         #"sorted.pileup.consensus.fa",
-    #         "/Users/amandabirmingham/Downloads/039idSEARCH-5366-SAN_L001_L002"
-    #         "_L003_L004.trimmed.sorted.pileup.consensus.fa",
+    #         "/Users/amandabirmingham/Downloads/SU002_S13_L001.trimmed."
+    #         "sorted.pileup.consensus.fa",
+    #         #"/Users/amandabirmingham/Downloads/039idSEARCH-5366-SAN_L001_L002"
+    #         #"_L003_L004.trimmed.sorted.pileup.consensus.fa",
     #         "/Users/amandabirmingham/Downloads/039idSEARCH-5366-SAN_L001_L002"
     #         "_L003_L004.trimmed.sorted.depth.txt",
     #         "/Users/amandabirmingham/Work/Repositories/covid_sequencing_"
@@ -301,6 +301,7 @@ if __name__ == '__main__':
                      SE_OR_PE: se_or_pe,
                      IVAR_VER: ivar_version,
                      IS_ACCEPTED: False,
+                     INDELS_FLAGGED: COL_NA,
                      CONS_SEQ_NAME: COL_NA,
                      COVERAGE: COL_NA,
                      NUM_INSERTS: COL_NA,
