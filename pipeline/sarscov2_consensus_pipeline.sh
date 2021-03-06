@@ -59,7 +59,7 @@ if [[ "$FQ" == pe ]]; then
 fi
 
 # Fastqc
-{ time ( fastqc $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc ) ; } 2> $WORKSPACE/"$SAMPLE".log.0.fastqc.log
+{ time ( fastqc -t 3 $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc ) ; } 2> $WORKSPACE/"$SAMPLE".log.0.fastqc.log
 
 # Step 1: Map Reads + Sort
 { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$SAMPLE"*.fastq.gz | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLE".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLE".log.1.map.log

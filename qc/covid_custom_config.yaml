@@ -44,12 +44,22 @@ qualimap_config:
     - 30
     - 50
 
-custom_plot_config:
-    qualimap_coverage_histogram:
-        logswitch: True
-        logswitch_active: True
-        logswitch_label: 'Log10'
-    qualimap_genome_fraction:
-        logswitch: True
-        logswitch_active: True
-        logswitch_label: 'Log10'
+plots_force_interactive: True
+
+max_table_rows: 10000
+
+remove_sections:
+    - qualimap-coverage-histogram
+    - qualimap-cumulative-genome-fraction-coverage
+    - qualimap-insert-size-histogram
+    - qualimap-gc-distribution
+    
+# custom_plot_config:
+#     qualimap_coverage_histogram:
+#         logswitch: True
+#         logswitch_active: True
+#         logswitch_label: 'Log10'
+#     qualimap_genome_fraction:
+#         logswitch: True
+#         logswitch_active: True
+#         logswitch_label: 'Log10'

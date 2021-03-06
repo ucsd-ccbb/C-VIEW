@@ -69,7 +69,7 @@ do
 			-v TIMESTAMP=$TIMESTAMP \
 			-N Covid19_"$SEQ_RUN"_"$SAMPLE" \
 			-wd /shared/workspace/projects/covid/logs \
-			-pe smp 1 \
+			-pe smp 2 \
 			-S /bin/bash \
 			$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
 	done
