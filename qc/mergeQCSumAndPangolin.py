@@ -29,4 +29,4 @@ lineage_file["Sample"] = lineage_file["taxon"].apply(format_taxon)
 combined = combinedQCs.merge(lineage_file, left_on = "Sample", right_on = "Sample", how = "outer")
 
 # Write table
-combined.to_csv("QCSummaryWithLineage.csv", index = False)
+combined.to_csv("merged_qc_and_lineages.csv", index = False)

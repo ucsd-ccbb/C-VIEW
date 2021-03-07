@@ -6,7 +6,7 @@ import boto3
 # remember to run aws configure from the command line before running this
 # script to record the AWS access for your user
 
-_GOLD_STANDARD_DIR = "./tests/data/gold_standard_2021-02-08-ARTIC"
+_GOLD_STANDARD_DIR = "./tests/data/2021-02-08-ARTIC_samples"
 _FNAME_CRUFT = ".trimmed.sorted.pileup."
 _CONSENSUS_FNAME = "consensus.fa"
 _VARIANTS_FNAME = "variants.tsv"

@@ -66,7 +66,7 @@ def _load_depths(fps_list):
     return depths_by_fname
 
 
-def _save_line_plot(depths_by_fname, output_fname):
+def _save_line_plot(depths_by_fname, output_fp):
     filtered_depths_by_fname = {}
     for curr_name, curr_depths in depths_by_fname.items():
         if len(curr_depths) > 0:
@@ -74,7 +74,7 @@ def _save_line_plot(depths_by_fname, output_fname):
 
     YMAX = max([max(curr_depths) for curr_depths
                 in filtered_depths_by_fname.values()])
-    with PdfPages(output_fname) as pdf_pages:
+    with PdfPages(output_fp) as pdf_pages:
         for i, curr_fname \
                 in enumerate(sorted(filtered_depths_by_fname.keys())):
             curr_depths = filtered_depths_by_fname[curr_fname]
@@ -105,7 +105,7 @@ def _make_parallel_lists(depths_by_fname):
     return flattened_list_of_fnames_for_each_depth, flattened_list_of_depths
 
 
-def _save_violin_plot(x, y, sample_names, output_fname):
+def _save_violin_plot(x, y, sample_names, output_fp):
     # create violin plot
 
     INCH_PER_SAMPLE = 0.25
@@ -128,7 +128,19 @@ def _save_violin_plot(x, y, sample_names, output_fname):
     plt.xlabel("Sample")
     plt.ylabel("Mapping Depth (per site)")
     plt.xticks(rotation=90)
-    fig.savefig(output_fname, format='pdf', bbox_inches='tight')
+    fig.savefig(output_fp, format='pdf', bbox_inches='tight')
+
+
+def make_plots(args_list):
+    lineplot_out_fp = args_list[1]
+    violin_out_fp = args_list[2]
+
+    loaded_depths_by_fname = _load_depths(args_list[3:])
+    x_vals, y_vals = _make_parallel_lists(loaded_depths_by_fname)
+
+    _save_line_plot(loaded_depths_by_fname, lineplot_out_fp)
+    _save_violin_plot(x_vals, y_vals, loaded_depths_by_fname.keys(),
+                      violin_out_fp)
 
 
 if __name__ == '__main__':
@@ -144,9 +156,4 @@ if __name__ == '__main__':
         print(inputs_error_msg, file=stderr)
         exit(1)
 
-    loaded_depths_by_fname = _load_depths(argv[1:])
-    x_vals, y_vals = _make_parallel_lists(loaded_depths_by_fname)
-
-    _save_line_plot(loaded_depths_by_fname, 'depth_lineplot.pdf')
-    _save_violin_plot(x_vals, y_vals, loaded_depths_by_fname.keys(),
-                      'depth_violin.pdf')
+    make_plots(argv)
