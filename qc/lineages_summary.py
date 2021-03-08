@@ -1,9 +1,8 @@
-'''
-	Gathers QCSummaryTable.csv files and merges with a consensus pangolin table.
-	Takes 2 arguments:
-	1. Path to directory containing QCSummaryTable.csv files
-	2. Path of pangolin lineage file
-'''
+# Gathers seq-run_summary.csv files and merges with pangolin lineage table
+# Takes 2 arguments:
+# 1. Path to directory containing per-sequence-run summary.csv files
+# 2. Path of pangolin lineage file
+
 
 import pandas as pd
 import sys

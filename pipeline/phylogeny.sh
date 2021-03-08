@@ -30,7 +30,7 @@ runPangolin () {
 
   cat $WORKSPACE/*-QCSummaryTable.csv > $WORKSPACE/merged_qc_summary.csv
   # produce merged_qc_and_lineages.csv
-  $PIPELINEDIR/qc/mergeQCSumAndPangolin.py $WORKSPACE/merged_qc_summary.csv merged.lineage_report.csv
+  $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE/merged_qc_summary.csv merged.lineage_report.csv
 
 	rename 's/merged/'$TIMESTAMP'/' $WORKSPACE/merged*
 	aws s3 cp $WORKSPACE/ $S3UPLOAD/ --recursive --quiet
