@@ -26,8 +26,7 @@ class SubsetCsvTest(TestCase):
             self.assertTrue(filecmp.cmp(output_fp, expected_fp))
         finally:
             try:
-                pass
-                #os.remove(output_fp)
+                os.remove(output_fp)
             except OSError:
                 pass
 
