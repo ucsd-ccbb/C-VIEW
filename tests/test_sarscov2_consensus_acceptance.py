@@ -1,8 +1,9 @@
 import os
 from io import StringIO
+from filecmp import cmp
 from unittest import TestCase
 from pipeline.sarscov2_consensus_acceptance import \
-    _read_input_fps, check_consensus_acceptance, \
+    _read_input_fps, check_consensus_acceptance, generate_acceptance_tsv, \
     _verify_fraction_acceptable_bases, _get_consensus_orfs_start_end, \
     _attempt_extract_search_id, _extract_putative_sample_id, \
     _generate_header_and_data_lines, _read_depths, _read_input_files, \
@@ -30863,3 +30864,70 @@ NC_045512.2	46	2
 
         real_out = _generate_header_and_data_lines(input)
         self.assertEqual(expected_out, real_out)
+
+    def test_generate_acceptance_tsv(self):
+        test_data_path = os.path.abspath("./data")
+        ref_data_path = os.path.abspath("../reference_files")
+        curr_item_name = "018idSEARCH-5345-SAN_L001_L002_L003_L004"
+        working_dir = f"{test_data_path}/2021-02-08-ARTIC_samples/" \
+                      f"{curr_item_name}"
+        expected_results_fp = f"{working_dir}/{curr_item_name}.acceptance.tsv"
+        output_fp = f"{test_data_path}/qc/temp_test_consensus_acceptance.tsv"
+
+        args = ["python sarscov2_consensus_acceptance.py",
+                "2021-02-08-ARTIC",
+                "2021-02-26_19-40-24",
+                "pe",
+                "iVar version 1.3.1\nPlease raise issues and bug reports at "
+                "https://github.com/andersen-lab/ivar/",
+                curr_item_name,
+                f"{working_dir}/"
+                f"{curr_item_name}.trimmed.sorted.pileup.consensus.fa",
+                f"{working_dir}/{curr_item_name}.trimmed.sorted.depth.txt",
+                f"{ref_data_path}/NC_045512.2.fas",
+                output_fp]
+
+        try:
+            generate_acceptance_tsv(args)
+            self.assertTrue(os.path.isfile(output_fp))
+            self.assertTrue(cmp(output_fp, expected_results_fp))
+        finally:
+            try:
+                os.remove(output_fp)
+            except OSError:
+                pass
+
+    def test_generate_acceptance_tsv_no_consensus(self):
+        test_data_path = os.path.abspath("./data")
+        ref_data_path = os.path.abspath("../reference_files")
+        curr_item_name = "SU002_S13_L001"
+        working_dir = f"{test_data_path}/PDH_83-233854622_samples/" \
+                      f"{curr_item_name}"
+        # expected_results_fp = f"{test_data_path}/2021-02-08-ARTIC_samples/" \
+        #                       f"018idSEARCH-5345-SAN_L001_L002_L003_L004/" \
+        #                       f"018idSEARCH-5345-SAN_L001_L002_L003_L004.acceptance.tsv"
+        expected_results_fp = f"{working_dir}/{curr_item_name}.acceptance.tsv"
+        output_fp = f"{test_data_path}/qc/temp_test_consensus_acceptance.tsv"
+
+        args = ["python sarscov2_consensus_acceptance.py",
+                "PDH_83-233854622",
+                "2021-03-01_19-46-58_se",
+                "se",
+                "iVar version 1.3.1\nPlease raise issues and bug reports at "
+                "https://github.com/andersen-lab/ivar/",
+                curr_item_name,
+                f"{working_dir}/"
+                f"{curr_item_name}.trimmed.sorted.pileup.consensus.fa",
+                f"{working_dir}/{curr_item_name}.trimmed.sorted.depth.txt",
+                f"{ref_data_path}/NC_045512.2.fas",
+                output_fp]
+
+        try:
+            generate_acceptance_tsv(args)
+            self.assertTrue(os.path.isfile(output_fp))
+            self.assertTrue(cmp(output_fp, expected_results_fp))
+        finally:
+            try:
+                os.remove(output_fp)
+            except OSError:
+                pass

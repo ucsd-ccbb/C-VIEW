@@ -248,49 +248,16 @@ def _generate_header_and_data_lines(output_dict):
     return [header_line, data_line]
 
 
-if __name__ == '__main__':
-    USAGE = "USAGE: %s <sequencing run name> <timestamp> <se or pe> " \
-            "<ivar version> <sample sequencing id> <consensus.fa file path> " \
-            "<depth.txt file path> <reference genome.fas file path> " \
-            % argv[0]
-
-    # Test values
-    # argv = ["python sarscov2_consensus_acceptance.py",
-    #         "2021-02-08-ARTIC",
-    #         "2021-02-26_19-40-24",
-    #         "pe",
-    #         "iVar version 1.3.1\nPlease raise issues and bug reports at "
-    #         "https://github.com/andersen-lab/ivar/",
-    #         "039idSEARCH-5366-SAN_L001_L002_L003_L004",
-    #         "/Users/amandabirmingham/Downloads/SU002_S13_L001.trimmed."
-    #         "sorted.pileup.consensus.fa",
-    #         #"/Users/amandabirmingham/Downloads/039idSEARCH-5366-SAN_L001_L002"
-    #         #"_L003_L004.trimmed.sorted.pileup.consensus.fa",
-    #         "/Users/amandabirmingham/Downloads/039idSEARCH-5366-SAN_L001_L002"
-    #         "_L003_L004.trimmed.sorted.depth.txt",
-    #         "/Users/amandabirmingham/Work/Repositories/covid_sequencing_"
-    #         "analysis_pipeline/reference_files/NC_045512.2.fas"]
-
-    # check command line for validity
-    if len(argv) != 9:
-        print(USAGE, file=stderr)
-        exit(1)
-
-    seq_run = timestamp = se_or_pe = ivar_ver_string = sample_sequencing_id = None
-    input_consensus_fa_fp = input_depth_txt_fp = input_ref_genome_fas_fp = None
-
-    try:
-        seq_run = argv[1]
-        timestamp = argv[2]
-        se_or_pe = argv[3]
-        ivar_ver_string = argv[4]
-        sample_sequencing_id = argv[5]
-        input_consensus_fa_fp = argv[6]
-        input_depth_txt_fp = argv[7]
-        input_ref_genome_fas_fp = argv[8]
-    except Exception as e:
-        print(f"Error parsing arguments: {e}")
-        exit(1)
+def generate_acceptance_tsv(arg_list):
+    seq_run = arg_list[1]
+    timestamp = arg_list[2]
+    se_or_pe = arg_list[3]
+    ivar_ver_string = arg_list[4]
+    sample_sequencing_id = arg_list[5]
+    input_consensus_fa_fp = arg_list[6]
+    input_depth_txt_fp = arg_list[7]
+    input_ref_genome_fas_fp = arg_list[8]
+    output_fp = arg_list[9]
 
     ivar_version = ivar_ver_string.splitlines()[0].strip()
     putative_sample_id = _extract_putative_sample_id(sample_sequencing_id)
@@ -320,7 +287,19 @@ if __name__ == '__main__':
 
     output_lines = _generate_header_and_data_lines(output_fields)
 
-    dir_fp = os.path.dirname(input_consensus_fa_fp)
-    output_fp = os.path.join(dir_fp, f"{sample_sequencing_id}.acceptance.tsv")
     with open(output_fp, 'w') as output_f:
         output_f.writelines(output_lines)
+
+
+if __name__ == '__main__':
+    USAGE = "USAGE: %s <sequencing run name> <timestamp> <se or pe> " \
+            "<ivar version> <sample sequencing id> <consensus.fa file path> " \
+            "<depth.txt file path> <reference genome.fas file path> " \
+            % argv[0]
+
+    # check command line for validity
+    if len(argv) != 9:
+        print(USAGE, file=stderr)
+        exit(1)
+
+    generate_acceptance_tsv(argv)
