@@ -28,9 +28,8 @@ runPangolin () {
 	pangolin --update
 	pangolin -t $THREADS --outfile $WORKSPACE/merged.lineage_report.csv $WORKSPACE/merged.fas
 
-  cat $WORKSPACE/*-QCSummaryTable.csv > $WORKSPACE/merged_qc_summary.csv
   # produce merged_qc_and_lineages.csv
-  $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE/merged_qc_summary.csv merged.lineage_report.csv
+  $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE _summary.csv $WORKSPACE/merged.lineage_report.csv $WORKSPACE/merged_qc_and_lineages.csv
 
 	rename 's/merged/'$TIMESTAMP'/' $WORKSPACE/merged*
 	aws s3 cp $WORKSPACE/ $S3UPLOAD/ --recursive --quiet
@@ -48,9 +47,9 @@ buildTree () {
 	python /shared/workspace/software/MinVar-Rooting-master/FastRoot.py -i $WORKSPACE/merged.trimmed.aln.treefile -o $WORKSPACE/merged.trimmed.aln.rooted.treefile -m OG -g "hCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25"
 
 	# Metadata -------------------------
-	$PIPELINEDIR/qc/subset_csv.py merged_qc_and_lineages.csv filtered_lines is_accepted True merged_accepted_qc_and_lineages_metadata.csv
+	$PIPELINEDIR/qc/subset_csv.py $WORKSPACE/merged_qc_and_lineages.csv filtered_lines is_accepted True $WORKSPACE/merged_accepted_qc_and_lineages_metadata.csv
 
-  # TODO: mod this to match format of merged_accepted_qc_and_lineages_metadata.csv
+  # TODO: mod this to match format of $WORKSPACE/merged_accepted_qc_and_lineages_metadata.csv
 	echo -e "hCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25\thCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25" >> $WORKSPACE/tmp.merged.metadata.txt
 	echo -e "hCoV-19/USA/CA-SEARCH-5574/2020|EPI_ISL_751801|2020-12-29\thCoV-19/USA/CA-SEARCH-5574/2020|EPI_ISL_751801|2020-12-29" >> $WORKSPACE/tmp.merged.metadata.txt
   # TODO: figure out how to add metadata from "historical"
