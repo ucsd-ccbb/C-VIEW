@@ -51,6 +51,7 @@ def filter_csv(arg_list):
 
         filtered_df = subset_csv(csv_fp, csv_col_name, allowed_vals_str)
         filtered_df.to_csv(output_fp, index=False)
+        result_code = 0
     elif filter_type == ACCEPTED_CONS_FNAMES:
         result_str = get_consensus_fnames_w_allowed_vals(
             csv_fp, "is_accepted", "True")
@@ -66,29 +67,6 @@ def filter_csv(arg_list):
 
 
 if __name__ == '__main__':
-    # argv = ["subset_csv.py",
-    #         "/Users/amandabirmingham/Desktop/covid_temp/"
-    #         "test_dummy_qc.csv",
-    #         "filtered_lines",
-    #         "seq_run",
-    #         "210109_A00953_0209_BHYHCVDRXX,PDH_79-233476243",
-    #         "/Users/amandabirmingham/Desktop/covid_temp/test_filter_lines.csv"]
-
-    # argv = ["subset_csv.py",
-    #         "/Users/amandabirmingham/Desktop/covid_temp/"
-    #         "test_dummy_qc.csv",
-    #         "accepted_cons_fnames"]
-
-    # argv = ["subset_csv.py",
-    #         "/Users/amandabirmingham/Desktop/covid_temp/"
-    #         "test_dummy_qc.csv",
-    #         "indel_flagged_cons_fnames"]
-
-    # argv = ["subset_csv.py",
-    #         "/Users/amandabirmingham/Desktop/covid_temp/"
-    #         "test_dummy_qc.csv",
-    #         "flagged_cons_fnames"]
-
     out_loc = stderr
     out_str, out_code = filter_csv(argv)
 
