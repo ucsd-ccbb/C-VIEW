@@ -5,27 +5,39 @@
 
 
 import pandas as pd
-import sys
+from sys import argv
 import glob
 import os
 
-# Merge tables with a single header
-combinedQCs = pd.concat(map(pd.read_csv, glob.glob(os.path.join(sys.argv[1], "*.csv"))))
-
-# Load pangolin file
-lineage_file = pd.read_csv(sys.argv[2])
 
 def format_taxon(x):
-	""" Parses sample name from taxon column in pangolin lineage report """
-	sampleName = x.split(".")[0]
-	sampleName = sampleName.replace("Consensus_", "")
-	return sampleName
+    """ Parses sample name from taxon column in pangolin lineage report """
+    sampleName = x.split(".")[0]
+    sampleName = sampleName.replace("Consensus_", "")
+    return sampleName
 
-# Add Sample column to pangolin lineage report
-lineage_file["Sample"] = lineage_file["taxon"].apply(format_taxon)
 
-# Merge tables
-combined = combinedQCs.merge(lineage_file, left_on = "Sample", right_on = "Sample", how = "outer")
+def create_lineages_summary(arg_list):
+    run_summaries_fp = arg_list[1]
+    run_summary_suffix = arg_list[2]
+    lineage_fp = arg_list[3]
+    output_fp = arg_list[4]
 
-# Write table
-combined.to_csv("merged_qc_and_lineages.csv", index = False)
+    # Merge summaries with a single header
+    summaries_pattern = os.path.join(run_summaries_fp,
+                                     f"*{run_summary_suffix}")
+    merged_summaries_df = pd.concat(
+        map(pd.read_csv, glob.glob(summaries_pattern)))
+
+    # Load pangolin file and add a "Sample" column to it
+    lineage_df = pd.read_csv(lineage_fp)
+    lineage_df["Sample"] = lineage_df["taxon"].apply(format_taxon)
+
+    # Merge tables and write to file
+    output_df = merged_summaries_df.merge(
+        lineage_df, left_on="Sample", right_on="Sample", how="outer")
+    output_df.to_csv(output_fp)
+
+
+if __name__ == '__main__':
+    create_lineages_summary(argv)
