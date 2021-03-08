@@ -21,7 +21,6 @@ class CustomGenStatsMultiQcTest(TestCase):
                     out_depth_lines_fp, out_depth_violin_fp]
         arg_list.extend(depth_fps)
 
-        lines_equal = violins_equal = False
         try:
             make_plots(arg_list)
 
@@ -40,19 +39,13 @@ class CustomGenStatsMultiQcTest(TestCase):
                 diff_violin = actual_violin.compare(
                     expected_violin, metric='root_mean_square')
                 self.assertLess(diff_violin[1], 0.01)
-
-            #lines_equal = cmp(out_depth_lines_fp, expected_depth_lines_fp)
-            # violins_equal = cmp(out_depth_violin_fp, expected_depth_violin_fp)
         finally:
-            # for out_fp in [out_depth_lines_fp, out_depth_violin_fp]:
-            #     try:
-            #         os.remove(out_fp)
-            #     except OSError:
-            #         pass
-            pass
+            for out_fp in [out_depth_lines_fp, out_depth_violin_fp]:
+                try:
+                    os.remove(out_fp)
+                except OSError:
+                    pass
 
-        #self.assertTrue(lines_equal)
-        #self.assertTrue(violins_equal)
 
 
 
