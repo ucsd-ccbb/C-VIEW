@@ -33,7 +33,7 @@ runQC () {
 	# mv depth_violin.pdf $WORKSPACE/qc/"$SEQ_RUN"-depth_violin.pdf
 	# mv depth_lineplot.pdf $WORKSPACE/qc/"$SEQ_RUN"-depth_lineplot.pdf
 	echo "Summarizing consensus QC."
-	python $PIPELINEDIR/qc/consensus_acceptance_summary.py $WORKSPACE $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv
+	python $PIPELINEDIR/qc/seq_run_acceptance.py $WORKSPACE $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv
 	# mv $WORKSPACE/summary.acceptance.tsv $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv
 
 	# Multiqc
