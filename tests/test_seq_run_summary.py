@@ -22,12 +22,18 @@ class SeqRunSummaryTest(TestCase):
         arg_list = ["seq_run_summary.py", input_stats_fp,
                     input_acceptance_fp, output_fp]
 
+        passes = False
         try:
             merge_multiqc_and_acceptance(arg_list)
-            self.assertTrue(os.path.isfile(output_fp))
-            self.assertTrue(filecmp.cmp(output_fp, expected_results_fp))
+            passes = os.path.isfile(output_fp)
+            self.assertTrue(passes)
+
+            file_match = filecmp.cmp(output_fp, expected_results_fp)
+            passes = passes and file_match
+            self.assertTrue(file_match)
         finally:
-            try:
-                os.remove(output_fp)
-            except OSError:
-                pass
+            if passes:
+                try:
+                    os.remove(output_fp)
+                except OSError:
+                    pass
