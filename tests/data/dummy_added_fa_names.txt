@@ -1,0 +1,4 @@
+fasta_id
+NC_045512.2 Severe acute respiratory syndrome coronavirus 2 isolate Wuhan-Hu-1, complete genome
+hCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25
+hCoV-19/USA/CA-SEARCH-5574/2020|EPI_ISL_751801|2020-12-29
