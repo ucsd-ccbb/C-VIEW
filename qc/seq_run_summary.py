@@ -10,8 +10,8 @@ def merge_multiqc_and_acceptance(arg_list):
     sum_acceptance_fp = arg_list[2]
     output_fp = arg_list[3]
 
-    multiqc_df = pd.read_csv(multiqc_stats_fp, sep="\t")
-    accept_df = pd.read_csv(sum_acceptance_fp, sep="\t")
+    multiqc_df = pd.read_csv(multiqc_stats_fp, sep="\t", dtype=str)
+    accept_df = pd.read_csv(sum_acceptance_fp, sep="\t", dtype=str)
 
     # remove unwanted leading strings from the multiqc column names
     unwanted_strs = ["QualiMap_mqc-generalstats-qualimap-",
