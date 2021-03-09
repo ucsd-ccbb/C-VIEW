@@ -23,6 +23,7 @@ jobs:
         # conda env update --file covid1.1_environment.yml --name base
         conda install numpy
         conda install boto3
+        conda install wand
         conda install -c bioconda fastqc
         conda install -c bioconda qualimap
         conda install -c bioconda minimap2
@@ -40,5 +41,4 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        conda install pytest
-        pytest
+        python -m unittest
