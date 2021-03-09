@@ -11,12 +11,12 @@ runPangolin () {
 
 	aws s3 cp $S3DOWNLOAD/consensus/ $WORKSPACE/ --recursive --quiet
 	aws s3 cp $S3DOWNLOAD/qc_summary/ $WORKSPACE/ --recursive --quiet
-	# TODO: add download of historical fas and metadata files
+	# TODO: add download of historical fas and metadata files if helix
 
 	cat $WORKSPACE/*passQC.fas > $WORKSPACE/merged.fas
 	sed -i -e 's/Consensus_//g' -e 's/.trimmed.sorted.pileup.consensus_threshold_0.5_quality_20//g' $WORKSPACE/merged.fas
 
-	# TODO: Add all historical fas files
+	# TODO: merge all historical fas files into merged.fas if helix
 
 	# add the reference sequence
 	cat $PIPELINEDIR/reference_files/RmYN02.fas >> $WORKSPACE/merged.fas
@@ -31,14 +31,14 @@ runPangolin () {
 
   # produce merged_qc_and_lineages.csv
   # TODO: must add merge of historical sample names BEFORE lineage merge
-  $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE _summary.csv $WORKSPACE/merged.lineage_report.csv $WORKSPACE/merged_qc_and_lineages.csv
+  $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE _summary.csv $WORKSPACE/merged.lineage_report.csv $WORKSPACE/merged.qc_and_lineages.csv
   # TODO: lineage merge should be done twice--once as an outer,
   #  once as a right (where only things with lineages stay); latter becomes metadata for
   #  empress
   # TODO: must output empress metadata file as TSV, not csv
-  # output as $WORKSPACE/empress_metadata.tsv
+  # output as $WORKSPACE/merged.empress_metadata.tsv
 
-	rename 's/merged/'$TIMESTAMP'/' $WORKSPACE/merged*
+	rename 's/merged/'$TIMESTAMP'/' $WORKSPACE/merged.*
 	aws s3 cp $WORKSPACE/ $S3UPLOAD/ --recursive --quiet
 }
 
@@ -56,9 +56,8 @@ buildTree () {
 	# tree building 
 	source $ANACONDADIR/activate qiime2-2020.11
 
-	empress tree-plot --tree $WORKSPACE/merged.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/empress_metadata.tsv --output-dir $WORKSPACE/tree-viz
+	empress tree-plot --tree $WORKSPACE/merged.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/merged.empress_metadata.tsv --output-dir $WORKSPACE/tree-viz
 
-  # TODO: "merged" vs "merged."
 	rename 's/merged/'$TIMESTAMP'/' $WORKSPACE/merged.*
 	rename 's/merged/'$TIMESTAMP'/' $WORKSPACE/viralmsa_out/merged.*
 	aws s3 cp $WORKSPACE/ $S3DOWNLOAD/trees/$TIMESTAMP/ --recursive --quiet
