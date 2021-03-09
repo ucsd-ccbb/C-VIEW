@@ -13,7 +13,7 @@ class SeqRunAcceptanceTest(TestCase):
         samples_dir = f"{self.test_data_path}/" \
                       f"2021-02-08-ARTIC_samples"
         expected_results_fp = f"{qc_output_dir}/" \
-                              f"2021-02-08-ARTIC_acceptance.tsv"
+                              f"2021-02-08-ARTIC-acceptance.tsv"
         qc_temp_dir = f"{self.test_data_path}/qc"
         output_fp = f"{qc_temp_dir}/temp_seq_run_acceptance.csv"
         arg_list = ["seq_run_acceptance.py", samples_dir, output_fp]

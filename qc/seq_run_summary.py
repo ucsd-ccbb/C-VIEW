@@ -4,7 +4,7 @@ import pandas as pd
 
 # Makes a combined table from:
 # 1. sequencing run's multiqc_general_stats.txt file
-# 2. sequencing run's <seq_run>-summary.acceptance.tsv file
+# 2. sequencing run's <seq_run>-acceptance.tsv file
 def merge_multiqc_and_acceptance(arg_list):
     multiqc_stats_fp = arg_list[1]
     sum_acceptance_fp = arg_list[2]

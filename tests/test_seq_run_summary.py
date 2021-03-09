@@ -14,9 +14,9 @@ class SeqRunSummaryTest(TestCase):
                          f"2021-02-08-ARTIC_multiqc_data/" \
                          f"multiqc_general_stats.txt"
         input_acceptance_fp = f"{qc_output_dir}/" \
-                              f"2021-02-08-ARTIC_acceptance.tsv"
+                              f"2021-02-08-ARTIC-acceptance.tsv"
         expected_results_fp = f"{qc_output_dir}/" \
-                              f"2021-02-08-ARTIC_summary.csv"
+                              f"2021-02-08-ARTIC-summary.csv"
         qc_temp_dir = f"{self.test_data_path}/qc"
         output_fp = f"{qc_temp_dir}/temp_seq_run_summary.csv"
         arg_list = ["seq_run_summary.py", input_stats_fp,

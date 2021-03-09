@@ -9,34 +9,44 @@ mkdir -p $WORKSPACE
 
 runPangolin () {
 
-	aws s3 cp $S3DOWNLOAD/consensus/ $WORKSPACE/ --recursive --quiet
+	aws s3 cp $S3DOWNLOAD/consensus/ $WORKSPACE/ --exclude "*" --recursive --quiet
 	aws s3 cp $S3DOWNLOAD/qc_summary/ $WORKSPACE/ --recursive --quiet
-	# TODO: add download of historical fas and metadata files if helix
+	# TODO: skip historic download if helix?
+	# TODO: need to add "historic" to the end of the historic fas files
+	aws s3 cp $S3DOWNLOAD/historic/ $WORKSPACE/historic/ --exclude "*" --include "*historic.fas" --recursive --quiet
 
-	cat $WORKSPACE/*passQC.fas > $WORKSPACE/merged.fas
-	sed -i -e 's/Consensus_//g' -e 's/.trimmed.sorted.pileup.consensus_threshold_0.5_quality_20//g' $WORKSPACE/merged.fas
 
-	# TODO: merge all historical fas files into merged.fas if helix
+	# start with the reference sequence
+	cat $PIPELINEDIR/reference_files/RmYN02.fas > $WORKSPACE/merged.fas
 
-	# add the reference sequence
+	# add a bat coronavirus sequence that is used as the outgroup for tree rooting
 	cat $PIPELINEDIR/reference_files/RmYN02.fas >> $WORKSPACE/merged.fas
 
 	# add B.1.1.7 sequence
 	cat $PIPELINEDIR/reference_files/hCoV-19_USA_CA-SEARCH-5574_2020.fasta >> $WORKSPACE/merged.fas
+
+  # TODO: skip this if helix
+  # add the historic fas sequences
+	cat $WORKSPACE/*historic.fas >> $WORKSPACE/static.fas
+
+  # BEFORE adding all the passQC fas files from the runs, stop and
+  # find every fasta header line in the merged.fas,
+  # cut off its first char (the >),
+  # then put it into the added_fa_names.txt file
+  # (we'll use this later for the qc and lineages file creation)
+  grep "^>" $WORKSPACE/merged.fas | cut -c 2- >> added_fa_names.txt
+
+  # add in the passing fas from all the sequencing runs
+	cat $WORKSPACE/*passQC.fas >> $WORKSPACE/merged.fas
+	sed -i -e 's/Consensus_//g' -e 's/.trimmed.sorted.pileup.consensus_threshold_0.5_quality_20//g' $WORKSPACE/merged.fas
 
 	# pangolin
 	source $ANACONDADIR/activate pangolin
 	pangolin --update
 	pangolin -t $THREADS --outfile $WORKSPACE/merged.lineage_report.csv $WORKSPACE/merged.fas
 
-  # produce merged_qc_and_lineages.csv
-  # TODO: must add merge of historical sample names BEFORE lineage merge
-  $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE _summary.csv $WORKSPACE/merged.lineage_report.csv $WORKSPACE/merged.qc_and_lineages.csv
-  # TODO: lineage merge should be done twice--once as an outer,
-  #  once as a right (where only things with lineages stay); latter becomes metadata for
-  #  empress
-  # TODO: must output empress metadata file as TSV, not csv
-  # output as $WORKSPACE/merged.empress_metadata.tsv
+  # produce merged_qc_and_lineages.csv and merged.empress_metadata.tsv
+  $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE -summary.csv added_fa_names.txt $WORKSPACE/merged.lineage_report.csv $WORKSPACE/merged.qc_and_lineages.csv $WORKSPACE/merged.empress_metadata.tsv
 
 	rename 's/merged/'$TIMESTAMP'/' $WORKSPACE/merged.*
 	aws s3 cp $WORKSPACE/ $S3UPLOAD/ --recursive --quiet

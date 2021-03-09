@@ -33,7 +33,7 @@ runQC () {
 	# mv depth_violin.pdf $WORKSPACE/qc/"$SEQ_RUN"-depth_violin.pdf
 	# mv depth_lineplot.pdf $WORKSPACE/qc/"$SEQ_RUN"-depth_lineplot.pdf
 	echo "Summarizing consensus QC."
-	python $PIPELINEDIR/qc/seq_run_acceptance.py $WORKSPACE $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv
+	python $PIPELINEDIR/qc/seq_run_acceptance.py $WORKSPACE $WORKSPACE/"$SEQ_RUN"-acceptance.tsv
 	# mv $WORKSPACE/summary.acceptance.tsv $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv
 
 	# Multiqc
@@ -46,17 +46,17 @@ runQC () {
 	multiqc --config $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml --module qualimap $WORKSPACE
 
 	# Make QC table
-	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $WORKSPACE/"$SEQ_RUN"-summary.csv
+	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-summary.csv
 	# mv $WORKSPACE/QCSummaryTable.csv $WORKSPACE/"$SEQ_RUN"-QCSummaryTable.csv
 
 	# Concatenate consensus files
 	# TODO: Adam am I setting these variables right?
 	cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN".fas
-  PASSING_CONS_FNAMES=$($PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"--summary.csv accepted_cons_fnames $WORKSPACE)
+  PASSING_CONS_FNAMES=$($PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv accepted_cons_fnames $WORKSPACE)
   # cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN"-passQC.fas
-  INDEL_CONS_FNAMES=$($PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"--summary.csv indel_flagged_cons_fnames $WORKSPACE)
+  INDEL_CONS_FNAMES=$($PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv indel_flagged_cons_fnames $WORKSPACE)
   # cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN"-indel_flagged.fas
-  $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"--summary.csv filtered_lines indels_flagged True $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv
+  $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv filtered_lines indels_flagged True $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv
 
 
 	# Upload Results
@@ -68,14 +68,14 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.samples.tsv $PHYLORESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $PHYLORESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $PHYLORESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $PHYLORESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $PHYLORESULTS/
 
 	# quality control folder
 	aws s3 cp $WORKSPACE/multiqc_data/ $QCRESULTS/"$SEQ_RUN"_multiqc_data/ --recursive --quiet
 	aws s3 cp $WORKSPACE/multiqc_report.html $QCRESULTS/"$SEQ_RUN"_multiqc_report.html
 	aws s3 cp $WORKSPACE/qc/ $QCRESULTS/ --recursive --quiet
-  aws s3 cp $WORKSPACE/"$SEQ_RUN"--summary.csv $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $QCRESULTS/
+  aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $QCRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $QCRESULTS/
 
 	# Manual review folder
 	# TODO: Set this folder up
@@ -86,7 +86,7 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/consensus/
 	# aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/acceptance/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"--summary.csv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/qc_summary/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/qc_summary/
 }
 
 { time ( runQC ) ; } > $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log 2>&1
