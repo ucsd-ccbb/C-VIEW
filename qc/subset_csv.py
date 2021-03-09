@@ -25,11 +25,15 @@ def subset_csv(csv_fp, csv_col_name, allowed_vals_str):
 
 
 def get_consensus_fnames_w_allowed_vals(
-        csv_fp, csv_col_name, allowed_vals_str):
+        csv_fp, csv_col_name, allowed_vals_str, dir_prefix=None):
     filtered_df = subset_csv(csv_fp, csv_col_name, allowed_vals_str)
     fastq_ids = filtered_df['fastq_id'].to_list()
-    consensus_fnames = [
-        f"{x}.trimmed.sorted.pileup.consensus.fa" for x in fastq_ids]
+    if dir_prefix is not None:
+        dir_prefix = dir_prefix + "/"
+    else:
+        dir_prefix = ""
+    consensus_fnames = [f"{dir_prefix}{x}.trimmed.sorted.pileup.consensus.fa"
+                        for x in fastq_ids]
     return " ".join(consensus_fnames)
 
 
@@ -53,12 +57,14 @@ def filter_csv(arg_list):
         filtered_df.to_csv(output_fp, index=False)
         result_code = 0
     elif filter_type == ACCEPTED_CONS_FNAMES:
+        dir_prefix = arg_list[3] if len(arg_list) == 4 else None
         result_str = get_consensus_fnames_w_allowed_vals(
-            csv_fp, "is_accepted", "True")
+            csv_fp, "is_accepted", "True", dir_prefix)
         result_code = 0
     elif filter_type == INDEL_FLAGGED_CONS_FNAMES:
+        dir_prefix = arg_list[3] if len(arg_list) == 4 else None
         result_str = get_consensus_fnames_w_allowed_vals(
-            csv_fp, "indels_flagged", "True")
+            csv_fp, "indels_flagged", "True", dir_prefix)
         result_code = 0
     else:
         result_str = f"Unrecognized filter type '{filter_type}'"

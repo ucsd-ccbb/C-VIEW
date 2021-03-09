@@ -50,14 +50,13 @@ runQC () {
 	# mv $WORKSPACE/QCSummaryTable.csv $WORKSPACE/"$SEQ_RUN"-QCSummaryTable.csv
 
 	# Concatenate consensus files
+	# TODO: Adam am I setting these variables right?
 	cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN".fas
-  PASSING_CONS_FNAMES=$($PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-QCSummaryTable.csv accepted_cons_fnames)
-  # TODO: figure out how to append $WORKSPACE/ to cons names; in python?
+  PASSING_CONS_FNAMES=$($PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"--summary.csv accepted_cons_fnames $WORKSPACE)
   # cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN"-passQC.fas
-  INDEL_CONS_FNAMES=$($PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-QCSummaryTable.csv indel_flagged_cons_fnames)
-  # TODO: figure out how to append $WORKSPACE/ to cons names; in python?
+  INDEL_CONS_FNAMES=$($PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"--summary.csv indel_flagged_cons_fnames $WORKSPACE)
   # cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN"-indel_flagged.fas
-  $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-QCSummaryTable.csv filtered_lines indels_flagged True $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv
+  $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"--summary.csv filtered_lines indels_flagged True $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv
 
 
 	# Upload Results
@@ -75,7 +74,7 @@ runQC () {
 	aws s3 cp $WORKSPACE/multiqc_data/ $QCRESULTS/"$SEQ_RUN"_multiqc_data/ --recursive --quiet
 	aws s3 cp $WORKSPACE/multiqc_report.html $QCRESULTS/"$SEQ_RUN"_multiqc_report.html
 	aws s3 cp $WORKSPACE/qc/ $QCRESULTS/ --recursive --quiet
-  aws s3 cp $WORKSPACE/"$SEQ_RUN"-QCSummaryTable.csv $QCRESULTS/
+  aws s3 cp $WORKSPACE/"$SEQ_RUN"--summary.csv $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv $QCRESULTS/
 
 	# Manual review folder
@@ -87,7 +86,7 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/consensus/
 	# aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/acceptance/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-QCSummaryTable.csv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/qc_summary/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"--summary.csv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/qc_summary/
 }
 
 { time ( runQC ) ; } > $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log 2>&1

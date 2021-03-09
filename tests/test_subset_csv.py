@@ -3,6 +3,8 @@ import filecmp
 from unittest import TestCase
 from qc.subset_csv import filter_csv
 
+# TODO: add testing for dir_prefix case
+
 
 class SubsetCsvTest(TestCase):
     test_data_path = os.path.abspath("./data")
