@@ -5,7 +5,7 @@ from unittest import TestCase
 from qc.samtools_depth_plots import make_plots
 
 
-class CustomGenStatsMultiQcTest(TestCase):
+class SamtoolsDepthPlotsTest(TestCase):
     def test_make_plots(self):
         test_data_path = os.path.abspath("./data")
         samples_path = f"{test_data_path}/2021-02-08-ARTIC_samples"

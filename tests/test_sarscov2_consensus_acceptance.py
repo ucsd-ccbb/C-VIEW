@@ -30369,7 +30369,7 @@ REF_SHORT_FIRST_ORF_START_1BASED = 7
 REF_SHORT_LAST_ORF_END_1BASED = 26
 
 
-class SampleQcTest(TestCase):
+class Sarscov2ConsensusAcceptanceTest(TestCase):
     # Not testing _read_consensus_file, _read_depths and
     # _read_ref_genome_fas bc they are simple and
     # fully exercised by _read_input_files tests.
