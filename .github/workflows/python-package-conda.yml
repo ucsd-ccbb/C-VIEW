@@ -23,7 +23,7 @@ jobs:
         # conda env update --file covid1.1_environment.yml --name base
         conda install numpy
         conda install boto3
-        conda install wand
+        conda install wand -c conda-forge
         conda install -c bioconda fastqc
         conda install -c bioconda qualimap
         conda install -c bioconda minimap2
