@@ -31089,9 +31089,6 @@ NC_045512.2	46	2
         curr_item_name = "SU002_S13_L001"
         working_dir = f"{test_data_path}/PDH_83-233854622_samples/" \
                       f"{curr_item_name}"
-        # expected_results_fp = f"{test_data_path}/2021-02-08-ARTIC_samples/" \
-        #                       f"018idSEARCH-5345-SAN_L001_L002_L003_L004/" \
-        #                       f"018idSEARCH-5345-SAN_L001_L002_L003_L004.acceptance.tsv"
         expected_results_fp = f"{working_dir}/{curr_item_name}.acceptance.tsv"
         expected_json_fp = f"{working_dir}/{curr_item_name}.align.json"
         output_fp = f"{test_data_path}/qc/temp_test_consensus_acceptance.tsv"
