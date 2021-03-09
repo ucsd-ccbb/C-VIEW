@@ -11,11 +11,12 @@ runPangolin () {
 
 	aws s3 cp $S3DOWNLOAD/consensus/ $WORKSPACE/ --recursive --quiet
 	aws s3 cp $S3DOWNLOAD/qc_summary/ $WORKSPACE/ --recursive --quiet
+	# TODO: add download of historical fas and metadata files
 
 	cat $WORKSPACE/*passQC.fas > $WORKSPACE/merged.fas
 	sed -i -e 's/Consensus_//g' -e 's/.trimmed.sorted.pileup.consensus_threshold_0.5_quality_20//g' $WORKSPACE/merged.fas
 
-	# TODO: Add historical fas .. should ref and B.1.1.7 be part of that?
+	# TODO: Add all historical fas files
 
 	# add the reference sequence
 	cat $PIPELINEDIR/reference_files/RmYN02.fas >> $WORKSPACE/merged.fas
@@ -29,7 +30,13 @@ runPangolin () {
 	pangolin -t $THREADS --outfile $WORKSPACE/merged.lineage_report.csv $WORKSPACE/merged.fas
 
   # produce merged_qc_and_lineages.csv
+  # TODO: must add merge of historical sample names BEFORE lineage merge
   $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE _summary.csv $WORKSPACE/merged.lineage_report.csv $WORKSPACE/merged_qc_and_lineages.csv
+  # TODO: lineage merge should be done twice--once as an outer,
+  #  once as a right (where only things with lineages stay); latter becomes metadata for
+  #  empress
+  # TODO: must output empress metadata file as TSV, not csv
+  # output as $WORKSPACE/empress_metadata.tsv
 
 	rename 's/merged/'$TIMESTAMP'/' $WORKSPACE/merged*
 	aws s3 cp $WORKSPACE/ $S3UPLOAD/ --recursive --quiet
@@ -46,23 +53,10 @@ buildTree () {
 
 	python /shared/workspace/software/MinVar-Rooting-master/FastRoot.py -i $WORKSPACE/merged.trimmed.aln.treefile -o $WORKSPACE/merged.trimmed.aln.rooted.treefile -m OG -g "hCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25"
 
-	# Metadata -------------------------
-	$PIPELINEDIR/qc/subset_csv.py $WORKSPACE/merged_qc_and_lineages.csv filtered_lines is_accepted True $WORKSPACE/merged_accepted_qc_and_lineages_metadata.csv
-
-  # TODO: mod this to match format of $WORKSPACE/merged_accepted_qc_and_lineages_metadata.csv
-	echo -e "hCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25\thCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25" >> $WORKSPACE/tmp.merged.metadata.txt
-	echo -e "hCoV-19/USA/CA-SEARCH-5574/2020|EPI_ISL_751801|2020-12-29\thCoV-19/USA/CA-SEARCH-5574/2020|EPI_ISL_751801|2020-12-29" >> $WORKSPACE/tmp.merged.metadata.txt
-  # TODO: figure out how to add metadata from "historical"
-
-  # TODO: figure out what needs to go in this line or if it is needed at all
-  # TODO: make sure correct col is specified as leaf name ... how is that done?
-	# sed -i '1 a q2:types\tcategorical\tcategorical\tcategorical\tcategorical\tcategorical' $WORKSPACE/merged.final.metadata.txt
-	# End Metadata -------------------------
-
 	# tree building 
 	source $ANACONDADIR/activate qiime2-2020.11
 
-	empress tree-plot --tree $WORKSPACE/merged.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/merged_accepted_qc_and_lineages_metadata.csv --output-dir $WORKSPACE/tree-viz
+	empress tree-plot --tree $WORKSPACE/merged.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/empress_metadata.tsv --output-dir $WORKSPACE/tree-viz
 
   # TODO: "merged" vs "merged."
 	rename 's/merged/'$TIMESTAMP'/' $WORKSPACE/merged.*
