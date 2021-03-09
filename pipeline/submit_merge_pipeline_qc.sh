@@ -17,7 +17,7 @@ do
 	echo "Call Variants: $VARIANTS"
 	echo "Run QC: $QC"
 	echo "Lineage with Pangolin: $LINEAGE"
-	echo "Run tree building: $TREE_BUILD" 
+	echo "Run tree building: $TREE_BUILD"
 
 	# Append Results URL
 	RESULTS="$TIMESTAMP"_"$FQ"
@@ -41,12 +41,12 @@ do
 	  echo "Error: VARIANTS must be one of true or false"
 	  exit 1
 	fi
-	
+
 	if [[ ! "$QC" =~ ^(true|false)$ ]]; then
 	  echo "Error: QC must be one of true or false"
 	  exit 1
 	fi
-	
+
 	if [[ ! "$LINEAGE" =~ ^(true|false)$ ]]; then
 	  echo "Error: LINEAGE must be one of true or false"
 	  exit 1
@@ -76,7 +76,7 @@ do
 	SAMPLE_LIST=$(aws s3 ls $S3DOWNLOAD/"$SEQ_RUN"_fastq/ | grep fastq.gz | awk '{print $NF}' | awk -F $DELIMITER '{print $1}' | sort | uniq | grep -v Undetermined)
 
 	if [[ "$VARIANTS" == true ]]; then
-		
+
 		# Run pipeline on each sample
 		for SAMPLE in $SAMPLE_LIST; do
 			qsub $QSUBSAMPLEPARAMS \
@@ -89,7 +89,7 @@ do
 				-v TIMESTAMP=$TIMESTAMP \
 				-N Covid19_"$SEQ_RUN"_"$SAMPLE" \
 				-wd /shared/workspace/projects/covid/logs \
-				-pe smp 1 \
+				-pe smp 2 \
 				-S /bin/bash \
 				$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
 		done
