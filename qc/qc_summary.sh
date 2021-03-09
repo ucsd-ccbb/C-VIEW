@@ -78,7 +78,7 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $QCRESULTS/
 
 	# Manual review folder
-	# TODO: Set this folder up
+	# TODO: Set this manual review folder up
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-indel_flagged.fas s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/manual_review/
   aws s3 cp $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/manual_review/
 
