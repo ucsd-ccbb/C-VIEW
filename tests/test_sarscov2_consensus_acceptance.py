@@ -30369,7 +30369,17 @@ REF_SHORT_FIRST_ORF_START_1BASED = 7
 REF_SHORT_LAST_ORF_END_1BASED = 26
 
 
-class Sarscov2ConsensusAcceptanceTest(TestCase):
+class FileTestCase(TestCase):
+    test_file_dir = os.path.dirname(os.path.abspath(__file__))
+    test_data_dir = os.path.join(test_file_dir, "data")
+    test_samples_dir = f"{test_data_dir}/2021-02-08-ARTIC_samples"
+    test_qc_dir = f"{test_data_dir}/2021-02-08-ARTIC_quality_control/"
+    test_temp_qc_dir = f"{test_data_dir}/qc"
+    ref_data_dir = os.path.join(os.path.dirname(test_file_dir),
+                                "reference_files")
+
+
+class Sarscov2ConsensusAcceptanceTest(FileTestCase):
     # Not testing _read_consensus_file, _read_depths and
     # _read_ref_genome_fas bc they are simple and
     # fully exercised by _read_input_files tests.
@@ -31038,15 +31048,13 @@ NC_045512.2	46	2
         self.assertEqual(expected_out, real_out)
 
     def test_generate_acceptance_tsv(self):
-        test_data_path = os.path.abspath("./data")
-        ref_data_path = os.path.abspath("../reference_files")
         curr_item_name = "018idSEARCH-5345-SAN_L001_L002_L003_L004"
-        working_dir = f"{test_data_path}/2021-02-08-ARTIC_samples/" \
+        working_dir = f"{self.test_data_dir}/2021-02-08-ARTIC_samples/" \
                       f"{curr_item_name}"
         expected_results_fp = f"{working_dir}/{curr_item_name}.acceptance.tsv"
         expected_json_fp = f"{working_dir}/{curr_item_name}.align.json"
-        output_fp = f"{test_data_path}/qc/temp_test_consensus_acceptance.tsv"
-        out_json_fp = f"{test_data_path}/qc/temp_test_consensus_align.json"
+        output_fp = f"{self.test_data_dir}/qc/temp_test_consensus_acceptance.tsv"
+        out_json_fp = f"{self.test_data_dir}/qc/temp_test_consensus_align.json"
 
         args = ["python sarscov2_consensus_acceptance.py",
                 "2021-02-08-ARTIC",
@@ -31058,7 +31066,7 @@ NC_045512.2	46	2
                 f"{working_dir}/"
                 f"{curr_item_name}.trimmed.sorted.pileup.consensus.fa",
                 f"{working_dir}/{curr_item_name}.trimmed.sorted.depth.txt",
-                f"{ref_data_path}/NC_045512.2.fas",
+                f"{self.ref_data_dir}/NC_045512.2.fas",
                 output_fp,
                 out_json_fp]
 
@@ -31084,15 +31092,13 @@ NC_045512.2	46	2
                     pass
 
     def test_generate_acceptance_tsv_no_consensus(self):
-        test_data_path = os.path.abspath("./data")
-        ref_data_path = os.path.abspath("../reference_files")
         curr_item_name = "SU002_S13_L001"
-        working_dir = f"{test_data_path}/PDH_83-233854622_samples/" \
+        working_dir = f"{self.test_data_dir}/PDH_83-233854622_samples/" \
                       f"{curr_item_name}"
         expected_results_fp = f"{working_dir}/{curr_item_name}.acceptance.tsv"
         expected_json_fp = f"{working_dir}/{curr_item_name}.align.json"
-        output_fp = f"{test_data_path}/qc/temp_test_consensus_acceptance.tsv"
-        out_json_fp = f"{test_data_path}/qc/temp_test_consensus_align.json"
+        output_fp = f"{self.test_data_dir}/qc/temp_test_consensus_acceptance.tsv"
+        out_json_fp = f"{self.test_data_dir}/qc/temp_test_consensus_align.json"
 
         args = ["python sarscov2_consensus_acceptance.py",
                 "PDH_83-233854622",
@@ -31104,7 +31110,7 @@ NC_045512.2	46	2
                 f"{working_dir}/"
                 f"{curr_item_name}.trimmed.sorted.pileup.consensus.fa",
                 f"{working_dir}/{curr_item_name}.trimmed.sorted.depth.txt",
-                f"{ref_data_path}/NC_045512.2.fas",
+                f"{self.ref_data_dir}/NC_045512.2.fas",
                 output_fp,
                 out_json_fp]
 
