@@ -10,7 +10,7 @@
 
 
 from sys import argv
-from collections import Counter, defaultdict
+from collections import Counter
 import re
 import yaml
 
