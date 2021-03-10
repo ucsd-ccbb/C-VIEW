@@ -113,13 +113,13 @@ def _save_violin_plot(x, y, sample_names, output_fp):
     # TODO: Is headless used implicitly somewhere in plotting? else axe
     try:
         fig, ax = plt.subplots()
-        headless = False
-    except:
+        # headless = False
+    except:  # noqa E722
         # TODO: does this duplicate what is done at start of script?
         import matplotlib
         matplotlib.use('Agg')
         fig, ax = plt.subplots()
-        headless = True
+        # headless = True
     fig.set_size_inches(INCH_PER_SAMPLE * len(sample_names), 4.8)
     violinplot(x=x, y=y)
     plt.ylim(ymin=1)

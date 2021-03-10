@@ -11,6 +11,7 @@ import os
 
 SAMPLE_ID = "sample_id"
 
+
 def format_taxon(x):
     """ Parses sample name from taxon column in pangolin lineage report """
     sampleName = x.split(".")[0]

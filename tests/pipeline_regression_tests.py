@@ -27,7 +27,7 @@ def regression_test(s3_results_url):
 
     gold_standard_basenames = os.listdir(_GOLD_STANDARD_DIR)
     for curr_gs_basename in sorted(gold_standard_basenames):
-        if not "SEARCH-" in curr_gs_basename:
+        if "SEARCH-" not in curr_gs_basename:
             continue
 
         # compare consensus sequence and variant calls ONLY
@@ -50,7 +50,7 @@ def regression_test(s3_results_url):
             num_match += 1
             print(".", end='')
         else:
-            num_mismatch +=1
+            num_mismatch += 1
             print("F", end='')
 
     print("")

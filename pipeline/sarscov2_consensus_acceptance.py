@@ -57,8 +57,9 @@ def check_acceptance(consensus_seq, consensus_depths,
     # the number of consensus gaps (consensus deletions) is NOT
     # a perfect multiple of 3, flag this consensus sequence as
     # possibly suspicious
-    indels_flagged = align_results[NUM_INSERTS] % 3 != 0 or \
-                     align_results[NUM_DELS] % 3 != 0
+    indels_flagged = \
+        align_results[NUM_INSERTS] % 3 != 0 or \
+        align_results[NUM_DELS] % 3 != 0
     is_accepted = (not indels_flagged) and fraction_passes
 
     result[COVERAGE] = depth_pass_fraction
