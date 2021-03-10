@@ -49,15 +49,19 @@ runQC () {
 	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-summary.csv
 	# mv $WORKSPACE/QCSummaryTable.csv $WORKSPACE/"$SEQ_RUN"-QCSummaryTable.csv
 
-	# Concatenate consensus files
-	# TODO: Adam am I setting these variables right?
+	# Concatenate all consensus files to a .fas file
 	cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN".fas
-  PASSING_CONS_FNAMES=$($PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv accepted_cons_fnames $WORKSPACE)
-  # cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN"-passQC.fas
-  INDEL_CONS_FNAMES=$($PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv indel_flagged_cons_fnames $WORKSPACE)
-  # cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN"-indel_flagged.fas
-  $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv filtered_lines indels_flagged True $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv
 
+  # Id only passing consensus files and write them to a *-passQC.fas file
+  PASSING_CONS_FNAMES=$(python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv accepted_cons_fnames $WORKSPACE)
+  cat $PASSING_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-passQC.fas
+
+  # Id only consensus files failing acceptance because of the indel flag.
+  # Write these to a *-indel_flagged.fas file and also create a *-summary.csv
+  # file holding only the records for these sequences
+  INDEL_CONS_FNAMES=$(python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv indel_flagged_cons_fnames $WORKSPACE)
+  cat $INDEL_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-indel_flagged.fas
+  python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv filtered_lines indels_flagged True $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv
 
 	# Upload Results
 	echo "Uploading QC and summary results."
@@ -78,7 +82,6 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $QCRESULTS/
 
 	# Manual review folder
-	# TODO: Set this manual review folder up
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-indel_flagged.fas s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/manual_review/
   aws s3 cp $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/manual_review/
 

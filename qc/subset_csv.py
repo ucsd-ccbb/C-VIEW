@@ -73,11 +73,11 @@ def filter_csv(arg_list):
 
 
 if __name__ == '__main__':
-    out_loc = stderr
+    # out_loc = stderr
     out_str, out_code = filter_csv(argv)
 
-    if out_str == 0:
-        out_loc = stdout
+    # if out_code == 0:
+    #     out_loc = stdout
 
-    print(out_str, file=out_loc)
-    exit(out_loc)
+    print(out_str)  # , file=out_loc)
+    exit(out_code)
