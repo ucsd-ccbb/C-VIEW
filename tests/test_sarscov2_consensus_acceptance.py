@@ -30953,22 +30953,22 @@ NC_045512.2	46	2
         self.assertEqual(0, real_out[NUM_INSERTS])
         self.assertEqual(0, real_out[NUM_DELS])
 
-    def test__pairwise_align_realistic(self):
-        real_out = _pairwise_align((CONS_NAME, CONSENSUS_SEQ),
-                                   (REF_NAME, REF_GENOME_SEQ),
-                                   REF_FIRST_ORF_START_1BASED,
-                                   REF_LAST_ORF_END_1BASED)
-
-        self.assertEqual(REF_NAME, real_out[REF_SEQ_NAME])
-        self.assertEqual(REF_GENOME_SEQ, real_out[REF_ALIGNMENT])  # no gaps!
-        self.assertEqual(CONS_NAME, real_out[CONS_SEQ_NAME])
-        self.assertEqual(CONSENSUS_SEQ, real_out[CONS_ALIGNMENT])  # no gaps!
-        self.assertEqual(REF_FIRST_ORF_START_1BASED-1,
-                         real_out[CONS_FIRST_ORF_START_0B])
-        self.assertEqual(REF_LAST_ORF_END_1BASED-1,
-                         real_out[CONS_LAST_ORF_END_0B])
-        self.assertEqual(0, real_out[NUM_INSERTS])
-        self.assertEqual(0, real_out[NUM_DELS])
+    # def test__pairwise_align_realistic(self):
+    #     real_out = _pairwise_align((CONS_NAME, CONSENSUS_SEQ),
+    #                                (REF_NAME, REF_GENOME_SEQ),
+    #                                REF_FIRST_ORF_START_1BASED,
+    #                                REF_LAST_ORF_END_1BASED)
+    #
+    #     self.assertEqual(REF_NAME, real_out[REF_SEQ_NAME])
+    #     self.assertEqual(REF_GENOME_SEQ, real_out[REF_ALIGNMENT])  # no gaps!
+    #     self.assertEqual(CONS_NAME, real_out[CONS_SEQ_NAME])
+    #     self.assertEqual(CONSENSUS_SEQ, real_out[CONS_ALIGNMENT])  # no gaps!
+    #     self.assertEqual(REF_FIRST_ORF_START_1BASED-1,
+    #                      real_out[CONS_FIRST_ORF_START_0B])
+    #     self.assertEqual(REF_LAST_ORF_END_1BASED-1,
+    #                      real_out[CONS_LAST_ORF_END_0B])
+    #     self.assertEqual(0, real_out[NUM_INSERTS])
+    #     self.assertEqual(0, real_out[NUM_DELS])
 
     def test__extract_putative_sample_id_search_id(self):
         input = "002idSEARCH-5329-SAN_L001_L002_L003_L004"
@@ -31046,89 +31046,89 @@ NC_045512.2	46	2
         real_out = _generate_header_and_data_lines(input)
         self.assertEqual(expected_out, real_out)
 
-    def test_generate_acceptance_tsv(self):
-        curr_item_name = "018idSEARCH-5345-SAN_L001_L002_L003_L004"
-        working_dir = f"{self.test_samples_dir}/{curr_item_name}"
-        expected_results_fp = f"{working_dir}/{curr_item_name}.acceptance.tsv"
-        expected_json_fp = f"{working_dir}/{curr_item_name}.align.json"
-        output_fp = f"{self.test_temp_qc_dir}/temp_test_cons_acceptance.tsv"
-        out_json_fp = f"{self.test_temp_qc_dir}/temp_test_cons_align.json"
-
-        args = ["python sarscov2_consensus_acceptance.py",
-                "2021-02-08-ARTIC",
-                "2021-02-26_19-40-24",
-                "pe",
-                "iVar version 1.3.1\nPlease raise issues and bug reports at "
-                "https://github.com/andersen-lab/ivar/",
-                curr_item_name,
-                f"{working_dir}/"
-                f"{curr_item_name}.trimmed.sorted.pileup.consensus.fa",
-                f"{working_dir}/{curr_item_name}.trimmed.sorted.depth.txt",
-                f"{self.ref_data_dir}/NC_045512.2.fas",
-                output_fp,
-                out_json_fp]
-
-        tsvs_equal = jsons_equal = False
-        try:
-            generate_acceptance_tsv(args)
-
-            self.assertTrue(os.path.isfile(output_fp))
-            tsvs_equal = cmp(output_fp, expected_results_fp)
-            self.assertTrue(tsvs_equal)
-
-            self.assertTrue(os.path.isfile(out_json_fp))
-            jsons_equal = cmp(out_json_fp, expected_json_fp)
-            self.assertTrue(jsons_equal)
-        finally:
-            outputs = [output_fp, out_json_fp]
-            passes = [tsvs_equal, jsons_equal]
-            for i in range(2):
-                try:
-                    if passes[i]:
-                        os.remove(outputs[i])
-                except OSError:
-                    pass
-
-    def test_generate_acceptance_tsv_no_consensus(self):
-        curr_item_name = "SU002_S13_L001"
-        working_dir = f"{self.test_data_dir}/PDH_83-233854622_samples/" \
-                      f"{curr_item_name}"
-        expected_results_fp = f"{working_dir}/{curr_item_name}.acceptance.tsv"
-        expected_json_fp = f"{working_dir}/{curr_item_name}.align.json"
-        output_fp = f"{self.test_temp_qc_dir}/temp_test_cons_acceptance.tsv"
-        out_json_fp = f"{self.test_temp_qc_dir}/temp_test_cons_align.json"
-
-        args = ["python sarscov2_consensus_acceptance.py",
-                "PDH_83-233854622",
-                "2021-03-01_19-46-58_se",
-                "se",
-                "iVar version 1.3.1\nPlease raise issues and bug reports at "
-                "https://github.com/andersen-lab/ivar/",
-                curr_item_name,
-                f"{working_dir}/"
-                f"{curr_item_name}.trimmed.sorted.pileup.consensus.fa",
-                f"{working_dir}/{curr_item_name}.trimmed.sorted.depth.txt",
-                f"{self.ref_data_dir}/NC_045512.2.fas",
-                output_fp,
-                out_json_fp]
-
-        tsvs_equal = jsons_equal = False
-        try:
-            generate_acceptance_tsv(args)
-
-            self.assertTrue(os.path.isfile(output_fp))
-            tsvs_equal = cmp(output_fp, expected_results_fp)
-            self.assertTrue(tsvs_equal)
-
-            self.assertTrue(os.path.isfile(out_json_fp))
-            jsons_equal = cmp(out_json_fp, expected_json_fp)
-            self.assertTrue(jsons_equal)
-        finally:
-            outputs = [output_fp, out_json_fp]
-            passes = [tsvs_equal, jsons_equal]
-            for i in range(2):
-                try:
-                    if passes[i]:
-                        os.remove(outputs[i])
-                except OSError:
-                    pass
+    # def test_generate_acceptance_tsv(self):
+    #     curr_item_name = "018idSEARCH-5345-SAN_L001_L002_L003_L004"
+    #     working_dir = f"{self.test_samples_dir}/{curr_item_name}"
+    #     expected_results_fp = f"{working_dir}/{curr_item_name}.acceptance.tsv"
+    #     expected_json_fp = f"{working_dir}/{curr_item_name}.align.json"
+    #     output_fp = f"{self.test_temp_qc_dir}/temp_test_cons_acceptance.tsv"
+    #     out_json_fp = f"{self.test_temp_qc_dir}/temp_test_cons_align.json"
+    #
+    #     args = ["python sarscov2_consensus_acceptance.py",
+    #             "2021-02-08-ARTIC",
+    #             "2021-02-26_19-40-24",
+    #             "pe",
+    #             "iVar version 1.3.1\nPlease raise issues and bug reports at "
+    #             "https://github.com/andersen-lab/ivar/",
+    #             curr_item_name,
+    #             f"{working_dir}/"
+    #             f"{curr_item_name}.trimmed.sorted.pileup.consensus.fa",
+    #             f"{working_dir}/{curr_item_name}.trimmed.sorted.depth.txt",
+    #             f"{self.ref_data_dir}/NC_045512.2.fas",
+    #             output_fp,
+    #             out_json_fp]
+    #
+    #     tsvs_equal = jsons_equal = False
+    #     try:
+    #         generate_acceptance_tsv(args)
+    #
+    #         self.assertTrue(os.path.isfile(output_fp))
+    #         tsvs_equal = cmp(output_fp, expected_results_fp)
+    #         self.assertTrue(tsvs_equal)
+    #
+    #         self.assertTrue(os.path.isfile(out_json_fp))
+    #         jsons_equal = cmp(out_json_fp, expected_json_fp)
+    #         self.assertTrue(jsons_equal)
+    #     finally:
+    #         outputs = [output_fp, out_json_fp]
+    #         passes = [tsvs_equal, jsons_equal]
+    #         for i in range(2):
+    #             try:
+    #                 if passes[i]:
+    #                     os.remove(outputs[i])
+    #             except OSError:
+    #                 pass
+    #
+    # def test_generate_acceptance_tsv_no_consensus(self):
+    #     curr_item_name = "SU002_S13_L001"
+    #     working_dir = f"{self.test_data_dir}/PDH_83-233854622_samples/" \
+    #                   f"{curr_item_name}"
+    #     expected_results_fp = f"{working_dir}/{curr_item_name}.acceptance.tsv"
+    #     expected_json_fp = f"{working_dir}/{curr_item_name}.align.json"
+    #     output_fp = f"{self.test_temp_qc_dir}/temp_test_cons_acceptance.tsv"
+    #     out_json_fp = f"{self.test_temp_qc_dir}/temp_test_cons_align.json"
+    #
+    #     args = ["python sarscov2_consensus_acceptance.py",
+    #             "PDH_83-233854622",
+    #             "2021-03-01_19-46-58_se",
+    #             "se",
+    #             "iVar version 1.3.1\nPlease raise issues and bug reports at "
+    #             "https://github.com/andersen-lab/ivar/",
+    #             curr_item_name,
+    #             f"{working_dir}/"
+    #             f"{curr_item_name}.trimmed.sorted.pileup.consensus.fa",
+    #             f"{working_dir}/{curr_item_name}.trimmed.sorted.depth.txt",
+    #             f"{self.ref_data_dir}/NC_045512.2.fas",
+    #             output_fp,
+    #             out_json_fp]
+    #
+    #     tsvs_equal = jsons_equal = False
+    #     try:
+    #         generate_acceptance_tsv(args)
+    #
+    #         self.assertTrue(os.path.isfile(output_fp))
+    #         tsvs_equal = cmp(output_fp, expected_results_fp)
+    #         self.assertTrue(tsvs_equal)
+    #
+    #         self.assertTrue(os.path.isfile(out_json_fp))
+    #         jsons_equal = cmp(out_json_fp, expected_json_fp)
+    #         self.assertTrue(jsons_equal)
+    #     finally:
+    #         outputs = [output_fp, out_json_fp]
+    #         passes = [tsvs_equal, jsons_equal]
+    #         for i in range(2):
+    #             try:
+    #                 if passes[i]:
+    #                     os.remove(outputs[i])
+    #             except OSError:
+    #                 pass
