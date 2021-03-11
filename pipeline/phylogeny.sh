@@ -9,22 +9,22 @@ THREADS=16
 rm -rf $WORKSPACE
 mkdir -p $WORKSPACE
 
+if [[ "$ORGANIZATION" == ucsd ]]; then
+  	# only if NOT is_helix
+    aws s3 cp $S3UCSD/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
+	aws s3 cp $S3UCSD/phylogeny/cumulative_data/qc_summary/ $WORKSPACE/ --recursive --quiet
+	aws s3 cp $S3UCSD/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
+	S3UPLOAD=$S3UCSD
+else
+	S3UPLOAD=$S3HELIX
+fi
+
+	# always download helix data
+aws s3 cp $S3HELIX/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
+aws s3 cp $S3HELIX/phylogeny/cumulative_data/qc_summary/ $WORKSPACE/ --recursive --quiet
+aws s3 cp $S3HELIX/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
+	
 runPangolin () {
-
-	if [[ "$ORGANIZATION" == ucsd ]]; then
-	  	# only if NOT is_helix
-	    aws s3 cp $S3UCSD/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
-		aws s3 cp $S3UCSD/phylogeny/cumulative_data/qc_summary/ $WORKSPACE/ --recursive --quiet
-		aws s3 cp $S3UCSD/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
-		S3UPLOAD=$S3UCSD
-	else
-		S3UPLOAD=$S3HELIX
-	fi
-
- 	# always download helix data
-	aws s3 cp $S3HELIX/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
-	aws s3 cp $S3HELIX/phylogeny/cumulative_data/qc_summary/ $WORKSPACE/ --recursive --quiet
-	aws s3 cp $S3HELIX/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
 
 	# start with the reference sequence
 	cat $PIPELINEDIR/reference_files/NC_045512.2.fas > $WORKSPACE/"$TIMESTAMP".fas
