@@ -69,7 +69,6 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-variants.zip $PHYLORESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-consensus.zip $PHYLORESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-depth.zip $PHYLORESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.samples.tsv $PHYLORESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $PHYLORESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $PHYLORESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $PHYLORESULTS/
