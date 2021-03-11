@@ -3,24 +3,24 @@
 INPUT=$1 # Sample Sheet with header - seq_run,s3download,s3upload,primers,reads
 TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
-S3_TREEBUILD=s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building
+S3HELIX=s3://ucsd-helix
+S3UCSD=s3://ucsd-other
 QSUBSAMPLEPARAMS=''
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
-sed 1d $INPUT | while IFS=',' read SEQ_RUN S3DOWNLOAD PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD
+sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD
 do
-	echo "Seq_Run: $SEQ_RUN"
-	echo "S3 Fastq path: $S3DOWNLOAD/"$SEQ_RUN"_fastq"
-	echo "Primers: $PRIMER_SET"
-	echo "Fastq Reads: $FQ"
-	echo "Merge Lanes: $MERGE_LANES"
-	echo "Call Variants: $VARIANTS"
-	echo "Run QC: $QC"
-	echo "Lineage with Pangolin: $LINEAGE"
-	echo "Run tree building: $TREE_BUILD"
 
-	# Append Results URL
-	RESULTS="$TIMESTAMP"_"$FQ"
+	if [[ ! "$ORGANIZATION" =~ ^(ucsd|helix)$ ]]; then
+		echo "Error: Parameter ORGANIZATION must be one of ucsd or helix"
+		exit 1
+	fi
+
+	if [[ "$ORGANIZATION" == ucsd ]]; then
+		S3DOWNLOAD=$S3UCSD
+	elif [[ "$ORGANIZATION" == helix ]]; then
+		S3DOWNLOAD=$S3HELIX
+	fi
 
 	if [[ ! "$PRIMER_SET" =~ ^(artic|swift_v2)$ ]]; then
 		echo "Error: Parameter PRIMER_SET must be one of artic or swift_v2"
@@ -57,11 +57,25 @@ do
 	  exit 1
 	fi
 
+	echo "Organization: $ORGANIZATION"
+	echo "Seq_Run: $SEQ_RUN"
+	echo "S3 Fastq path: $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq"
+	echo "Primers: $PRIMER_SET"
+	echo "Fastq Reads: $FQ"
+	echo "Merge Lanes: $MERGE_LANES"
+	echo "Call Variants: $VARIANTS"
+	echo "Run QC: $QC"
+	echo "Lineage with Pangolin: $LINEAGE"
+	echo "Run tree building: $TREE_BUILD"
+
+	# Append Results URL
+	RESULTS="$TIMESTAMP"_"$FQ"
+
 	# Merge fastq files from multiple lanes
 	if [[ "$MERGE_LANES" == true ]]; then
 		qsub -v SEQ_RUN=$SEQ_RUN \
 			 -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
-			 -v S3DOWNLOAD=$S3DOWNLOAD/"$SEQ_RUN"_fastq \
+			 -v S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq \
 			 -wd /shared/workspace/projects/covid/logs \
 			 -N merge_fq_lanes_"$SEQ_RUN" \
 			 -pe smp 16 \
@@ -73,7 +87,11 @@ do
 		DELIMITER=_R
 	fi
 
-	SAMPLE_LIST=$(aws s3 ls $S3DOWNLOAD/"$SEQ_RUN"_fastq/ | grep fastq.gz | awk '{print $NF}' | awk -F $DELIMITER '{print $1}' | sort | uniq | grep -v Undetermined)
+	SAMPLE_LIST=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ | grep fastq.gz | awk '{print $NF}' | awk -F $DELIMITER '{print $1}' | sort | uniq | grep -v Undetermined)
+	if [[ "$SAMPLE_LIST" == "" ]]; then
+		echo "There are no samples to run in $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ "
+		exit 1
+	fi
 
 	if [[ "$VARIANTS" == true ]]; then
 
@@ -114,8 +132,7 @@ do
     if [[ "$LINEAGE" == true ]]; then
 	    qsub \
 			-hold_jid 'QC_summary_'$SEQ_RUN'' \
-			-v S3DOWNLOAD=$S3_TREEBUILD \
-			-v S3UPLOAD=$S3DOWNLOAD/Cumulative_phylogeny/$TIMESTAMP \
+			-v ORGANIZATION=$ORGANIZATION \
 			-v TREE_BUILD=$TREE_BUILD \
 			-v TIMESTAMP=$TIMESTAMP \
 			-v WORKSPACE=/scratch/lineage/$TIMESTAMP \
@@ -127,8 +144,8 @@ do
 
     fi
 
-	echo "seq_run,s3download,primers,reads,merge,variants,qc,lineage,tree_build" > "$SEQ_RUN"-"$TIMESTAMP".csv
-	echo "$SEQ_RUN,$S3DOWNLOAD,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD" >> "$SEQ_RUN"-"$TIMESTAMP".csv
-	aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3DOWNLOAD/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
+	echo "organization,seq_run,primers,reads,merge,variants,qc,lineage,tree_build" > "$SEQ_RUN"-"$TIMESTAMP".csv
+	echo "$ORGANIZATION,$SEQ_RUN,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD" >> "$SEQ_RUN"-"$TIMESTAMP".csv
+	aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
 	rm "$SEQ_RUN"-"$TIMESTAMP".csv
 done

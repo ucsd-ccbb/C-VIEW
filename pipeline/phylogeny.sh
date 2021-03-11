@@ -3,18 +3,28 @@
 export PATH=$PATH:/shared/workspace/software/IQTree/iqtree-2.1.2-Linux/bin:/shared/workspace/software/viralMSA:/shared/workspace/software/MinVar-Rooting-master:/shared/workspace/software/anaconda3/envs/covid1.2/bin
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
+S3HELIX=s3://ucsd-helix
+S3UCSD=s3://ucsd-other
 THREADS=16
 rm -rf $WORKSPACE
 mkdir -p $WORKSPACE
 
 runPangolin () {
 
-	aws s3 cp $S3DOWNLOAD/consensus/ $WORKSPACE/ --exclude "*" --recursive --quiet
-	aws s3 cp $S3DOWNLOAD/qc_summary/ $WORKSPACE/ --recursive --quiet
-	# TODO: skip historic download if helix?
-	# TODO: need to add "historic" to the end of the historic fas files
-	aws s3 cp $S3DOWNLOAD/historic/ $WORKSPACE/historic/ --exclude "*" --include "*historic.fas" --recursive --quiet
+	if [[ "$ORGANIZATION" == ucsd ]]; then
+	  	# only if NOT is_helix
+	    aws s3 cp $S3UCSD/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
+		aws s3 cp $S3UCSD/phylogeny/cumulative_data/qc_summary/ $WORKSPACE/ --recursive --quiet
+		aws s3 cp $S3UCSD/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
+		S3UPLOAD=$S3UCSD
+	else
+		S3UPLOAD=$S3HELIX
+	fi
 
+ 	# always download helix data
+	aws s3 cp $S3HELIX/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
+	aws s3 cp $S3HELIX/phylogeny/cumulative_data/qc_summary/ $WORKSPACE/ --recursive --quiet
+	aws s3 cp $S3HELIX/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
 
 	# start with the reference sequence
 	cat $PIPELINEDIR/reference_files/NC_045512.2.fas > $WORKSPACE/merged.fas
@@ -49,7 +59,7 @@ runPangolin () {
     $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE "-summary.csv" $WORKSPACE/added_fa_names.txt $WORKSPACE/merged.lineage_report.csv $WORKSPACE/merged.qc_and_lineages.csv $WORKSPACE/merged.empress_metadata.tsv
 
 	rename 's/merged/'$TIMESTAMP'/' $WORKSPACE/merged.*
-	aws s3 cp $WORKSPACE/ $S3UPLOAD/ --recursive --quiet
+	aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$TIMESTAMP/ --recursive --quiet
 }
 
 buildTree () {
@@ -70,18 +80,18 @@ buildTree () {
 
 	rename 's/merged/'$TIMESTAMP'/' $WORKSPACE/merged.*
 	rename 's/merged/'$TIMESTAMP'/' $WORKSPACE/viralmsa_out/merged.*
-	aws s3 cp $WORKSPACE/ $S3DOWNLOAD/trees/$TIMESTAMP/ --recursive --quiet
+	aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$TIMESTAMP/ --recursive --quiet
 
 }
 
 # Always run Pangolin
 { time ( runPangolin ) ; } > $WORKSPACE/"$TIMESTAMP"-pangolin.log 2>&1
-aws s3 cp $WORKSPACE/"$TIMESTAMP"-pangolin.log $S3UPLOAD/
+aws s3 cp $WORKSPACE/"$TIMESTAMP"-pangolin.log $S3UPLOAD/phylogeny/$TIMESTAMP/
 
 # Run tree building if TREE_BUILD == true
 if [[ "$TREE_BUILD" == true ]]; then
 	{ time ( buildTree ) ; } > $WORKSPACE/"$TIMESTAMP"-treebuild.log 2>&1
-	aws s3 cp $WORKSPACE/"$TIMESTAMP"-treebuild.log $S3DOWNLOAD/trees/$TIMESTAMP/
+	aws s3 cp $WORKSPACE/"$TIMESTAMP"-treebuild.log $S3UPLOAD/phylogeny/$TIMESTAMP/
 fi
 
 
