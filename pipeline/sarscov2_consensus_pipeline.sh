@@ -11,7 +11,7 @@ PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 REF_FAS="/scratch/reference/NC_045512.2.fas"
 REF_MMI="/scratch/reference/NC_045512.2.fas.mmi"
 REF_GFF="/scratch/reference/NC_045512.2.gff3"
-RESULTS=$S3DOWNLOAD/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_samples/$SAMPLE
+RESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_samples/$SAMPLE
 # Clear fastq directory if node is being reused
 rm -rf $WORKSPACE/*
 mkdir -p $WORKSPACE/fastq
@@ -40,9 +40,9 @@ if [[ ! -f "$SCRATCH_PRIMER_FP" ]]; then
 fi
 
 if [[ "$MERGE_LANES" == true ]]; then
-  S3DOWNLOAD=$S3DOWNLOAD/"$SEQ_RUN"_fastq/"$SEQ_RUN"_lane_merged_fastq
+  S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/"$SEQ_RUN"_lane_merged_fastq
 else
-  S3DOWNLOAD=$S3DOWNLOAD/"$SEQ_RUN"_fastq
+  S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq
 fi
 
 # Step 0: Download fastq
@@ -87,7 +87,7 @@ fi
 
 # QC
 IVAR_VER=$(ivar version)
-{ time ( python $PIPELINEDIR/pipeline/sarscov2_consensus_acceptance.py $SEQ_RUN $TIMESTAMP $FQ $IVAR_VER $SAMPLE $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt $REF_FAS $WORKSPACE/"$SAMPLE".acceptance.tsv $WORKSPACE/"$SAMPLE".align.json) ; } 2> $WORKSPACE/"$SAMPLE".log.9.acceptance.log
+{ time ( python $PIPELINEDIR/pipeline/sarscov2_consensus_acceptance.py $SEQ_RUN $TIMESTAMP $FQ "$IVAR_VER" $SAMPLE $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt $REF_FAS $WORKSPACE/"$SAMPLE".acceptance.tsv $WORKSPACE/"$SAMPLE".align.json ) ; } 2> $WORKSPACE/"$SAMPLE".log.9.acceptance.log
 
 
 aws s3 cp $WORKSPACE/ $RESULTS/ --recursive --include "*" --exclude "*fastq.gz"

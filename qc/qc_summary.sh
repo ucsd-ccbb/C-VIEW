@@ -1,8 +1,8 @@
 #!/bin/bash
 
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
-PHYLORESULTS=$S3DOWNLOAD/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_phylogenetic_results
-QCRESULTS=$S3DOWNLOAD/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_quality_control
+PHYLORESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_phylogenetic_results
+QCRESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_quality_control
 # Activate conda env covid1.2
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate covid1.2
@@ -12,7 +12,7 @@ mkdir -p $WORKSPACE/qc/fastqc
 
 runQC () {
 
-	aws s3 cp $S3DOWNLOAD/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_samples/ $WORKSPACE/ \
+	aws s3 cp $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_samples/ $WORKSPACE/ \
 		--quiet \
 		--recursive \
 		--exclude "*" \
@@ -52,16 +52,16 @@ runQC () {
 	# Concatenate all consensus files to a .fas file
 	cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN".fas
 
-  # Id only passing consensus files and write them to a *-passQC.fas file
-  PASSING_CONS_FNAMES=$(python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv accepted_cons_fnames $WORKSPACE)
-  cat $PASSING_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-passQC.fas
+    # Id only passing consensus files and write them to a *-passQC.fas file
+    PASSING_CONS_FNAMES=$(python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv accepted_cons_fnames $WORKSPACE)
+    cat $PASSING_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-passQC.fas
 
-  # Id only consensus files failing acceptance because of the indel flag.
-  # Write these to a *-indel_flagged.fas file and also create a *-summary.csv
-  # file holding only the records for these sequences
-  INDEL_CONS_FNAMES=$(python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv indel_flagged_cons_fnames $WORKSPACE)
-  cat $INDEL_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-indel_flagged.fas
-  python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv filtered_lines indels_flagged True $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv
+	# Id only consensus files failing acceptance because of the indel flag.
+	# Write these to a *-indel_flagged.fas file and also create a *-summary.csv
+	# file holding only the records for these sequences
+	INDEL_CONS_FNAMES=$(python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv indel_flagged_cons_fnames $WORKSPACE)
+	cat $INDEL_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-indel_flagged.fas
+	python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv filtered_lines indels_flagged True $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv
 
 	# Upload Results
 	echo "Uploading QC and summary results."
@@ -78,18 +78,18 @@ runQC () {
 	aws s3 cp $WORKSPACE/multiqc_data/ $QCRESULTS/"$SEQ_RUN"_multiqc_data/ --recursive --quiet
 	aws s3 cp $WORKSPACE/multiqc_report.html $QCRESULTS/"$SEQ_RUN"_multiqc_report.html
 	aws s3 cp $WORKSPACE/qc/ $QCRESULTS/ --recursive --quiet
-  aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $QCRESULTS/
+    aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $QCRESULTS/
 
 	# Manual review folder
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-indel_flagged.fas s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/manual_review/
-  aws s3 cp $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/manual_review/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-indel_flagged.fas $S3DOWNLOAD/manual_review/
+  	aws s3 cp $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv $S3DOWNLOAD/manual_review/
 
 	# Tree building data
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/consensus/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/consensus/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3DOWNLOAD/phylogeny/cumulative_data/consensus/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $S3DOWNLOAD/phylogeny/cumulative_data/consensus/
 	# aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/acceptance/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/qc_summary/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $S3DOWNLOAD/phylogeny/cumulative_data/qc_summary/
 }
 
 { time ( runQC ) ; } > $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log 2>&1
