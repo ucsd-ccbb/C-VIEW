@@ -19,25 +19,6 @@ DUP_FILE = "ERROR: Duplicate file in arguments"
 MULTIPLE_REFS = "ERROR: Multiple reference IDs were found " \
                 "(needs to be exactly 1)"
 
-
-def _validate_argvs(argv):
-    input_fnames = dict()
-
-    for curr_fp in argv[1:]:
-        if not isfile(curr_fp):
-            if isdir(curr_fp):
-                return "%s: %s" % (FOLDER_NOT_FILE, curr_fp)
-            else:
-                return "%s: %s" % (FILE_NOT_FOUND, curr_fp)
-
-        curr_fname = basename(curr_fp)
-        if curr_fname in input_fnames:
-            return "%s: %s" % (DUP_FILE, curr_fname)
-
-        input_fnames[curr_fname] = True
-    return ""
-
-
 # TODO: Reunite this with its copy-paste ancestor in
 #  sarscov2_consensus_acceptance.py
 def _read_depths(depth_lines):
@@ -144,16 +125,4 @@ def make_plots(args_list):
 
 
 if __name__ == '__main__':
-    USAGE = "USAGE: %s <file1.depth.txt> [file2.depth.txt] [file3.depth.txt]" \
-            " ..." % argv[0]
-    if len(argv) == 1 or argv[1].lower() in {'-h', '--help', '-help'}:
-        print(USAGE, file=stderr)
-        exit(1)
-
-    # check command line for validity
-    inputs_error_msg = _validate_argvs(argv)
-    if inputs_error_msg != "":
-        print(inputs_error_msg, file=stderr)
-        exit(1)
-
     make_plots(argv)
