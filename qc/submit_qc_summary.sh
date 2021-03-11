@@ -1,29 +1,88 @@
 #!/bin/bash
 
-
-INPUT=$1 # Sample Sheet with header - seq_run,s3download,s3upload,primers,reads
+INPUT=$1 # Sample Sheet with header
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
+S3HELIX=s3://ucsd-helix
+S3UCSD=s3://ucsd-other
+QSUBSAMPLEPARAMS=''
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
-sed 1d $INPUT | while IFS=',' read SEQ_RUN S3DOWNLOAD TIMESTAMP FQ
+sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD TIMESTAMP
 do
-	echo "Seq_Run: $SEQ_RUN"
-	echo "QC results path: $S3DOWNLOAD/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_quality_control"
-	echo "Timestamp of run results: $TIMESTAMP"
-	echo "Fastq Reads: $FQ"
-	WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP
-	echo "Workspace : $WORKSPACE"
+
+	if [[ ! "$ORGANIZATION" =~ ^(ucsd|helix)$ ]]; then
+		echo "Error: Parameter ORGANIZATION must be one of ucsd or helix"
+		exit 1
+	fi
+
+	if [[ "$ORGANIZATION" == ucsd ]]; then
+		S3DOWNLOAD=$S3UCSD
+	elif [[ "$ORGANIZATION" == helix ]]; then
+		S3DOWNLOAD=$S3HELIX
+	fi
+
+	if [[ ! "$PRIMER_SET" =~ ^(artic|swift_v2)$ ]]; then
+		echo "Error: Parameter PRIMER_SET must be one of artic or swift_v2"
+		exit 1
+	fi
 
 	if [[ ! "$FQ" =~ ^(se|pe)$ ]]; then
-	  echo "FQ must be one of se or pe"
+	  echo "Error: FQ must be one of se or pe"
 	  exit 1
 	fi
 
-	# Perform QC and summary on seq_run when all samples have completed
+	if [[ ! "$MERGE_LANES" =~ ^(true|false)$ ]]; then
+	  echo "Error: MERGE_LANES must be one of true or false"
+	  exit 1
+	fi
+
+	if [[ ! "$VARIANTS" =~ ^(true|false)$ ]]; then
+	  echo "Error: VARIANTS must be one of true or false"
+	  exit 1
+	fi
+
+	if [[ ! "$QC" =~ ^(true|false)$ ]]; then
+	  echo "Error: QC must be one of true or false"
+	  exit 1
+	fi
+
+	if [[ ! "$LINEAGE" =~ ^(true|false)$ ]]; then
+	  echo "Error: LINEAGE must be one of true or false"
+	  exit 1
+	fi
+
+	if [[ ! "$TREE_BUILD" =~ ^(true|false)$ ]]; then
+	  echo "Error: TREE_BUILD must be one of true or false"
+	  exit 1
+	fi
+
+	if [[ "$TIMESTAMP" == "" ]]; then
+	  echo "Error: Must input run timestamp"
+	  exit 1
+	fi
+
+	echo "Organization: $ORGANIZATION"
+	echo "Seq_Run: $SEQ_RUN"
+	echo "S3 Fastq path: $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq"
+	echo "Primers: $PRIMER_SET"
+	echo "Fastq Reads: $FQ"
+	echo "Merge Lanes: $MERGE_LANES"
+	echo "Call Variants: $VARIANTS"
+	echo "Run QC: $QC"
+	echo "Lineage with Pangolin: $LINEAGE"
+	echo "Run tree building: $TREE_BUILD"
+	echo "Previous run timestamp: $TIMESTAMP"
+
+	RUN_EXISTS=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_samples/)
+	if [[ "$RUN_EXISTS" == "" ]]; then
+		echo "Run $TIMESTAMP does not exist"
+		exit 1
+	fi
+
 	qsub \
 		-v SEQ_RUN=$SEQ_RUN \
 		-v S3DOWNLOAD=$S3DOWNLOAD \
-		-v WORKSPACE=/scratch/$SEQ_RUN/"$TIMESTAMP"_"$FQ" \
+		-v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
 		-v FQ=$FQ \
 		-v TIMESTAMP=$TIMESTAMP \
 		-N QC_summary_"$SEQ_RUN" \
@@ -31,4 +90,10 @@ do
 		-pe smp 32 \
 		-S /bin/bash \
     	$PIPELINEDIR/qc/qc_summary.sh
+
+
+	echo "organization,seq_run,primers,reads,merge,variants,qc,lineage,tree_build" > "$SEQ_RUN"-"$TIMESTAMP".csv
+	echo "$ORGANIZATION,$SEQ_RUN,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD" >> "$SEQ_RUN"-"$TIMESTAMP".csv
+	aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
+	rm "$SEQ_RUN"-"$TIMESTAMP".csv
 done
