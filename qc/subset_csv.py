@@ -4,7 +4,7 @@
 # CANNOT be used to say, e.g.,
 # "keep any lines where 0 < gc_content_percent < 48.5"
 
-from sys import argv, stderr, stdout
+from sys import argv
 import pandas as pd
 
 LINES_TO_FILE = "filtered_lines"

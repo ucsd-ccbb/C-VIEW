@@ -2,7 +2,6 @@
 
 import os
 from sys import argv, stderr
-from os.path import isdir, isfile, basename
 
 from seaborn import violinplot
 import matplotlib.pyplot as plt
@@ -18,6 +17,7 @@ NOT_PILEUP = "ERROR: File is not a samtools pileup output"
 DUP_FILE = "ERROR: Duplicate file in arguments"
 MULTIPLE_REFS = "ERROR: Multiple reference IDs were found " \
                 "(needs to be exactly 1)"
+
 
 # TODO: Reunite this with its copy-paste ancestor in
 #  sarscov2_consensus_acceptance.py
