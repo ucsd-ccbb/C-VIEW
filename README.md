@@ -97,7 +97,7 @@ It is also possible to run more granular elements of the pipeline directly: `run
 
 |Field Name|Allowed Values|Description|
 |----------|--------------|-----------|
-|processing_run|string containing alphanumeric characters, hyphens, and/or underscores only|Specifies an identifier of a data processing run.  For `run_qc_summary.sh`, this specifies the per-sample data processing run to be qc'd. For `run_phylogeny.sh`, it specifies the name prefixed to all output artifacts.  Usually this is a timestamp, such as `2021-03-11_21-58-55`.|
+|processing_run|string containing alphanumeric characters, hyphens, and/or underscores only|Specifies an identifier of a data processing run.  For `run_qc_summary.sh`, this specifies the per-sample data processing run to be qc'd. For `run_phylogeny.sh`, it specifies the name of this phylogeny data-processing run, which prefixed to all output artifacts.  Usually this is a timestamp, such as `2021-03-11_21-58-55`.|
 
 An example input for either of these scripts might look like:
 
