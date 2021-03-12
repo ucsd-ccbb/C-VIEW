@@ -135,7 +135,7 @@ do
 			-v ORGANIZATION=$ORGANIZATION \
 			-v TREE_BUILD=$TREE_BUILD \
 			-v TIMESTAMP=$TIMESTAMP \
-			-v WORKSPACE=/scratch/lineage/$TIMESTAMP \
+			-v WORKSPACE=/scratch/phylogeny/$TIMESTAMP \
 			-N tree_building \
 			-wd /shared/workspace/projects/covid/logs \
 			-pe smp 96 \
