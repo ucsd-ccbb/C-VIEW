@@ -67,9 +67,9 @@ compute_root_volume_size = 500
 
 ## Running the pipeline
 
-The pipeline is initiated on the head node of the cluster by calling the run_pipeline.sh script with an input csv file provided by the user.  This file should have a header line in the following format:
+The pipeline is initiated on the head node of the cluster by calling the `run_pipeline.sh` script with an input csv file provided by the user.  This file should have a header line in the following format:
 
-organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build
+`organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build`
 
 It must then contain one or more data lines, each of which will trigger a run of the specified part(s) of the pipeline on a specified sequencing run dataset.
 
@@ -86,14 +86,14 @@ The fields are:
 |`lineage`|true or false|Indicates whether the pipeline should execute the lineage-calling functionality on all cumulative data.|
 |`tree_build`|true or false|Indicates whether the pipeline should execute the tree-building and tree-visualization functionality on all cumulative data.|
 
-An example input for `run_phylogeny.sh` might look like:
+An example input for `run_pipeline.sh` might look like:
 
 ```
 organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build
 ucsd,210213_A00953_0232_BHY3GLDRXX,swift_v2,pe,true,true,true,true,true
 ```
 
-It is also possible to run more granular elements of the pipeline directly: run_qc_summary.sh executes only the `qc` functionality described above on a specified sequencing run, while run_phylogeny.sh executes only the `lineage` and/or `tree_build` functionality on all cumulative data. These two scripts require input files containing the field above as well as one extra final field:
+It is also possible to run more granular elements of the pipeline directly: `run_qc_summary.sh` executes only the `qc` functionality described above on a specified sequencing run, while `run_phylogeny.sh` executes only the `lineage` and/or `tree_build` functionality on all cumulative data. These two scripts require input files containing the field above as well as one extra final field:
 
 |Field Name|Allowed Values|Description|
 |----------|--------------|-----------|
