@@ -83,8 +83,8 @@ The fields are:
 |`merge`|true or false|Indicates whether the pipeline should attempt to merge sample read data across fastq files from multiple lanes.|
 |`variants`|true or false|Indicates whether the pipeline should execute the per-sample variant-calling and consensus-sequence-building functionality on the sequencing run dataset specified in this row.|
 |`qc`|true or false|Indicates whether the pipeline should execute the per-sequencing-run qc-reporting and summarization functionality on the sequencing run dataset specified in this row.|
-|`lineage`|true or false|Indicates whether the pipeline should execute the lineage-calling functionality on all cumulative data.|
-|`tree_build`|true or false|Indicates whether the pipeline should execute the tree-building and tree-visualization functionality on all cumulative data.|
+|`lineage`|true or false|Indicates whether the pipeline should execute the lineage-calling functionality on all cumulative data available to this organization.|
+|`tree_build`|true or false|Indicates whether the pipeline should execute the tree-building and tree-visualization functionality on all cumulative data available to this organization.|
 
 An example input for `run_pipeline.sh` might look like:
 
@@ -93,7 +93,7 @@ organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build
 ucsd,210213_A00953_0232_BHY3GLDRXX,swift_v2,pe,true,true,true,true,true
 ```
 
-It is also possible to run more granular elements of the pipeline directly: `run_qc_summary.sh` executes only the `qc` functionality described above on a specified sequencing run, while `run_phylogeny.sh` executes only the `lineage` and/or `tree_build` functionality on all cumulative data. These two scripts require input files containing the field above as well as one extra final field:
+It is also possible to run more granular elements of the pipeline directly: `run_qc_summary.sh` executes only the `qc` functionality described above on a specified sequencing run, while `run_phylogeny.sh` executes only the `lineage` and/or `tree_build` functionality on all cumulative data available to the organization. These two scripts require input files containing the field above as well as one extra final field:
 
 |Field Name|Allowed Values|Description|
 |----------|--------------|-----------|
