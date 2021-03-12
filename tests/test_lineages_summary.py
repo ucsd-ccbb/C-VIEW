@@ -22,18 +22,25 @@ class LineagesSummaryTest(FileTestCase):
                     input_lineage_fp,
                     out_summary_fp, out_metadata_fp]
 
+        qc_is_file = qc_equal = meta_is_file = meta_equal = False
         try:
             create_lineages_summary_and_metadata(arg_list)
 
-            self.assertTrue(os.path.isfile(expected_qc_and_lineages_fp))
-            self.assertTrue(filecmp.cmp(out_summary_fp,
-                                        expected_qc_and_lineages_fp))
+            qc_is_file = os.path.isfile(expected_qc_and_lineages_fp)
+            self.assertTrue(qc_is_file)
 
-            self.assertTrue(os.path.isfile(out_metadata_fp))
-            self.assertTrue(filecmp.cmp(out_metadata_fp, expected_metadata_fp))
+            qc_equal = filecmp.cmp(out_summary_fp, expected_qc_and_lineages_fp)
+            self.assertTrue(qc_equal)
+
+            meta_is_file = os.path.isfile(out_metadata_fp)
+            self.assertTrue(meta_is_file)
+
+            meta_equal = filecmp.cmp(out_metadata_fp, expected_metadata_fp)
+            self.assertTrue(meta_equal)
         finally:
-            for fp in [out_summary_fp, out_metadata_fp]:
-                try:
-                    os.remove(fp)
-                except OSError:
-                    pass
+            if qc_is_file and qc_equal and meta_is_file and meta_equal:
+                for fp in [out_summary_fp, out_metadata_fp]:
+                    try:
+                        os.remove(fp)
+                    except OSError:
+                        pass
