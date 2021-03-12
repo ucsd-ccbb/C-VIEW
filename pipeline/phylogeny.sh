@@ -49,7 +49,6 @@ runPangolin () {
 
     # add in the passing fas from all the sequencing runs
 	cat $WORKSPACE/*passQC.fas >> $WORKSPACE/"$TIMESTAMP".fas
-	sed -i -e 's/Consensus_//g' -e 's/.trimmed.sorted.pileup.consensus_threshold_0.5_quality_20//g' $WORKSPACE/"$TIMESTAMP".fas
 
 	# pangolin
 	source $ANACONDADIR/activate pangolin

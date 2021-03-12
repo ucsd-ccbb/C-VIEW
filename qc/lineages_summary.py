@@ -9,14 +9,21 @@ from sys import argv
 import glob
 import os
 
+SAMPLE_NAME = "Sample"
 SAMPLE_ID = "sample_id"
+CONS_NAME = "consensus_seq_name"
+MOD_CONS_NAME = "modded_consensus_seq_name"
 
 
-def format_taxon(x):
-    """ Parses sample name from taxon column in pangolin lineage report """
-    sampleName = x.split(".")[0]
-    sampleName = sampleName.replace("Consensus_", "")
-    return sampleName
+# recreate un-reversable pangolin name munge;
+# code pulled and very slightly modded from
+# https://github.com/cov-lineages/pangolin/blob/
+#  1763ac04da0dff41bd778cfa72f41a361457d81d/pangolin/command.py#L144-L147
+def _perform_pangolin_name_munge(seq_name):
+    mod_seq_name = seq_name.replace(' ', '_')
+    if "," in mod_seq_name:
+        mod_seq_name = mod_seq_name.replace(",", "_")
+    return mod_seq_name
 
 
 def merge_summaries(run_summaries_fp, run_summary_suffix):
@@ -33,16 +40,34 @@ def merge_summaries(run_summaries_fp, run_summary_suffix):
 
 
 def expand_with_added_fa_names(merged_summaries_df, added_fa_names_fp):
+    fas_col_name = "fasta_id"
+
     # read this in as a tsv (even though just one column) bc some of these
     # names have commas in them so can't read as csv ...
     added_fastq_ids_df = pd.read_csv(added_fa_names_fp, sep="\t", dtype=str)
-    # NB: per seq_run_summary.py, "Sample" is "fastq_id" (or, here, "fasta_id")
-    added_fastq_ids_df.rename(columns={"fasta_id": "Sample"}, inplace=True)
-    added_fastq_ids_df[SAMPLE_ID] = added_fastq_ids_df["Sample"]
-    expanded_df = merged_summaries_df.merge(added_fastq_ids_df,
-                                            left_on=["Sample", SAMPLE_ID],
-                                            right_on=["Sample", SAMPLE_ID],
-                                            how="outer")
+
+    # make a column to hold the sample id; for these added ids, the sample
+    # name is the same as the fas name (for now, until naming conventions are
+    # nailed down; sorry, Yoshiki :( )
+    added_fastq_ids_df[SAMPLE_ID] = added_fastq_ids_df[fas_col_name]
+    # also copy it into "Sample" column for now, just so it has something there
+    added_fastq_ids_df[SAMPLE_NAME] = added_fastq_ids_df[fas_col_name]
+
+    # rename the "fasta_id" column "consensus_seq_name"
+    added_fastq_ids_df.rename(
+        columns={fas_col_name: CONS_NAME}, inplace=True)
+
+    expanded_df = merged_summaries_df.merge(
+        added_fastq_ids_df,
+        left_on=[CONS_NAME, SAMPLE_NAME, SAMPLE_ID],
+        right_on=[CONS_NAME, SAMPLE_NAME, SAMPLE_ID], how="outer")
+
+    # add a "modded_consensus_seq_name" col
+    # by modifying the consensus name column contents according to
+    # pangolin's irreversible munge rules
+    expanded_df[MOD_CONS_NAME] = \
+        expanded_df[CONS_NAME].apply(_perform_pangolin_name_munge)
+
     return expanded_df
 
 
@@ -50,7 +75,7 @@ def generate_metadata_df(expanded_summaries_df, lineage_df):
     # RIGHT merge expanded summaries with lineages (include ONLY lines
     # for samples that went through lineage calling)
     metadata_df = expanded_summaries_df.merge(
-        lineage_df, left_on="Sample", right_on="Sample", how="right")
+        lineage_df, left_on=MOD_CONS_NAME, right_on=MOD_CONS_NAME, how="right")
 
     # rearrange columns--want "sample_id" (which will hopefully be SEARCH
     # id where that exists) as first column
@@ -73,15 +98,24 @@ def create_lineages_summary_and_metadata(arg_list):
         merged_summaries_df, added_fa_names_fp)
     expanded_summaries_copy_df = expanded_summaries_df.copy(deep=True)
 
-    # Load pangolin file and add a "Sample" column to it
+    # Load pangolin file to a dataframe and
+    # copy the "taxon" column into a new col named "modded_consensus_seq_name"
     lineage_df = pd.read_csv(lineage_fp, dtype=str)
-    lineage_df["Sample"] = lineage_df["taxon"].apply(format_taxon)
+    lineage_df[MOD_CONS_NAME] = lineage_df["taxon"]
 
     # outer merge expanded summaries with lineages (includes lines for
     # both samples that went through lineage calling and those that didn't)
     output_df = expanded_summaries_df.merge(
-        lineage_df, left_on="Sample", right_on="Sample", how="outer")
+        lineage_df, left_on=MOD_CONS_NAME, right_on=MOD_CONS_NAME, how="outer")
     output_df.to_csv(out_summary_fp, index=False)
+
+    # there *shouldn't* be any rows in the lineage that aren't in the
+    # expanded summaries ... if there are, something is wrong.  Raise
+    # an error (but *after* writing the output file, so we have some chance of
+    # figuring out what went wrong).
+    if len(output_df) != len(expanded_summaries_df):
+        raise ValueError(f"Expected {len(expanded_summaries_df)} rows, "
+                         f"got {len(output_df)}")
 
     # RIGHT merge expanded summaries with lineages (include ONLY lines
     # for samples that went through lineage calling because those are also
