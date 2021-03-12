@@ -77,11 +77,12 @@ def generate_metadata_df(expanded_summaries_df, lineage_df):
     metadata_df = expanded_summaries_df.merge(
         lineage_df, left_on=MOD_CONS_NAME, right_on=MOD_CONS_NAME, how="right")
 
-    # rearrange columns--want "sample_id" (which will hopefully be SEARCH
-    # id where that exists) as first column
-    # shift column 'Name' to first position
-    first_column = metadata_df.pop(SAMPLE_ID)
-    metadata_df.insert(0, SAMPLE_ID, first_column)
+    # rearrange columns--want CONS_NAME as first column to match up
+    # with the fas record names, which are used as the tree node names
+    # in the tree file
+    # shift column 'consensus_seq_name' to first position
+    first_column = metadata_df.pop(CONS_NAME)
+    metadata_df.insert(0, CONS_NAME, first_column)
     return metadata_df
 
 
