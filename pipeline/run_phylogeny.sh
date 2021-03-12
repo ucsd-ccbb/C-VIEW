@@ -5,10 +5,10 @@ INPUT=$1 # Sample Sheet with header
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 S3HELIX=s3://ucsd-helix
 S3UCSD=s3://ucsd-other
-QSUBSAMPLEPARAMS=''
+TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
-sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD TIMESTAMP
+sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD
 do
 
 	if [[ ! "$ORGANIZATION" =~ ^(ucsd|helix)$ ]]; then
@@ -57,11 +57,6 @@ do
 	  exit 1
 	fi
 
-	if [[ "$TIMESTAMP" == "" ]]; then
-	  echo "Error: Must input run timestamp"
-	  exit 1
-	fi
-
 	echo "Organization: $ORGANIZATION"
 	echo "Seq_Run: $SEQ_RUN"
 	echo "S3 Fastq path: $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq"
@@ -72,13 +67,12 @@ do
 	echo "Run QC: $QC"
 	echo "Lineage with Pangolin: $LINEAGE"
 	echo "Run tree building: $TREE_BUILD"
-	echo "Previous run timestamp: $TIMESTAMP"
 
     qsub \
 		-v ORGANIZATION=$ORGANIZATION \
 		-v TREE_BUILD=$TREE_BUILD \
 		-v TIMESTAMP=$TIMESTAMP \
-		-v WORKSPACE=/scratch/lineage/$TIMESTAMP \
+		-v WORKSPACE=/scratch/phylogeny/$TIMESTAMP \
 		-N tree_building \
 		-wd /shared/workspace/projects/covid/logs \
 		-pe smp 96 \
