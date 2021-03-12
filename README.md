@@ -102,7 +102,7 @@ It is also possible to run more granular elements of the pipeline directly: `run
 An example input for either of these scripts might look like:
 
 ```
-organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build
+organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build,processing_run
 ucsd,210213_A00953_0232_BHY3GLDRXX,swift_v2,pe,true,true,true,true,true,2021-03-11_21-18-32
 ```
 
@@ -116,6 +116,6 @@ Finally, it is possible to run the pipeline on a single sample using the `run_sa
 An example input for `run_sample.sh` might look like:
 
 ```
-sample,organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build
+sample,organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build,processing_run
 002idSEARCH-5329-SAN_L001_L002_L003_L004,ucsd,210213_A00953_0232_BHY3GLDRXX,swift_v2,pe,true,true,true,true,true,2021-03-11_21-18-32
 ```
