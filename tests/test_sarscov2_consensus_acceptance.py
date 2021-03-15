@@ -30372,9 +30372,13 @@ REF_SHORT_LAST_ORF_END_1BASED = 26
 class FileTestCase(TestCase):
     test_file_dir = os.path.dirname(os.path.abspath(__file__))
     test_data_dir = os.path.join(test_file_dir, "data")
-    test_samples_dir = f"{test_data_dir}/2021-02-08-ARTIC_samples"
-    test_qc_dir = f"{test_data_dir}/2021-02-08-ARTIC_quality_control/"
-    test_temp_qc_dir = f"{test_data_dir}/qc"
+    dummy_dir = os.path.join(test_data_dir, "dummy")
+    test_samples_dir = f"{dummy_dir}/dummy_2021-02-08-ARTIC_samples"
+    test_qc_dir = f"{test_data_dir}/2021-02-08-ARTIC_quality_control"
+    gold_standard_dir = f"{test_data_dir}/gold_standard"
+    gs_samples_dir = f"{gold_standard_dir}/2021-02-08-ARTIC_samples"
+    gs_qc_dir = f"{gold_standard_dir}/2021-02-08-ARTIC_quality_control"
+    test_temp_dir = f"{test_data_dir}/temp"
     ref_data_dir = os.path.join(os.path.dirname(test_file_dir),
                                 "reference_files")
 
@@ -31055,8 +31059,8 @@ NC_045512.2	46	2
 #     working_dir = f"{self.test_samples_dir}/{curr_item_name}"
 #     expected_results_fp = f"{working_dir}/{curr_item_name}.acceptance.tsv"
 #     expected_json_fp = f"{working_dir}/{curr_item_name}.align.json"
-#     output_fp = f"{self.test_temp_qc_dir}/temp_test_cons_acceptance.tsv"
-#     out_json_fp = f"{self.test_temp_qc_dir}/temp_test_cons_align.json"
+#     output_fp = f"{self.test_temp_dir}/temp_test_cons_acceptance.tsv"
+#     out_json_fp = f"{self.test_temp_dir}/temp_test_cons_align.json"
 #
 #     args = ["python sarscov2_consensus_acceptance.py",
 #             "2021-02-08-ARTIC",
@@ -31096,12 +31100,12 @@ NC_045512.2	46	2
 
     def test_generate_acceptance_tsv_no_consensus(self):
         curr_item_name = "SU002_S13_L001"
-        working_dir = f"{self.test_data_dir}/PDH_83-233854622_samples/" \
+        working_dir = f"{self.dummy_dir}/dummy_PDH_83-233854622_samples/" \
                       f"{curr_item_name}"
         expected_results_fp = f"{working_dir}/{curr_item_name}.acceptance.tsv"
         expected_json_fp = f"{working_dir}/{curr_item_name}.align.json"
-        output_fp = f"{self.test_temp_qc_dir}/temp_test_cons_acceptance.tsv"
-        out_json_fp = f"{self.test_temp_qc_dir}/temp_test_cons_align.json"
+        output_fp = f"{self.test_temp_dir}/temp_test_cons_acceptance.tsv"
+        out_json_fp = f"{self.test_temp_dir}/temp_test_cons_align.json"
 
         args = ["python sarscov2_consensus_acceptance.py",
                 "PDH_83-233854622",

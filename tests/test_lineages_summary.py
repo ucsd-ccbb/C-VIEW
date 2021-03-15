@@ -6,19 +6,19 @@ from qc.lineages_summary import create_lineages_summary_and_metadata
 
 class LineagesSummaryTest(FileTestCase):
     def test_create_lineages_summary_and_metadata(self):
-        input_added_names_fp = f"{self.test_data_dir}/" \
+        input_added_names_fp = f"{self.dummy_dir}/" \
                                f"dummy_added_fa_names.txt"
-        input_lineage_fp = f"{self.test_data_dir}/" \
+        input_lineage_fp = f"{self.dummy_dir}/" \
                            f"dummy_merged.lineage_report.csv"
-        expected_qc_and_lineages_fp = f"{self.test_data_dir}/" \
+        expected_qc_and_lineages_fp = f"{self.dummy_dir}/" \
                                       f"dummy_qc_and_lineages.csv"
-        expected_metadata_fp = f"{self.test_data_dir}/" \
+        expected_metadata_fp = f"{self.dummy_dir}/" \
                                f"dummy_metadata.tsv"
 
-        out_summary_fp = f"{self.test_temp_qc_dir}/temp_qc_and_lineages.csv"
-        out_metadata_fp = f"{self.test_temp_qc_dir}/temp_metadata.tsv"
+        out_summary_fp = f"{self.test_temp_dir}/temp_qc_and_lineages.csv"
+        out_metadata_fp = f"{self.test_temp_dir}/temp_metadata.tsv"
         arg_list = ["lineages_summary.py", input_added_names_fp,
-                    self.test_data_dir, "-summary.csv",
+                    self.dummy_dir, "-summary.csv",
                     input_lineage_fp,
                     out_summary_fp, out_metadata_fp]
 

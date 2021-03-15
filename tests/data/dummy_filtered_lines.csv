@@ -1,4 +1,0 @@
-fastq_id,is_accepted,indels_flagged,coverage_gte_10_reads,num_inserts_in_consensus,num_deletions_in_consensus,sample_id,consensus_seq_name,assembly_method,timestamp,se_or_pe,seq_run
-040idSEARCH-5367-SAN_L001_L002_L003_L004,True,False,0.97987,0,0,SEARCH-5367-SAN,Consensus_040idSEARCH-5367-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus_threshold_0.5_quality_20,iVar version 1.3.1,2021-02-26_19-40-24,pe,210109_A00953_0209_BHYHCVDRXX
-041idSEARCH-5368-SAN_L001_L002_L003_L004,True,False,1,0,0,SEARCH-5368-SAN,Consensus_041idSEARCH-5368-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus_threshold_0.5_quality_20,iVar version 1.3.1,2021-02-26_19-40-24,pe,210109_A00953_0209_BHYHCVDRXX
-044idSEARCH-5371-SAN_L001_L002_L003_L004,True,False,0.96826,0,12,SEARCH-5371-SAN,Consensus_044idSEARCH-5371-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus_threshold_0.5_quality_20,iVar version 1.3.1,2021-02-26_19-40-24,pe,PDH_79-233476243
