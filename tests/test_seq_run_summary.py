@@ -6,14 +6,14 @@ from qc.seq_run_summary import merge_multiqc_and_acceptance
 
 class SeqRunSummaryTest(FileTestCase):
     def test_merge_multiqc_and_acceptance(self):
-        input_stats_fp = f"{self.test_qc_dir}" \
+        input_stats_fp = f"{self.gs_qc_dir}/" \
                          f"2021-02-08-ARTIC_multiqc_data/" \
                          f"multiqc_general_stats.txt"
-        input_acceptance_fp = f"{self.test_qc_dir}/" \
+        input_acceptance_fp = f"{self.gs_qc_dir}/" \
                               f"2021-02-08-ARTIC-acceptance.tsv"
-        expected_results_fp = f"{self.test_qc_dir}/" \
+        expected_results_fp = f"{self.gs_qc_dir}/" \
                               f"2021-02-08-ARTIC-summary.csv"
-        output_fp = f"{self.test_temp_qc_dir}/temp_seq_run_summary.csv"
+        output_fp = f"{self.test_temp_dir}/temp_seq_run_summary.csv"
         arg_list = ["seq_run_summary.py", input_stats_fp,
                     input_acceptance_fp, output_fp]
 

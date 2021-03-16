@@ -61,6 +61,7 @@ def expand_with_added_fa_names(merged_summaries_df, added_fa_names_fp):
         added_fastq_ids_df,
         left_on=[CONS_NAME, SAMPLE_NAME, SAMPLE_ID],
         right_on=[CONS_NAME, SAMPLE_NAME, SAMPLE_ID], how="outer")
+    expanded_df.fillna('', inplace=True)
 
     # add a "modded_consensus_seq_name" col
     # by modifying the consensus name column contents according to
@@ -127,4 +128,11 @@ def create_lineages_summary_and_metadata(arg_list):
 
 
 if __name__ == '__main__':
+    argv = ["python lineages_summary.py",
+            "/Users/amandabirmingham/Desktop/added_fa_names-1.txt",
+            "/Users/amandabirmingham/Desktop/",
+            "-summary.csv",
+            "/Users/amandabirmingham/Desktop/2021-03-13_00-11-09.lineage_report.csv",
+            "/Users/amandabirmingham/Desktop/qc-and-lin-test.csv",
+            "/Users/amandabirmingham/Desktop/metadata-test.tsv"]
     create_lineages_summary_and_metadata(argv)

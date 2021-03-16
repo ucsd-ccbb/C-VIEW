@@ -1,64 +1,14 @@
-from sys import argv, stderr
+from sys import argv
 import os
-import filecmp
 import boto3
+from wand.image import Image
+import pandas as pd
+import filecmp
 
 # remember to run aws configure from the command line before running this
 # script to record the AWS access for your user
 
-_GOLD_STANDARD_DIR = "./tests/data/2021-02-08-ARTIC_samples"
-_FNAME_CRUFT = ".trimmed.sorted.pileup."
-_CONSENSUS_FNAME = "consensus.fa"
-_VARIANTS_FNAME = "variants.tsv"
-
 _S3_PREFIX = "s3://"
-
-_TEST_FNAME_PREFIX = "test_"
-_GSC = "gs_consensus"
-_GSV = "gs_variants"
-_TC = "test_consensus"
-_TV = "test_variants"
-
-
-def regression_test(s3_results_url):
-    curr_match = None
-    num_match = num_mismatch = 0
-    result_details = {}
-
-    gold_standard_basenames = os.listdir(_GOLD_STANDARD_DIR)
-    for curr_gs_basename in sorted(gold_standard_basenames):
-        if "SEARCH-" not in curr_gs_basename:
-            continue
-
-        # compare consensus sequence and variant calls ONLY
-        fnames = _formulate_curr_fnames(curr_gs_basename)
-
-        try:
-            _download_files_to_cwd(s3_results_url, curr_gs_basename, fnames)
-
-            curr_match, result_details[curr_gs_basename] = \
-                _compare_files(curr_gs_basename, fnames)
-        finally:
-            # remove any and all of the to-test files downloaded
-            for curr_key in [_TC, _TV]:
-                try:
-                    os.remove(fnames[curr_key])
-                except OSError:
-                    pass
-
-        if curr_match:
-            num_match += 1
-            print(".", end='')
-        else:
-            num_mismatch += 1
-            print("F", end='')
-
-    print("")
-    print(f"matches: {num_match}")
-    print(f"non-matches: {num_mismatch}")
-    if num_mismatch > 0:
-        for curr_key in sorted(result_details):
-            print(result_details[curr_key])
 
 
 def _split_s3_url(s3_results_url):
@@ -70,55 +20,62 @@ def _split_s3_url(s3_results_url):
     return bucket_name, results_path
 
 
-def _formulate_curr_fnames(curr_gs_basename):
-    fnames = {}
-    fnames[_GSC] = f"{curr_gs_basename}" \
-                   f"{_FNAME_CRUFT}{_CONSENSUS_FNAME}"
-    fnames[_GSV] = f"{curr_gs_basename}{_FNAME_CRUFT}" \
-                   f"{_VARIANTS_FNAME}"
-    fnames[_TC] = f"{_TEST_FNAME_PREFIX}{fnames[_GSC]}"
-    fnames[_TV] = f"{_TEST_FNAME_PREFIX}{fnames[_GSV]}"
-    return fnames
+def compare_pdfs(expected_pdf_fp, real_pdf_fp):
+    real_img = Image(filename=real_pdf_fp, resolution=150)
+    with Image(filename=expected_pdf_fp,
+               resolution=150) as expected_img:
+        imgs_diff = real_img.compare(
+            expected_img, metric='root_mean_square')
+        return imgs_diff[1]
 
 
-def _formulate_aws_fp(s3_results_path, sample_basename, fnames, fname_key):
-    gs_key = None
-    if fname_key == _TC:
-        gs_key = _GSC
-    elif fname_key == _TV:
-        gs_key = _GSV
-    return os.path.join(s3_results_path, sample_basename, fnames[gs_key])
-
-
-def _download_files_to_cwd(s3_results_url, sample_basename, fnames):
-    s3_bucket, s3_results_path = _split_s3_url(s3_results_url)
-    aws_results_curr_cons_fp = _formulate_aws_fp(
-        s3_results_path, sample_basename, fnames, _TC)
-    aws_results_curr_var_fp = _formulate_aws_fp(
-        s3_results_path, sample_basename, fnames, _TV)
-
+def regression_test(gs_fp, temp_dir, s3_results_url):
+    s3_bucket, s3_results_dir = _split_s3_url(s3_results_url)
     s3 = boto3.client('s3')
-    s3.download_file(s3_bucket, aws_results_curr_cons_fp, fnames[_TC])
-    s3.download_file(s3_bucket, aws_results_curr_var_fp, fnames[_TV])
 
+    # take the input dir of the known-good files
+    for base_fp, sub_dirs, fnames in os.walk(gs_fp):
+        for curr_fname in fnames:
+            if curr_fname.startswith("."):
+                continue
 
-def _compare_files(curr_gs_basename, fnames):
-    gs_cons_fp = os.path.join(_GOLD_STANDARD_DIR, curr_gs_basename,
-                              fnames[_GSC])
-    curr_cons_equal = filecmp.cmp(gs_cons_fp, fnames[_TC])
+            print(curr_fname)
+            curr_fp = os.path.join(base_fp, curr_fname)
+            rel_fp = os.path.relpath(curr_fp, start=gs_fp)
+            s3_fp = os.path.join(s3_results_dir, rel_fp)
+            temp_fp = os.path.join(temp_dir, curr_fname)
 
-    gs_var_fp = os.path.join(_GOLD_STANDARD_DIR, curr_gs_basename,
-                             fnames[_GSV])
-    curr_var_equal = filecmp.cmp(gs_var_fp, fnames[_TV])
+            # generate its path in aws and download the aws version to cwd
+            s3.download_file(s3_bucket, s3_fp, temp_fp)
 
-    curr_match = curr_cons_equal and curr_var_equal
-    return curr_match, [curr_gs_basename, curr_cons_equal, curr_var_equal]
+            _, curr_fext = os.path.splitext(curr_fp)
+            curr_files_equal = False
+            try:
+                if curr_fext == ".pdf":
+                    img_diff = compare_pdfs(curr_fp, temp_fp)
+                    curr_files_equal = img_diff < 0.01
+                elif curr_fext == ".csv" or curr_fext == ".tsv":
+                    sep = "," if curr_fext == ".csv" else "\t"
+                    curr_df = pd.read_csv(curr_fp, sep=sep, dtype=str)
+                    temp_df = pd.read_csv(temp_fp, sep=sep, dtype=str)
+
+                    timestamp_col = "timestamp"
+                    if timestamp_col in curr_df.columns:
+                        curr_df.pop(timestamp_col)
+                        temp_df.pop(timestamp_col)
+
+                    curr_files_equal = curr_df.equals(temp_df)
+                else:
+                    curr_files_equal = filecmp.cmp(curr_fp, temp_fp)
+            finally:
+                if curr_files_equal:
+                    try:
+                        os.remove(temp_fp)
+                    except OSError:
+                        pass
+                else:
+                    print("F\n")
 
 
 if __name__ == '__main__':
-    if len(argv) != 2 or not argv[1].startswith(_S3_PREFIX):
-        print(f"USAGE: {argv[0]} <{_S3_PREFIX} url of results to test>",
-              file=stderr)
-        exit(1)
-
-    regression_test(argv[1])
+    regression_test(argv[1], argv[2], argv[3])
