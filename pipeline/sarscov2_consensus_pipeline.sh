@@ -6,7 +6,7 @@ ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate covid1.2
 # Set variables
 THREADS=1
-NUM_READS_PLUS_3=250003
+NUM_READS_PLUS_3=1000003
 WORKSPACE=/scratch/$SAMPLE
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 REF_FAS="/scratch/reference/NC_045512.2.fas"
