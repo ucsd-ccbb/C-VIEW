@@ -105,9 +105,10 @@ do
 				-v MERGE_LANES=$MERGE_LANES \
 				-v FQ=$FQ \
 				-v TIMESTAMP=$TIMESTAMP \
+				-v THREADS=$THREADS \
 				-N Covid19_"$SEQ_RUN"_"$SAMPLE" \
 				-wd /shared/workspace/projects/covid/logs \
-				-pe smp 2 \
+				-pe smp 3 \
 				-S /bin/bash \
 				$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
 		done
