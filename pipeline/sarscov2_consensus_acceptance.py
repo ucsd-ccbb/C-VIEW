@@ -13,7 +13,8 @@ COL_NA = "NA"
 SAMP_SEQUENCING_ID = "fastq_id"
 IS_ACCEPTED = "is_accepted"
 INDELS_FLAGGED = "indels_flagged"
-COVERAGE = "coverage_gte_10_reads"
+PASS_DEPTH_FRACTION = "coverage_gte_10_reads"
+PASS_BASE_IDENTITY_FRACTION = "fraction_acgt_bases"
 NUM_INSERTS = "num_inserts_in_consensus"
 NUM_DELS = "num_deletions_in_consensus"
 SAMPLE_ID = "sample_id"
@@ -23,7 +24,8 @@ SE_OR_PE = "se_or_pe"
 IVAR_VER = "assembly_method"
 CONS_SEQ_NAME = "consensus_seq_name"
 REF_SEQ_NAME = "reference_seq_name"
-FIELD_ORDER = [SAMP_SEQUENCING_ID, IS_ACCEPTED, INDELS_FLAGGED, COVERAGE,
+FIELD_ORDER = [SAMP_SEQUENCING_ID, IS_ACCEPTED, INDELS_FLAGGED,
+               PASS_DEPTH_FRACTION,  # PASS_BASE_IDENTITY_FRACTION,
                NUM_INSERTS, NUM_DELS, SAMPLE_ID, CONS_SEQ_NAME, IVAR_VER,
                TIMESTAMP, SE_OR_PE, SEQ_RUN]
 REF_ALIGNMENT = "ref_alignment"
@@ -38,6 +40,7 @@ def check_acceptance(consensus_seq, consensus_depths,
     # range[,)
     result = {}
     depth_pass_list = []
+    identity_pass_list = []
     pass_list = []
     for i in range(align_results[CONS_LAST_ORF_END_0B] + 1):
         if i >= align_results[CONS_FIRST_ORF_START_0B]:
@@ -45,11 +48,15 @@ def check_acceptance(consensus_seq, consensus_depths,
             curr_depth = consensus_depths[i]
 
             base_pass = curr_base in ['A', 'C', 'G', 'T']
+            identity_pass_list.append(base_pass)
+
             depth_pass = curr_depth >= depth_threshold
             depth_pass_list.append(int(depth_pass))
+
             pass_list.append(int(base_pass and depth_pass))
 
     depth_pass_fraction = sum(depth_pass_list)/len(depth_pass_list)
+    identity_pass_fraction = sum(identity_pass_list)/len(identity_pass_list)
     pass_fraction = sum(pass_list)/len(pass_list)
     fraction_passes = pass_fraction >= fraction_threshold
 
@@ -60,9 +67,11 @@ def check_acceptance(consensus_seq, consensus_depths,
     indels_flagged = \
         align_results[NUM_INSERTS] % 3 != 0 or \
         align_results[NUM_DELS] % 3 != 0
-    is_accepted = (not indels_flagged) and fraction_passes
 
-    result[COVERAGE] = depth_pass_fraction
+    is_accepted = fraction_passes  # and (not indels_flagged)
+
+    result[PASS_DEPTH_FRACTION] = depth_pass_fraction
+    result[PASS_BASE_IDENTITY_FRACTION] = identity_pass_fraction
     result[INDELS_FLAGGED] = indels_flagged
     result[IS_ACCEPTED] = is_accepted
     return result
@@ -267,7 +276,8 @@ def generate_acceptance_tsv(arg_list):
                      IS_ACCEPTED: False,
                      INDELS_FLAGGED: COL_NA,
                      CONS_SEQ_NAME: COL_NA,
-                     COVERAGE: COL_NA,
+                     PASS_DEPTH_FRACTION: COL_NA,
+#                     PASS_BASE_IDENTITY_FRACTION: COL_NA,
                      NUM_INSERTS: COL_NA,
                      NUM_DELS: COL_NA}
 
