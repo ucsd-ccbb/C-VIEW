@@ -10,12 +10,13 @@ import pandas as pd
 LINES_TO_FILE = "filtered_lines"
 ACCEPTED_CONS_FNAMES = "accepted_cons_fnames"
 INDEL_FLAGGED_CONS_FNAMES = "indel_flagged_cons_fnames"
-FILTER_TYPES = [LINES_TO_FILE, ACCEPTED_CONS_FNAMES, INDEL_FLAGGED_CONS_FNAMES]
+NO_NANS_CONS_FNAMES = "not_na_cons_fnames"
+FILTER_TYPES = [LINES_TO_FILE, ACCEPTED_CONS_FNAMES, INDEL_FLAGGED_CONS_FNAMES,
+                NO_NANS_CONS_FNAMES]
 
 
 def subset_csv(csv_fp, csv_col_name, allowed_vals_str):
-    # read csv file into dataframe
-    orig_df = pd.read_csv(csv_fp, dtype=str)
+    orig_df = _read_df(csv_fp)
 
     # Filter by keeping only records that have an allowed value in the
     # specified column
@@ -27,6 +28,23 @@ def subset_csv(csv_fp, csv_col_name, allowed_vals_str):
 def get_consensus_fnames_w_allowed_vals(
         csv_fp, csv_col_name, allowed_vals_str, dir_prefix=None):
     filtered_df = subset_csv(csv_fp, csv_col_name, allowed_vals_str)
+    return _get_consensus_fnames(filtered_df, dir_prefix)
+
+
+def get_consensus_fnames_wo_nans(csv_fp, csv_col_name, dir_prefix=None):
+    orig_df = _read_df(csv_fp)
+
+    # Filter by keeping only records that aren't na in the specified column
+    filtered_df = orig_df[orig_df[csv_col_name].notna()]
+    return _get_consensus_fnames(filtered_df, dir_prefix)
+
+
+def _read_df(csv_fp):
+    # read csv file into dataframe
+    return pd.read_csv(csv_fp, dtype=str)
+
+
+def _get_consensus_fnames(filtered_df, dir_prefix):
     fastq_ids = filtered_df['fastq_id'].to_list()
     if dir_prefix is not None:
         dir_prefix = dir_prefix + "/"
@@ -64,9 +82,12 @@ def filter_csv(arg_list):
                 csv_fp, "is_accepted", "True", dir_prefix)
             result_code = 0
         elif filter_type == INDEL_FLAGGED_CONS_FNAMES:
-            dir_prefix = arg_list[3] if len(arg_list) == 4 else None
             result_str = get_consensus_fnames_w_allowed_vals(
                 csv_fp, "indels_flagged", "True", dir_prefix)
+            result_code = 0
+        elif filter_type == NO_NANS_CONS_FNAMES:
+            result_str = get_consensus_fnames_wo_nans(
+                csv_fp, "consensus_seq_name", dir_prefix)
             result_code = 0
         else:
             result_str = f"Unrecognized filter type '{filter_type}'"
