@@ -53,15 +53,15 @@ runQC () {
 	cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN".fas
 
     # Id only passing consensus files and write them to a *-passQC.fas file
-    PASSING_CONS_FNAMES=$(python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv accepted_cons_fnames $WORKSPACE)
+    PASSING_CONS_FNAMES=$(python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv not_na_cons_fnames $WORKSPACE)
     cat $PASSING_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-passQC.fas
 
 	# Id only consensus files failing acceptance because of the indel flag.
 	# Write these to a *-indel_flagged.fas file and also create a *-summary.csv
 	# file holding only the records for these sequences
-	INDEL_CONS_FNAMES=$(python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv indel_flagged_cons_fnames $WORKSPACE)
-	cat $INDEL_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-indel_flagged.fas
-	python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv filtered_lines indels_flagged True $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv
+	# INDEL_CONS_FNAMES=$(python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv indel_flagged_cons_fnames $WORKSPACE)
+	# cat $INDEL_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-indel_flagged.fas
+	# python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv filtered_lines indels_flagged True $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv
 
 	# Upload Results
 	echo "Uploading QC and summary results."
@@ -81,8 +81,8 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $QCRESULTS/
 
 	# Manual review folder
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-indel_flagged.fas $S3DOWNLOAD/manual_review/
-  	aws s3 cp $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv $S3DOWNLOAD/manual_review/
+	# aws s3 cp $WORKSPACE/"$SEQ_RUN"-indel_flagged.fas $S3DOWNLOAD/manual_review/
+  #	aws s3 cp $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv $S3DOWNLOAD/manual_review/
 
 	# Tree building data
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3DOWNLOAD/phylogeny/cumulative_data/consensus/
