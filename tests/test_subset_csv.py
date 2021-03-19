@@ -27,7 +27,7 @@ class SubsetCsvTest(FileTestCase):
             except OSError:
                 pass
 
-    def test_filter_csv_filter_lines_accepted_cons_fnames(self):
+    def test_filter_csv_accepted_cons_fnames(self):
         expected_str = "040idSEARCH-5367-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa 041idSEARCH-5368-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa 042idSEARCH-5369-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa 044idSEARCH-5371-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa"  # noqa 501
         args = ["subset_csv.py",
                 f"{self.dummy_dir}/dummy_table.csv",
@@ -36,7 +36,7 @@ class SubsetCsvTest(FileTestCase):
         self.assertEqual(expected_str, real_str)
         self.assertEqual(0, real_code)
 
-    def test_filter_csv_filter_lines_accepted_cons_fnames_w_dir(self):
+    def test_filter_csv_accepted_cons_fnames_w_dir(self):
         expected_str = "dummy_dir/040idSEARCH-5367-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa dummy_dir/041idSEARCH-5368-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa dummy_dir/042idSEARCH-5369-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa dummy_dir/044idSEARCH-5371-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa"  # noqa 501
         args = ["subset_csv.py",
                 f"{self.dummy_dir}/dummy_table.csv",
@@ -46,7 +46,7 @@ class SubsetCsvTest(FileTestCase):
         self.assertEqual(expected_str, real_str)
         self.assertEqual(0, real_code)
 
-    def test_filter_csv_filter_lines_indel_flagged_cons_fnames(self):
+    def test_filter_csv_indel_flagged_cons_fnames(self):
         expected_str = "043idSEARCH-5370-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa 045idSEARCH-5371-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa"  #noqa 501
         args = ["subset_csv.py",
                 f"{self.dummy_dir}/dummy_table.csv",
@@ -55,7 +55,7 @@ class SubsetCsvTest(FileTestCase):
         self.assertEqual(expected_str, real_str)
         self.assertEqual(0, real_code)
 
-    def test_filter_csv_filter_lines_indel_flagged_cons_fnames_w_dir(self):
+    def test_filter_csv_indel_flagged_cons_fnames_w_dir(self):
         expected_str = "dummy_dir/043idSEARCH-5370-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa dummy_dir/045idSEARCH-5371-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa"  #noqa 501
         args = ["subset_csv.py",
                 f"{self.dummy_dir}/dummy_table.csv",
@@ -65,7 +65,26 @@ class SubsetCsvTest(FileTestCase):
         self.assertEqual(expected_str, real_str)
         self.assertEqual(0, real_code)
 
-    def test_filter_csv_filter_lines_error(self):
+    def test_filter_csv_not_na_cons_fnames(self):
+        expected_str = "040idSEARCH-5367-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa 041idSEARCH-5368-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa 042idSEARCH-5369-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa 043idSEARCH-5370-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa 044idSEARCH-5371-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa 045idSEARCH-5371-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa"  #noqa 501
+        args = ["subset_csv.py",
+                f"{self.dummy_dir}/dummy_table.csv",
+                "not_na_cons_fnames"]
+        real_str, real_code = filter_csv(args)
+        self.assertEqual(expected_str, real_str)
+        self.assertEqual(0, real_code)
+
+    def test_filter_csv_not_na_cons_fnames_w_dir(self):
+        expected_str = "dummy_dir/040idSEARCH-5367-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa dummy_dir/041idSEARCH-5368-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa dummy_dir/042idSEARCH-5369-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa dummy_dir/043idSEARCH-5370-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa dummy_dir/044idSEARCH-5371-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa dummy_dir/045idSEARCH-5371-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa"  #noqa 501
+        args = ["subset_csv.py",
+                f"{self.dummy_dir}/dummy_table.csv",
+                "not_na_cons_fnames",
+                "dummy_dir"]
+        real_str, real_code = filter_csv(args)
+        self.assertEqual(expected_str, real_str)
+        self.assertEqual(0, real_code)
+
+    def test_filter_csv_error(self):
         expected_str = "Unrecognized filter type 'flagged_cons_fnames'"
         args = ["subset_csv.py",
                 f"{self.dummy_dir}/dummy_table.csv",
