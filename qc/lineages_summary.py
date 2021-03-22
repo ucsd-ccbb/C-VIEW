@@ -128,11 +128,4 @@ def create_lineages_summary_and_metadata(arg_list):
 
 
 if __name__ == '__main__':
-    argv = ["python lineages_summary.py",
-            "/Users/amandabirmingham/Desktop/added_fa_names-1.txt",
-            "/Users/amandabirmingham/Desktop/",
-            "-summary.csv",
-            "/Users/amandabirmingham/Desktop/2021-03-13_00-11-09.lineage_report.csv",
-            "/Users/amandabirmingham/Desktop/qc-and-lin-test.csv",
-            "/Users/amandabirmingham/Desktop/metadata-test.tsv"]
     create_lineages_summary_and_metadata(argv)
