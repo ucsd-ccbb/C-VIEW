@@ -79,7 +79,7 @@ echo "ivar trim exit code: $?" >> $WORKSPACE/"$SAMPLE".error.log
 echo "samtools sort exit code: $?" >> $WORKSPACE/"$SAMPLE".error.log
 
 # Step 4: Generate Pile-Up
-{ time ( samtools mpileup -A -aa -d 0 -Q 0 --reference $REF_FAS $WORKSPACE/"$SAMPLE".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.txt 2> $WORKSPACE/"$SAMPLE".log.4.pileup.log
+{ time ( samtools mpileup -B -A -aa -d 0 -Q 0 --reference $REF_FAS $WORKSPACE/"$SAMPLE".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.txt 2> $WORKSPACE/"$SAMPLE".log.4.pileup.log
 echo "samtools mpileup exit code: $?" >> $WORKSPACE/"$SAMPLE".error.log
 
 # Step 5: Call Variants
