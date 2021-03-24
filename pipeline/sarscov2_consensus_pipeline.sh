@@ -63,8 +63,7 @@ fi
 { time ( fastqc -t $THREADS $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc ) ; } 2> $WORKSPACE/"$SAMPLE".log.0.fastqc.log
 
 # Step 1: Map Reads + Sort
-{ time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$SAMPLE"*.fastq.gz | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLE".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLE".log.1.map.log
-
+{ time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$SAMPLE"*.fastq.gz | samtools view -h -F 4 | head -n $NUM_READS_PLUS_3 | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLE".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLE".log.1.map.log
 # Step 2: Trim Sorted BAM
 { time ( ivar trim -x 5 -e -i $WORKSPACE/"$SAMPLE".sorted.bam -b $SCRATCH_PRIMER_FP -p $WORKSPACE/"$SAMPLE".trimmed ) ; } > $WORKSPACE/"$SAMPLE".log.2.trim.log 2>&1
 
