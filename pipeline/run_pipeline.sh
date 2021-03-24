@@ -66,15 +66,16 @@ do
 
 	echo "Organization: $ORGANIZATION"
 	echo "Seq_Run: $SEQ_RUN"
+	echo "Timestamp: $TIMESTAMP"
 	echo "S3 Fastq path: $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq"
 	echo "Primers: $PRIMER_SET"
 	echo "Fastq Reads: $FQ"
 	echo "Merge Lanes: $MERGE_LANES"
+	echo "Extract $READ_CAP mapped reads"
 	echo "Call Variants: $VARIANTS"
 	echo "Run QC: $QC"
 	echo "Lineage with Pangolin: $LINEAGE"
 	echo "Run tree building: $TREE_BUILD"
-	echo "Extract $READ_CAP mapped reads"
 
 	# Append Results URL
 	RESULTS="$TIMESTAMP"_"$FQ"
@@ -114,7 +115,7 @@ do
 				-v FQ=$FQ \
 				-v TIMESTAMP=$TIMESTAMP \
 				-v READ_CAP=$READ_CAP \
-				-N Covid19_"$SEQ_RUN"_"$SAMPLE" \
+				-N Covid19_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
 				-wd /shared/workspace/projects/covid/logs \
 				-pe smp 3 \
 				-S /bin/bash \
@@ -124,7 +125,7 @@ do
 
 	if [[ "$QC" == true ]]; then
 			qsub \
-				-hold_jid 'Covid19_'$SEQ_RUN'_*' \
+				-hold_jid 'Covid19_'$SEQ_RUN'_'$TIMESTAMP'_*' \
 				-v SEQ_RUN=$SEQ_RUN \
 				-v S3DOWNLOAD=$S3DOWNLOAD \
 				-v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
