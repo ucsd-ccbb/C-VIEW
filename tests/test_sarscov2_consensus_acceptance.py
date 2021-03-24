@@ -31049,21 +31049,24 @@ NC_045512.2	46	2
                  'timestamp': '2021-02-26_19-40-24',
                  'se_or_pe': 'pe',
                  'assembly_method': 'iVar version 1.3.1',
-                 'is_accepted': True,
-                 'indels_flagged': False,
                  'consensus_seq_name': 'Consensus_039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus_threshold_0.5_quality_20',   # noqa E501
                  'coverage_gte_10_reads': 0.987392746,
                  'num_inserts_in_consensus': 15,
-                 'num_deletions_in_consensus': 1}
+                 'num_deletions_in_consensus': 1,
+                 'consensus_s3': "",
+                 'trimmed_bam_s3': "",
+                 'variants_s3': ""
+        }
 
-        expected_out = ['fastq_id\tis_accepted\tindels_flagged\t'
+        expected_out = ['fastq_id\t'
                         'coverage_gte_10_reads\t'
+                        'fraction_acgt_bases\t'
                         'num_inserts_in_consensus\t'
                         'num_deletions_in_consensus\tsample_id\t'
                         'consensus_seq_name\tassembly_method\ttimestamp\t'
-                        'se_or_pe\tseq_run\n',
+                        'se_or_pe\tseq_run\t'
+                        'consensus_s3\ttrimmed_bam_s3\tvariants_s3\n',
                         '039idSEARCH-5366-SAN_L001_L002_L003_L004\t'
-                        'True\tFalse\t'
                         '0.987392746\t15\t1\tSEARCH-5366-SAN\t'
                         'Consensus_039idSEARCH-5366-SAN_L001_L002_L003_L004.'
                         'trimmed.sorted.pileup.consensus_threshold_0.5_'

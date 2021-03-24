@@ -24,10 +24,15 @@ SE_OR_PE = "se_or_pe"
 IVAR_VER = "assembly_method"
 CONS_SEQ_NAME = "consensus_seq_name"
 REF_SEQ_NAME = "reference_seq_name"
+CONSENSUS_S3 = "consensus_s3"
+TRIMMED_BAM_S3 = "trimmed_bam_s3"
+VARIANT_S3 = "variants_s3"
+
 FIELD_ORDER = [SAMP_SEQUENCING_ID, IS_ACCEPTED, INDELS_FLAGGED,
-               PASS_DEPTH_FRACTION,  # PASS_BASE_IDENTITY_FRACTION,
+               PASS_DEPTH_FRACTION,  PASS_BASE_IDENTITY_FRACTION,
                NUM_INSERTS, NUM_DELS, SAMPLE_ID, CONS_SEQ_NAME, IVAR_VER,
-               TIMESTAMP, SE_OR_PE, SEQ_RUN]
+               TIMESTAMP, SE_OR_PE, SEQ_RUN, CONSENSUS_S3, TRIMMED_BAM_S3,
+               VARIANT_S3]
 REF_ALIGNMENT = "ref_alignment"
 CONS_ALIGNMENT = "cons_alignment"
 CONS_FIRST_ORF_START_0B = "cons_first_orf_start_0based"
@@ -246,7 +251,7 @@ def _acceptance_check_inputs(file_inputs_tuple):
 def _generate_header_and_data_lines(output_dict):
     data_strs = []
     for curr_field_name in FIELD_ORDER:
-        data_strs.append(str(output_dict[curr_field_name]))
+        data_strs.append(str(output_dict.get(curr_field_name, COL_NA)))
 
     header_line = "\t".join(FIELD_ORDER) + "\n"
     data_line = "\t".join(data_strs) + "\n"
@@ -262,8 +267,11 @@ def generate_acceptance_tsv(arg_list):
     input_consensus_fa_fp = arg_list[6]
     input_depth_txt_fp = arg_list[7]
     input_ref_genome_fas_fp = arg_list[8]
-    output_table_fp = arg_list[9]
-    output_align_fp = arg_list[10]
+    trimmed_bam_fname = arg_list[9]
+    variants_tsv_fname = arg_list[10]
+    s3_dir = arg_list[11]
+    output_table_fp = arg_list[12]
+    output_align_fp = arg_list[13]
 
     ivar_version = ivar_ver_string.splitlines()[0].strip()
     putative_sample_id = _extract_putative_sample_id(sample_sequencing_id)
@@ -273,13 +281,7 @@ def generate_acceptance_tsv(arg_list):
                      TIMESTAMP: timestamp,
                      SE_OR_PE: se_or_pe,
                      IVAR_VER: ivar_version,
-                     IS_ACCEPTED: False,
-                     INDELS_FLAGGED: COL_NA,
-                     CONS_SEQ_NAME: COL_NA,
-                     PASS_DEPTH_FRACTION: COL_NA,
-#                     PASS_BASE_IDENTITY_FRACTION: COL_NA,
-                     NUM_INSERTS: COL_NA,
-                     NUM_DELS: COL_NA}
+                     IS_ACCEPTED: False}
 
     contents_tuple = _read_input_fps(
         input_consensus_fa_fp, input_depth_txt_fp, input_ref_genome_fas_fp)
@@ -294,6 +296,12 @@ def generate_acceptance_tsv(arg_list):
         # will overwrite the default ones
         output_fields.update(align_result)
         output_fields.update(accept_result)
+
+        # add the S3 URLs
+        consensus_fname = os.path.basename(input_consensus_fa_fp)
+        output_fields[CONSENSUS_S3] = os.path.join(s3_dir, consensus_fname)
+        output_fields[TRIMMED_BAM_S3] = os.path.join(s3_dir, trimmed_bam_fname)
+        output_fields[VARIANT_S3] = os.path.join(s3_dir, variants_tsv_fname)
 
     output_lines = _generate_header_and_data_lines(output_fields)
     with open(output_table_fp, 'w') as output_f:
