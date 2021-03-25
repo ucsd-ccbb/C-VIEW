@@ -14,7 +14,6 @@ if [[ "$ISTEST" = false ]]; then
   if [[ "$ORGANIZATION" == ucsd ]]; then
     # only if NOT is_helix
     aws s3 cp $S3UCSD/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
-    aws s3 cp $S3UCSD/phylogeny/cumulative_data/qc_summary/ $WORKSPACE/ --recursive --quiet
     aws s3 cp $S3UCSD/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
     S3UPLOAD=$S3UCSD
   else
@@ -23,11 +22,9 @@ if [[ "$ISTEST" = false ]]; then
 
   # always download helix data
   aws s3 cp $S3HELIX/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
-  aws s3 cp $S3HELIX/phylogeny/cumulative_data/qc_summary/ $WORKSPACE/ --recursive --quiet
   aws s3 cp $S3HELIX/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
 else
   aws s3 cp $S3TEST/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
-  aws s3 cp $S3TEST/phylogeny/cumulative_data/qc_summary/ $WORKSPACE/ --recursive --quiet
   aws s3 cp $S3TEST/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
   S3UPLOAD=$S3TEST
 fi
@@ -44,17 +41,16 @@ runPangolin () {
 	# add B.1.1.7 sequence
 	cat $PIPELINEDIR/reference_files/hCoV-19_USA_CA-SEARCH-5574_2020.fasta >> $WORKSPACE/"$TIMESTAMP".fas
 
-    # TODO: skip this if helix
-    # add the historic fas sequences
+  # add the historic fas sequences
 	cat $WORKSPACE/*historic.fas >> $WORKSPACE/"$TIMESTAMP".fas
 
-    # BEFORE adding all the passQC fas files from the runs, stop and
-    # find every fasta header line in the "$TIMESTAMP".fas,
-    # cut off its first char (the >),
-    # then put it into the added_fa_names.txt file
-    # (we'll use this later for the qc and lineages file creation)
-    echo "fasta_id" > $WORKSPACE/added_fa_names.txt
-    grep "^>" $WORKSPACE/"$TIMESTAMP".fas | cut -c 2- >> $WORKSPACE/added_fa_names.txt
+  # BEFORE adding all the passQC fas files from the runs, stop and
+  # find every fasta header line in the "$TIMESTAMP".fas,
+  # cut off its first char (the >),
+  # then put it into the added_fa_names.txt file
+  # (we'll use this later for the qc and lineages file creation)
+  echo "fasta_id" > $WORKSPACE/added_fa_names.txt
+  grep "^>" $WORKSPACE/"$TIMESTAMP".fas | cut -c 2- >> $WORKSPACE/added_fa_names.txt
 
     # add in the passing fas from all the sequencing runs
 	cat $WORKSPACE/*passQC.fas >> $WORKSPACE/"$TIMESTAMP".fas
