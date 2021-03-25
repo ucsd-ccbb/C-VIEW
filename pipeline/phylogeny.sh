@@ -5,24 +5,33 @@ PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 S3HELIX=s3://ucsd-helix
 S3UCSD=s3://ucsd-other
+S3TEST=s3://test
 THREADS=16
 rm -rf $WORKSPACE
 mkdir -p $WORKSPACE
 
-if [[ "$ORGANIZATION" == ucsd ]]; then
-  	# only if NOT is_helix
+if [[ "$ISTEST" = false ]]; then
+  if [[ "$ORGANIZATION" == ucsd ]]; then
+    # only if NOT is_helix
     aws s3 cp $S3UCSD/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
-	aws s3 cp $S3UCSD/phylogeny/cumulative_data/qc_summary/ $WORKSPACE/ --recursive --quiet
-	aws s3 cp $S3UCSD/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
-	S3UPLOAD=$S3UCSD
+    aws s3 cp $S3UCSD/phylogeny/cumulative_data/qc_summary/ $WORKSPACE/ --recursive --quiet
+    aws s3 cp $S3UCSD/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
+    S3UPLOAD=$S3UCSD
+  else
+    S3UPLOAD=$S3HELIX
+  fi
+
+  # always download helix data
+  aws s3 cp $S3HELIX/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
+  aws s3 cp $S3HELIX/phylogeny/cumulative_data/qc_summary/ $WORKSPACE/ --recursive --quiet
+  aws s3 cp $S3HELIX/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
 else
-	S3UPLOAD=$S3HELIX
+  aws s3 cp $S3TEST/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
+  aws s3 cp $S3TEST/phylogeny/cumulative_data/qc_summary/ $WORKSPACE/ --recursive --quiet
+  aws s3 cp $S3TEST/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
+  S3UPLOAD=$S3TEST
 fi
 
-	# always download helix data
-aws s3 cp $S3HELIX/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
-aws s3 cp $S3HELIX/phylogeny/cumulative_data/qc_summary/ $WORKSPACE/ --recursive --quiet
-aws s3 cp $S3HELIX/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
 	
 runPangolin () {
 

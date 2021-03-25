@@ -3,6 +3,8 @@
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 PHYLORESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_phylogenetic_results
 QCRESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_quality_control
+S3TEST=s3://test
+
 # Activate conda env covid1.2
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate covid1.2
@@ -85,10 +87,15 @@ runQC () {
   #	aws s3 cp $WORKSPACE/"$SEQ_RUN"-indel_flagged_qc_summary.csv $S3DOWNLOAD/manual_review/
 
 	# Tree building data
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3DOWNLOAD/phylogeny/cumulative_data/consensus/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $S3DOWNLOAD/phylogeny/cumulative_data/consensus/
+  if [[ "$ISTEST" = false ]]; then
+    S3CUMULATIVE=$S3DOWNLOAD
+  else
+    S3CUMULATIVE=$S3TEST
+  fi
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 	# aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv s3://ucsd-ccbb-projects/2021/20210208_COVID_sequencing/tree_building/acceptance/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $S3DOWNLOAD/phylogeny/cumulative_data/qc_summary/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $S3CUMULATIVE/phylogeny/cumulative_data/qc_summary/
 }
 
 { time ( runQC ) ; } > $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log 2>&1

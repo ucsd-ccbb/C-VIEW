@@ -7,7 +7,7 @@ S3UCSD=s3://ucsd-other
 QSUBSAMPLEPARAMS=''
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
-sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD TIMESTAMP
+sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD TIMESTAMP ISTEST
 do
 
 	if [[ ! "$ORGANIZATION" =~ ^(ucsd|helix)$ ]]; then
@@ -85,6 +85,7 @@ do
 		-v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
 		-v FQ=$FQ \
 		-v TIMESTAMP=$TIMESTAMP \
+		-v ISTEST=$ISTEST \
 		-N QC_summary_"$SEQ_RUN" \
 		-wd /shared/workspace/projects/covid/logs \
 		-pe smp 32 \

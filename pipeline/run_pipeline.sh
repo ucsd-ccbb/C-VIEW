@@ -7,7 +7,7 @@ S3UCSD=s3://ucsd-other
 QSUBSAMPLEPARAMS=''
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
-sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD READ_CAP
+sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD READ_CAP ISTEST
 do
 	TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
 	sleep 1
@@ -76,6 +76,7 @@ do
 	echo "Run QC: $QC"
 	echo "Lineage with Pangolin: $LINEAGE"
 	echo "Run tree building: $TREE_BUILD"
+	echo "Is test run: $ISTEST"
 
 	# Append Results URL
 	RESULTS="$TIMESTAMP"_"$FQ"
@@ -114,6 +115,7 @@ do
 				-v MERGE_LANES=$MERGE_LANES \
 				-v FQ=$FQ \
 				-v TIMESTAMP=$TIMESTAMP \
+				-v ISTEST=$ISTEST \
 				-v READ_CAP=$READ_CAP \
 				-N Covid19_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
 				-wd /shared/workspace/projects/covid/logs \
@@ -131,6 +133,7 @@ do
 				-v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
 				-v FQ=$FQ \
 				-v TIMESTAMP=$TIMESTAMP \
+				-v ISTEST=$ISTEST \
 				-N QC_summary_"$SEQ_RUN" \
 				-wd /shared/workspace/projects/covid/logs \
 				-pe smp 32 \
@@ -145,6 +148,7 @@ do
 			-v ORGANIZATION=$ORGANIZATION \
 			-v TREE_BUILD=$TREE_BUILD \
 			-v TIMESTAMP=$TIMESTAMP \
+			-v ISTEST=$ISTEST \
 			-v WORKSPACE=/scratch/phylogeny/$TIMESTAMP \
 			-N tree_building \
 			-wd /shared/workspace/projects/covid/logs \
@@ -154,8 +158,9 @@ do
 
     fi
 
-	echo "organization,seq_run,primers,reads,merge,variants,qc,lineage,tree_build" > "$SEQ_RUN"-"$TIMESTAMP".csv
-	echo "$ORGANIZATION,$SEQ_RUN,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD" >> "$SEQ_RUN"-"$TIMESTAMP".csv
+  echo $INPUT > "$SEQ_RUN"-"$TIMESTAMP".csv
+	# echo "organization,seq_run,primers,reads,merge,variants,qc,lineage,tree_build" > "$SEQ_RUN"-"$TIMESTAMP".csv
+	# echo "$ORGANIZATION,$SEQ_RUN,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD" >> "$SEQ_RUN"-"$TIMESTAMP".csv
 	aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
 	rm "$SEQ_RUN"-"$TIMESTAMP".csv
 done

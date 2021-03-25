@@ -8,7 +8,7 @@ S3UCSD=s3://ucsd-other
 TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
-sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD
+sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD ISTEST
 do
 
 	if [[ ! "$ORGANIZATION" =~ ^(ucsd|helix)$ ]]; then
@@ -67,12 +67,14 @@ do
 	echo "Run QC: $QC"
 	echo "Lineage with Pangolin: $LINEAGE"
 	echo "Run tree building: $TREE_BUILD"
+	echo "Is test run: $ISTEST"
 
     qsub \
 		-v ORGANIZATION=$ORGANIZATION \
 		-v TREE_BUILD=$TREE_BUILD \
 		-v TIMESTAMP=$TIMESTAMP \
 		-v WORKSPACE=/scratch/phylogeny/$TIMESTAMP \
+		-v ISTEST=$ISTEST \
 		-N tree_building \
 		-wd /shared/workspace/projects/covid/logs \
 		-pe smp 96 \
