@@ -5,7 +5,7 @@ PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 S3HELIX=s3://ucsd-helix
 S3UCSD=s3://ucsd-other
-S3TEST=s3://test
+S3TEST=s3://ucsd-rtl-test
 THREADS=16
 rm -rf $WORKSPACE
 mkdir -p $WORKSPACE

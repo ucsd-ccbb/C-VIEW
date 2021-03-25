@@ -3,7 +3,7 @@
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 PHYLORESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_phylogenetic_results
 QCRESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_quality_control
-S3TEST=s3://test
+S3TEST=s3://ucsd-rtl-test
 
 # Activate conda env covid1.2
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
