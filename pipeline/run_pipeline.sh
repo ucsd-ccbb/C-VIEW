@@ -115,7 +115,6 @@ do
 				-v MERGE_LANES=$MERGE_LANES \
 				-v FQ=$FQ \
 				-v TIMESTAMP=$TIMESTAMP \
-				-v ISTEST=$ISTEST \
 				-v READ_CAP=$READ_CAP \
 				-N Covid19_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
 				-wd /shared/workspace/projects/covid/logs \
@@ -158,9 +157,8 @@ do
 
     fi
 
-  echo $INPUT > "$SEQ_RUN"-"$TIMESTAMP".csv
-	# echo "organization,seq_run,primers,reads,merge,variants,qc,lineage,tree_build" > "$SEQ_RUN"-"$TIMESTAMP".csv
-	# echo "$ORGANIZATION,$SEQ_RUN,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD" >> "$SEQ_RUN"-"$TIMESTAMP".csv
+	echo "organization,seq_run,primers,reads,merge,variants,qc,lineage,tree_build,read_cap,is_test" > "$SEQ_RUN"-"$TIMESTAMP".csv
+	echo "$ORGANIZATION,$SEQ_RUN,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD,$READ_CAP,$ISTEST" >> "$SEQ_RUN"-"$TIMESTAMP".csv
 	aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
 	rm "$SEQ_RUN"-"$TIMESTAMP".csv
 done
