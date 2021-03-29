@@ -23,7 +23,8 @@ runQC () {
 		--include "*.depth.txt" \
 		--include "*fastqc.zip" \
 		--include "*.sorted.stats*" \
-		--include "*.acceptance.tsv"
+		--include "*.acceptance.tsv" \
+		--include "*error.log"
 
 	# Zip files
 	mv $WORKSPACE/*/*.variants.tsv $WORKSPACE/*/*.consensus.fa $WORKSPACE/*/*.depth.txt $WORKSPACE/*/*.acceptance.tsv $WORKSPACE
@@ -38,8 +39,13 @@ runQC () {
 	python $PIPELINEDIR/qc/seq_run_acceptance.py $WORKSPACE $WORKSPACE/"$SEQ_RUN"-acceptance.tsv
 	# mv $WORKSPACE/summary.acceptance.tsv $WORKSPACE/"$SEQ_RUN"-summary.acceptance.tsv
 
+	# Exit codes
+	echo "checking per-sample exit codes."
+	cat $WORKSPACE/*/*error.log > $WORKSPACE/"$SEQ_RUN".error.tsv
+	cat $WORKSPACE/"$SEQ_RUN".error.tsv
+
 	# Multiqc
-	echo "Configuring Multiqc"
+	echo "Configuring Multiqc."
 	find $WORKSPACE -name "qualimapReport.html" | sort -n > $WORKSPACE/qc/qualimapReport_paths.txt
 	for z in $WORKSPACE/*/fastqc/*fastqc.zip; do unzip -q $z -d $WORKSPACE/qc/fastqc; done
 	find $WORKSPACE -name "fastqc_data.txt" | sort -n > $WORKSPACE/qc/fastqc_data_paths.txt
@@ -48,15 +54,17 @@ runQC () {
 	multiqc --config $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml --module qualimap --module custom_content $WORKSPACE
 
 	# Make QC table
+	echo "Making run QC summary table."
 	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-summary.csv
 	# mv $WORKSPACE/QCSummaryTable.csv $WORKSPACE/"$SEQ_RUN"-QCSummaryTable.csv
 
 	# Concatenate all consensus files to a .fas file
 	cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN".fas
 
-  # Id only passing consensus files and write them to a *-passQC.fas file
-  PASSING_CONS_FNAMES=$(python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv not_na_cons_fnames $WORKSPACE)
-  cat $PASSING_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-passQC.fas
+    # Id only passing consensus files and write them to a *-passQC.fas file
+    echo "Merging passing consensus files."
+    PASSING_CONS_FNAMES=$(python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv not_na_cons_fnames $WORKSPACE)
+    cat $PASSING_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-passQC.fas
 
 	# Upload Results
 	echo "Uploading QC and summary results."
@@ -74,13 +82,14 @@ runQC () {
 	aws s3 cp $WORKSPACE/qc/ $QCRESULTS/ --recursive --quiet
     aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $QCRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN".error.tsv $QCRESULTS/
 
 	# Tree building data
-  if [[ "$ISTEST" = false ]]; then
-    S3CUMULATIVE=$S3DOWNLOAD
-  else
-    S3CUMULATIVE=$S3TEST
-  fi
+    if [[ "$ISTEST" = false ]]; then
+      S3CUMULATIVE=$S3DOWNLOAD
+    else
+      S3CUMULATIVE=$S3TEST
+    fi
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
