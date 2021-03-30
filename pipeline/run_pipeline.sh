@@ -61,7 +61,7 @@ do
 	re='^[0-9]+$'
 	if [[ ! $READ_CAP =~ ^($re|all)$ ]] ; then
 	   echo "Error: READ_CAP must be an integer or 'all'"
-	   #exit 1
+	   exit 1
 	fi
 
 	echo "Organization: $ORGANIZATION"
