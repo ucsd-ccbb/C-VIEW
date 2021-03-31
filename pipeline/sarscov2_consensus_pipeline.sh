@@ -5,7 +5,7 @@ export PATH=/shared/workspace/software/ivar/bin:$PATH
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate covid1.2
 # Set variables
-THREADS=3
+THREADS=2
 WORKSPACE=/scratch/$SAMPLE/$TIMESTAMP
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 REF_FAS="/scratch/reference/NC_045512.2.fas"
@@ -59,8 +59,8 @@ if [[ "$FQ" == pe ]]; then
 fi
 
 # Fastqc
-{ time ( fastqc -t $THREADS $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc ) ; } > $WORKSPACE/"$SAMPLE".log.0.fastqc.log 2>&1
-echo -e "$SAMPLE\tFastqc exit code: $?" > $WORKSPACE/"$SAMPLE".exit.log
+# { time ( fastqc -t $THREADS $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc ) ; } > $WORKSPACE/"$SAMPLE".log.0.fastqc.log 2>&1
+# echo -e "$SAMPLE\tFastqc exit code: $?" > $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 1: Map Reads + Sort
 if [[ "$READ_CAP" == all ]]; then
