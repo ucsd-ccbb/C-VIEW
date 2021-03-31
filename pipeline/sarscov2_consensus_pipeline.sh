@@ -60,7 +60,7 @@ fi
 
 # Fastqc
 { time ( fastqc -t $THREADS $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc ) ; } > $WORKSPACE/"$SAMPLE".log.0.fastqc.log 2>&1
-echo "Fastqc exit code: $?" > $WORKSPACE/"$SAMPLE".error.log
+echo -e "$SAMPLE\tFastqc exit code: $?" > $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 1: Map Reads + Sort
 if [[ "$READ_CAP" == all ]]; then
@@ -68,39 +68,42 @@ if [[ "$READ_CAP" == all ]]; then
 else
   { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$SAMPLE"*.fastq.gz | samtools view -h -F 4 | head -n $READ_CAP | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLE".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLE".log.1.map.log
 fi
-echo "minimap2 exit code: $?" >> $WORKSPACE/"$SAMPLE".error.log
+echo -e "$SAMPLE\tminimap2 exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 2: Trim Sorted BAM
 { time ( ivar trim -x 5 -e -i $WORKSPACE/"$SAMPLE".sorted.bam -b $SCRATCH_PRIMER_FP -p $WORKSPACE/"$SAMPLE".trimmed ) ; } > $WORKSPACE/"$SAMPLE".log.2.trim.log 2>&1
-echo "ivar trim exit code: $?" >> $WORKSPACE/"$SAMPLE".error.log
+echo -e "$SAMPLE\tivar trim exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 3: Sort Trimmed BAM
 { time ( samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLE".trimmed.sorted.bam $WORKSPACE/"$SAMPLE".trimmed.bam && rm $WORKSPACE/"$SAMPLE".trimmed.bam ) ; } 2> $WORKSPACE/"$SAMPLE".log.3.sorttrimmed.log
-echo "samtools sort exit code: $?" >> $WORKSPACE/"$SAMPLE".error.log
+echo -e "$SAMPLE\tsamtools sort exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 4: Generate Pile-Up
+<<<<<<<<< Temporary merge branch 1
 { time ( samtools mpileup -B -A -aa -d 0 -Q 0 --reference $REF_FAS $WORKSPACE/"$SAMPLE".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.txt 2> $WORKSPACE/"$SAMPLE".log.4.pileup.log
-echo "samtools mpileup exit code: $?" >> $WORKSPACE/"$SAMPLE".error.log
+echo -e "$SAMPLE\tsamtools mpileup exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 5: Call Variants
 { time ( cat $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.txt | ivar variants -r $REF_FAS -g $REF_GFF -p $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.variants.tsv -m 10 ) ; } 2> $WORKSPACE/"$SAMPLE".log.5.variants.log
-echo "ivar variants code: $?" >> $WORKSPACE/"$SAMPLE".error.log
+echo -e "$SAMPLE\tivar variants exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 6: Call Consensus
 { time ( cat $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.txt | ivar consensus -p $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.consensus -m 10 -n N -t 0.5 ) ; } > $WORKSPACE/"$SAMPLE".log.6.consensus.log 2>&1
-echo "ivar consensus exit code: $?" >> $WORKSPACE/"$SAMPLE".error.log
+echo -e "$SAMPLE\tivar consensus exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 7: Call Depth
 { time ( samtools depth -d 0 -Q 0 -q 0 -aa $WORKSPACE/"$SAMPLE".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt 2> $WORKSPACE/"$SAMPLE".log.7.depth.log
-echo "samtools depth exit code: $?" >> $WORKSPACE/"$SAMPLE".error.log
+echo -e "$SAMPLE\tsamtools depth exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 # # Step 8: Qualimap
 { time ( qualimap bamqc -bam $WORKSPACE/"$SAMPLE".sorted.bam -nt $THREADS --java-mem-size=4G -outdir $WORKSPACE/"$SAMPLE".sorted.stats ) ; } > $WORKSPACE/"$SAMPLE".log.8.qualimap.sorted.log 2>&1
-echo "qualimap exit code: $?" >> $WORKSPACE/"$SAMPLE".error.log
+echo -e "$SAMPLE\tqualimap exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 # QC
 IVAR_VER=$(ivar version)
 { time ( python $PIPELINEDIR/pipeline/sarscov2_consensus_acceptance.py $SEQ_RUN $TIMESTAMP $FQ "$IVAR_VER" $SAMPLE $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt $REF_FAS $WORKSPACE/"$SAMPLE".acceptance.tsv $WORKSPACE/"$SAMPLE".align.json ) ; } 2> $WORKSPACE/"$SAMPLE".log.9.acceptance.log
-echo "acceptance.py exit code: $?" >> $WORKSPACE/"$SAMPLE".error.log
+echo -e "$SAMPLE\tacceptance.py exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
+
+grep -v "exit code: 0" $WORKSPACE/"$SAMPLE".exit.log | head -n 1 > $WORKSPACE/"$SAMPLE".error.log
 
 aws s3 cp $WORKSPACE/ $RESULTS/ --recursive --include "*" --exclude "*fastq.gz"

@@ -4,10 +4,9 @@ INPUT=$1 # Sample Sheet with header
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 S3HELIX=s3://ucsd-helix
 S3UCSD=s3://ucsd-other
-QSUBSAMPLEPARAMS=''
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
-sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD TIMESTAMP
+sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD TIMESTAMP ISTEST
 do
 
 	if [[ ! "$ORGANIZATION" =~ ^(ucsd|helix)$ ]]; then
@@ -85,6 +84,7 @@ do
 		-v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
 		-v FQ=$FQ \
 		-v TIMESTAMP=$TIMESTAMP \
+		-v ISTEST=$ISTEST \
 		-N QC_summary_"$SEQ_RUN" \
 		-wd /shared/workspace/projects/covid/logs \
 		-pe smp 32 \
@@ -92,8 +92,8 @@ do
     	$PIPELINEDIR/qc/qc_summary.sh
 
 
-	echo "organization,seq_run,primers,reads,merge,variants,qc,lineage,tree_build" > "$SEQ_RUN"-"$TIMESTAMP".csv
-	echo "$ORGANIZATION,$SEQ_RUN,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD" >> "$SEQ_RUN"-"$TIMESTAMP".csv
+	echo "organization,seq_run,primers,reads,merge,variants,qc,lineage,tree_build,is_test" > "$SEQ_RUN"-"$TIMESTAMP".csv
+	echo "$ORGANIZATION,$SEQ_RUN,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD,$ISTEST" >> "$SEQ_RUN"-"$TIMESTAMP".csv
 	aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
 	rm "$SEQ_RUN"-"$TIMESTAMP".csv
 done

@@ -1,13 +1,13 @@
 #!/bin/bash
 
-INPUT=$1 # Sample Sheet with header - seq_run,s3download,s3upload,primers,reads
+INPUT=$1 # Sample Sheet with header - organization,batch,primers,reads,merge,variants,qc,lineage,tree_build,read_cap,istest
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 S3HELIX=s3://ucsd-helix
 S3UCSD=s3://ucsd-other
 QSUBSAMPLEPARAMS=''
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
-sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD READ_CAP
+sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD READ_CAP ISTEST
 do
 	TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
 	sleep 1
@@ -61,7 +61,7 @@ do
 	re='^[0-9]+$'
 	if [[ ! $READ_CAP =~ ^($re|all)$ ]] ; then
 	   echo "Error: READ_CAP must be an integer or 'all'"
-	   #exit 1
+	   exit 1
 	fi
 
 	echo "Organization: $ORGANIZATION"
@@ -76,6 +76,7 @@ do
 	echo "Run QC: $QC"
 	echo "Lineage with Pangolin: $LINEAGE"
 	echo "Run tree building: $TREE_BUILD"
+	echo "Is test run: $ISTEST"
 
 	# Append Results URL
 	RESULTS="$TIMESTAMP"_"$FQ"
@@ -98,7 +99,7 @@ do
 
 	SAMPLE_LIST=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ | grep fastq.gz | awk '{print $NF}' | awk -F $DELIMITER '{print $1}' | sort | uniq | grep -v Undetermined)
 	if [[ "$SAMPLE_LIST" == "" ]]; then
-		echo "There are no samples to run in $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ "
+		echo "Error: There are no samples to run in $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ "
 		exit 1
 	fi
 
@@ -131,6 +132,7 @@ do
 				-v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
 				-v FQ=$FQ \
 				-v TIMESTAMP=$TIMESTAMP \
+				-v ISTEST=$ISTEST \
 				-N QC_summary_"$SEQ_RUN" \
 				-wd /shared/workspace/projects/covid/logs \
 				-pe smp 32 \
@@ -145,6 +147,7 @@ do
 			-v ORGANIZATION=$ORGANIZATION \
 			-v TREE_BUILD=$TREE_BUILD \
 			-v TIMESTAMP=$TIMESTAMP \
+			-v ISTEST=$ISTEST \
 			-v WORKSPACE=/scratch/phylogeny/$TIMESTAMP \
 			-N tree_building \
 			-wd /shared/workspace/projects/covid/logs \
@@ -154,8 +157,8 @@ do
 
     fi
 
-	echo "organization,seq_run,primers,reads,merge,variants,qc,lineage,tree_build" > "$SEQ_RUN"-"$TIMESTAMP".csv
-	echo "$ORGANIZATION,$SEQ_RUN,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD" >> "$SEQ_RUN"-"$TIMESTAMP".csv
+	echo "organization,seq_run,primers,reads,merge,variants,qc,lineage,tree_build,read_cap,is_test" > "$SEQ_RUN"-"$TIMESTAMP".csv
+	echo "$ORGANIZATION,$SEQ_RUN,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD,$READ_CAP,$ISTEST" >> "$SEQ_RUN"-"$TIMESTAMP".csv
 	aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
 	rm "$SEQ_RUN"-"$TIMESTAMP".csv
 done

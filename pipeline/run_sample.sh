@@ -1,12 +1,12 @@
 #!/bin/bash
 
-INPUT=$1 # Sample Sheet with header - seq_run,s3download,s3upload,primers,reads
+INPUT=$1
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 S3HELIX=s3://ucsd-helix
 S3UCSD=s3://ucsd-other
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
-sed 1d $INPUT | while IFS=',' read SAMPLE ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD TIMESTAMP
+sed 1d $INPUT | while IFS=',' read SAMPLE ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD READ_CAP TIMESTAMP
 do
 
 	if [[ ! "$ORGANIZATION" =~ ^(ucsd|helix)$ ]]; then
@@ -60,6 +60,12 @@ do
 	  exit 1
 	fi
 
+	re='^[0-9]+$'
+	if [[ ! $READ_CAP =~ ^($re|all)$ ]] ; then
+	   echo "Error: READ_CAP must be an integer or 'all'"
+	   exit 1
+	fi
+
 	echo "Sample: $SAMPLE"
 	echo "Organization: $ORGANIZATION"
 	echo "Seq_Run: $SEQ_RUN"
@@ -82,6 +88,7 @@ do
 		-v MERGE_LANES=$MERGE_LANES \
 		-v FQ=$FQ \
 		-v TIMESTAMP=$TIMESTAMP \
+		-v READ_CAP=$READ_CAP \
 		-N Covid19_"$SEQ_RUN"_"$SAMPLE" \
 		-wd /shared/workspace/projects/covid/logs \
 		-pe smp 2 \
