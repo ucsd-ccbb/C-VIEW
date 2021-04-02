@@ -10,7 +10,7 @@ ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate covid1.2
 # clear workspace if node is being reused
 rm -rf $WORKSPACE/*
-# mkdir -p $WORKSPACE/qc/fastqc
+mkdir -p $WORKSPACE/qc
 
 runQC () {
 

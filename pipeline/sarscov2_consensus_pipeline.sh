@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PATH=/shared/workspace/software/ivar/bin:$PATH
+export PATH=/shared/workspace/software/ivar/bin:/shared/workspace/software/q30:$PATH
 # Activate conda env covid1.2
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate covid1.2
@@ -59,7 +59,7 @@ if [[ "$FQ" == pe ]]; then
 fi
 
 # q30
-{ time ( python $PIPELINEDIR/qc/q30/q30.py $WORKSPACE/fastq/"$SAMPLE"*fastq.gz $WORKSPACE/q30/"$SAMPLE"_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLE".log.0.q30.log
+{ time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*fastq.gz $WORKSPACE/q30/"$SAMPLE"_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLE".log.0.q30.log
 echo -e "$SAMPLE\tq30.py exit code: $?" > $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 1: Map Reads + Sort
