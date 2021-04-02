@@ -60,6 +60,7 @@ fi
 
 # q30
 { time ( python $PIPELINEDIR/qc/q30/q30.py $WORKSPACE/fastq/"$SAMPLE"*fastq.gz $WORKSPACE/q30/"$SAMPLE"_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLE".log.0.q30.log
+echo -e "$SAMPLE\tq30.py exit code: $?" > $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 1: Map Reads + Sort
 if [[ "$READ_CAP" == all ]]; then
