@@ -20,15 +20,15 @@ class CustomGenStatsMultiQcTest(FileTestCase):
 
         qualimap_paths_fp = self._make_paths_file(
             "qualimapReport_paths.txt", 'qualimapReport.html')
-        fastqc_data_paths_fp = self._make_paths_file(
-            "fastqc_data_paths.txt", 'fastqc_data.txt')
+        q30_data_paths_fp = self._make_paths_file(
+            "q30_data_paths.txt", '*q30_data.txt')
         output_fp = f"{self.test_temp_dir}/" \
                     f"temp_test_cust_gen_stats_multiqc.yaml"
         expected_result_fp = f"{self.dummy_dir}/" \
                              f"dummy_2021-02-08-ARTIC-multiqc_custom_gen_stats.yaml"
 
         arg_list = ["custom_gen_stats_multiqc.py", qualimap_paths_fp,
-                    fastqc_data_paths_fp, "pe", output_fp]
+                    q30_data_paths_fp, "pe", output_fp]
 
         with open(expected_result_fp) as f:
             expected_dict = yaml.load(f, Loader=yaml.FullLoader)
@@ -38,7 +38,7 @@ class CustomGenStatsMultiQcTest(FileTestCase):
             out_dict = write_custom_multiqc_yaml(arg_list)
             self.assertTrue(os.path.isfile(output_fp))
         finally:
-            for fp in [qualimap_paths_fp, fastqc_data_paths_fp, output_fp]:
+            for fp in [qualimap_paths_fp, q30_data_paths_fp, output_fp]:
                 try:
                     os.remove(fp)
                 except OSError:
