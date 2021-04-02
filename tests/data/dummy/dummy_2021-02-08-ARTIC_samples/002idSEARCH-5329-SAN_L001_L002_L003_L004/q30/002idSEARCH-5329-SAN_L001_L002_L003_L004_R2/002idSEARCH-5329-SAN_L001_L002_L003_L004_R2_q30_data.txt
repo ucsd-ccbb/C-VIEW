@@ -1,0 +1,3 @@
+/Users/artnasamran/CCBB_projects/20210211_covid_qc/ARTIC_unit_test/002idSEARCH-5329-SAN_L001_L002_L003_L004_R2.fastq.gz
+total sequences: 2440812
+q30 reads: 2282795
