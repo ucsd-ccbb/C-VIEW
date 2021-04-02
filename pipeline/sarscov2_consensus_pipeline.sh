@@ -15,7 +15,7 @@ RESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_sa
 # Clear fastq directory if node is being reused
 rm -rf $WORKSPACE/*
 mkdir -p $WORKSPACE/fastq
-mkdir -p $WORKSPACE/fastqc
+mkdir -p $WORKSPACE/q30
 
 # Move reference files to compute node once
 if [[ ! -f "$REF_FAS" ]]; then
@@ -58,9 +58,8 @@ if [[ "$FQ" == pe ]]; then
 	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R2*fastq.gz"
 fi
 
-# Fastqc
-# { time ( fastqc -t $THREADS $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc ) ; } > $WORKSPACE/"$SAMPLE".log.0.fastqc.log 2>&1
-# echo -e "$SAMPLE\tFastqc exit code: $?" > $WORKSPACE/"$SAMPLE".exit.log
+# q30
+{ time ( python $PIPELINEDIR/qc/q30/q30.py $WORKSPACE/fastq/"$SAMPLE"*fastq.gz $WORKSPACE/q30/"$SAMPLE"_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLE".log.0.q30.log
 
 # Step 1: Map Reads + Sort
 if [[ "$READ_CAP" == all ]]; then

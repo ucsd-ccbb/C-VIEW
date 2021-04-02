@@ -2,11 +2,12 @@
 
 # Art Nasamran <cnasamran@health.ucsd.edu>
 # Extracts P25 insert sizes from qualimapReports
-# Calculates % >=Q30 from fastqc_data.txt
-# Takes 3 arguments:
+# Calculates % >=Q30 from q30.txt
+# Takes 4 arguments:
 # 1. qualimapReports_paths.txt
-# 2. fastqc_data_paths.txt
+# 2. q30_reads_paths.txt
 # 3. se (single-end) or pe (paired-end)
+# 4. output file path
 
 
 from sys import argv
@@ -15,37 +16,25 @@ import re
 import yaml
 
 
-def parseSeqQual(fastqcFile):
-    """ Parses fastqc_data.txt for Per sequence quality scores and stores as a dict. """
-    file_obj = open(fastqcFile)
+def parseSeqQual(q30File):
+    """ Parses q30.txt for and stores as a list [total seqs, q30 seqs]. """
+    file_obj = open(q30File)
     file = file_obj.readlines()
-    data = {}
+    data = []
     parsing = False
     for line in file:
         line = line.strip()
-        if line.startswith("#Quality"):
+        if line.startswith("total sequences"):
             parsing = True
-            continue  # Skip header
-        elif line.startswith(">>END_MODULE"):
-            parsing = False
+        if line.startswith("q30 reads"):
+            parsing = True
+            #continue  # Skip header
         if parsing:
-            key, value = line.strip().split("\t")
+            value = line.strip().split(" ")[2]
             value = int(float(value))
-            data[key] = value
+            data.append(value)
     file_obj.close()
     return data
-
-
-def calcQ30(table):
-    """ Calculates percentage of reads >= Q30 from a dictionary in the format of quality:nSequences. """
-    sumValues = sum(table.values())
-    sumQ30 = 0
-    for key, value in table.items():
-        if int(key) >= 30:
-            sumQ30 = sumQ30 + value
-    GTQ30 = (sumQ30 / sumValues) * 100
-    return (GTQ30)
-
 
 def pairwise(it):
     """ From https://stackoverflow.com/questions/5389507/iterating-over-every-two-elements-in-a-list user mic_e. """
@@ -56,13 +45,12 @@ def pairwise(it):
         except StopIteration:
             return
 
-
 def getSampleName(x):
-    """ Parses sample name from fastqc path. """
+    """ Parses sample name from q30 path. """
     name = x.split("/")
     name = name[-2]
-    name = name.replace("_R1_001_fastqc", "")
-    name = name.replace("_R1_fastqc", "")
+    name = name.replace("_R1_001", "")
+    name = name.replace("_R1", "")
     return name
 
 
@@ -102,28 +90,30 @@ def insert_pct_gte_q30_in_sample_dict(data_dict, name, pctQ30):
     return temp_sample_dict
 
 
-def gather_pct_gte_q30(fastqc_file_list_fp, se_or_pe, data_dict):
-    # Load fastqcs
-    with open(fastqc_file_list_fp) as fastQCsFile:
-        fastQCs_paths = [line.strip() for line in fastQCsFile]
+def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
+    # Load q30s
+    with open(q30_file_list_fp) as q30sFile:
+        q30s_paths = [line.strip() for line in q30sFile]
 
     if se_or_pe == "se":
-        for R1 in fastQCs_paths:
+        for R1 in q30s_paths:
             getSampleName(R1)
             S1 = parseSeqQual(R1)
-            tbl = Counter(S1)
+            # tbl = Counter(S1)
             name = getSampleName(R1)
-            pctQ30 = calcQ30(tbl)
+            # pctQ30 = calcQ30(tbl)
+            pctQ30 = S1[1]/S1[0]
             data_dict[name] = insert_pct_gte_q30_in_sample_dict(
                 data_dict, name, pctQ30)
     elif se_or_pe == "pe":
         # Get Q30s for both R1 and R2
-        for R1, R2 in pairwise(fastQCs_paths):
+        for R1, R2 in pairwise(q30s_paths):
             S1 = parseSeqQual(R1)
             S2 = parseSeqQual(R2)
-            combined = Counter(S1) + Counter(S2)
+            # combined = Counter(S1) + Counter(S2)
             name = getSampleName(R1)
-            pctQ30 = calcQ30(combined)
+            # pctQ30 = calcQ30(combined)
+            pctQ30 = (S1[1] + S2[1])/(S1[0] + S2[0]) * 100
             data_dict[name] = insert_pct_gte_q30_in_sample_dict(
                 data_dict, name, pctQ30)
     else:
@@ -158,12 +148,12 @@ def generate_multiqc_dict(data_dict):
 
 def write_custom_multiqc_yaml(arg_list):
     qmap_file_list_fp = arg_list[1]
-    fastqc_file_list_fp = arg_list[2]
+    q30_file_list_fp = arg_list[2]
     se_or_pe = arg_list[3]
     output_fp = arg_list[4]
 
     data_dict = gather_p25_ins_sizes(qmap_file_list_fp)
-    data_dict = gather_pct_gte_q30(fastqc_file_list_fp, se_or_pe, data_dict)
+    data_dict = gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict)
     yaml_dict = generate_multiqc_dict(data_dict)
 
     with open(output_fp, 'w') as yaml_file:
