@@ -28,9 +28,10 @@ CONSENSUS_S3 = "consensus_s3"
 TRIMMED_BAM_S3 = "trimmed_bam_s3"
 VARIANT_S3 = "variants_s3"
 
-FIELD_ORDER = [SAMP_SEQUENCING_ID, IS_ACCEPTED, INDELS_FLAGGED,
-               PASS_DEPTH_FRACTION,  PASS_BASE_IDENTITY_FRACTION,
-               NUM_INSERTS, NUM_DELS, SAMPLE_ID, CONS_SEQ_NAME, IVAR_VER,
+FIELD_ORDER = [SAMP_SEQUENCING_ID,
+               PASS_DEPTH_FRACTION, PASS_BASE_IDENTITY_FRACTION,
+               NUM_INSERTS, NUM_DELS, SAMPLE_ID,
+               CONS_SEQ_NAME, IVAR_VER,
                TIMESTAMP, SE_OR_PE, SEQ_RUN, CONSENSUS_S3, TRIMMED_BAM_S3,
                VARIANT_S3]
 REF_ALIGNMENT = "ref_alignment"
@@ -283,6 +284,12 @@ def generate_acceptance_tsv(arg_list):
                      IVAR_VER: ivar_version,
                      IS_ACCEPTED: False}
 
+    # add the S3 URLs
+    consensus_fname = os.path.basename(input_consensus_fa_fp)
+    output_fields[CONSENSUS_S3] = os.path.join(s3_dir, consensus_fname)
+    output_fields[TRIMMED_BAM_S3] = os.path.join(s3_dir, trimmed_bam_fname)
+    output_fields[VARIANT_S3] = os.path.join(s3_dir, variants_tsv_fname)
+
     contents_tuple = _read_input_fps(
         input_consensus_fa_fp, input_depth_txt_fp, input_ref_genome_fas_fp)
 
@@ -296,12 +303,6 @@ def generate_acceptance_tsv(arg_list):
         # will overwrite the default ones
         output_fields.update(align_result)
         output_fields.update(accept_result)
-
-        # add the S3 URLs
-        consensus_fname = os.path.basename(input_consensus_fa_fp)
-        output_fields[CONSENSUS_S3] = os.path.join(s3_dir, consensus_fname)
-        output_fields[TRIMMED_BAM_S3] = os.path.join(s3_dir, trimmed_bam_fname)
-        output_fields[VARIANT_S3] = os.path.join(s3_dir, variants_tsv_fname)
 
     output_lines = _generate_header_and_data_lines(output_fields)
     with open(output_table_fp, 'w') as output_f:

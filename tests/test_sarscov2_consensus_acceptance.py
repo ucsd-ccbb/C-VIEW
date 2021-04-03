@@ -31052,11 +31052,12 @@ NC_045512.2	46	2
                  'assembly_method': 'iVar version 1.3.1',
                  'consensus_seq_name': 'Consensus_039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus_threshold_0.5_quality_20',   # noqa E501
                  'coverage_gte_10_reads': 0.987392746,
+                 'fraction_acgt_bases': 0.9999456,
                  'num_inserts_in_consensus': 15,
                  'num_deletions_in_consensus': 1,
-                 'consensus_s3': "",
-                 'trimmed_bam_s3': "",
-                 'variants_s3': ""
+                 'consensus_s3': "s3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa",
+                 'trimmed_bam_s3': "s3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.bam",
+                 'variants_s3': "s3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.variants.tsv"
         }
 
         expected_out = ['fastq_id\t'
@@ -31073,56 +31074,68 @@ NC_045512.2	46	2
                         'trimmed.sorted.pileup.consensus_threshold_0.5_'
                         'quality_20\t'
                         'iVar version 1.3.1\t2021-02-26_19-40-24\tpe\t'
-                        '2021-02-08-ARTIC\n']
+                        '2021-02-08-ARTIC\t'
+                        's3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa\t'
+                        's3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.bam\t'
+                        's3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.variants.tsv\n'
+                        ]
 
         real_out = _generate_header_and_data_lines(input)
         self.assertEqual(expected_out, real_out)
 
-# Github actions CI dies on this test with what looks like an out-of-memory
-# error; apparently doing a real 30kbp needleman-wunsch is too much for it
-# def test_generate_acceptance_tsv(self):
-#     curr_item_name = "018idSEARCH-5345-SAN_L001_L002_L003_L004"
-#     working_dir = f"{self.test_samples_dir}/{curr_item_name}"
-#     expected_results_fp = f"{working_dir}/{curr_item_name}.acceptance.tsv"
-#     expected_json_fp = f"{working_dir}/{curr_item_name}.align.json"
-#     output_fp = f"{self.test_temp_dir}/temp_test_cons_acceptance.tsv"
-#     out_json_fp = f"{self.test_temp_dir}/temp_test_cons_align.json"
-#
-#     args = ["python sarscov2_consensus_acceptance.py",
-#             "2021-02-08-ARTIC",
-#             "2021-02-26_19-40-24",
-#             "pe",
-#             "iVar version 1.3.1\nPlease raise issues and bug reports at "
-#             "https://github.com/andersen-lab/ivar/",
-#             curr_item_name,
-#             f"{working_dir}/"
-#             f"{curr_item_name}.trimmed.sorted.pileup.consensus.fa",
-#             f"{working_dir}/{curr_item_name}.trimmed.sorted.depth.txt",
-#             f"{self.ref_data_dir}/NC_045512.2.fas",
-#             output_fp,
-#             out_json_fp]
-#
-#     tsvs_equal = jsons_equal = False
-#     try:
-#         generate_acceptance_tsv(args)
-#
-#         self.assertTrue(os.path.isfile(output_fp))
-#         tsvs_equal = cmp(output_fp, expected_results_fp)
-#         self.assertTrue(tsvs_equal)
-#
-#         self.assertTrue(os.path.isfile(out_json_fp))
-#         jsons_equal = cmp(out_json_fp, expected_json_fp)
-#         self.assertTrue(jsons_equal)
-#     finally:
-#         outputs = [output_fp, out_json_fp]
-#         passes = [tsvs_equal, jsons_equal]
-#         for i in range(2):
-#             try:
-#                 if passes[i]:
-#                     os.remove(outputs[i])
-#             except OSError:
-#                 pass
-#
+    # Github actions CI dies on this test with what looks like an out-of-memory
+    # error; apparently doing a real 30kbp needleman-wunsch is too much for it
+    # def test_generate_acceptance_tsv(self):
+    #     curr_item_name = "018idSEARCH-5345-SAN_L001_L002_L003_L004"
+    #     dummy_item_dir = f"{self.dummy_samples_dir}/{curr_item_name}"
+    #     expected_results_fp = f"{dummy_item_dir}/{curr_item_name}" \
+    #                           f".acceptance.tsv"
+    #     expected_json_fp = f"{dummy_item_dir}/{curr_item_name}.align.json"
+    #     output_fp = f"{self.test_temp_dir}/temp_test_cons_acceptance.tsv"
+    #     out_json_fp = f"{self.test_temp_dir}/temp_test_cons_align.json"
+    #
+    #     args = ["python sarscov2_consensus_acceptance.py",
+    #             "2021-02-08-ARTIC",
+    #             "2021-02-26_19-40-24",
+    #             "pe",
+    #             "iVar version 1.3.1\nPlease raise issues and bug "
+    #             "reports at https://github.com/andersen-lab/ivar/",
+    #             curr_item_name,
+    #             f"{dummy_item_dir}/"
+    #             f"{curr_item_name}.trimmed.sorted.pileup.consensus.fa",
+    #             f"{dummy_item_dir}/{curr_item_name}."
+    #             f"trimmed.sorted.depth.txt",
+    #             f"{self.ref_data_dir}/NC_045512.2.fas",
+    #             f"018idSEARCH-5345-SAN_L001_L002_L003_L004."
+    #             f"trimmed.sorted.bam",
+    #             f"018idSEARCH-5345-SAN_L001_L002_L003_L004."
+    #             f"trimmed.sorted.pileup.variants.tsv",
+    #             f"s3://ucsd-other/2021-02-08-ARTIC/2021-02-08-"
+    #             f"ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-"
+    #             f"ARTIC_samples/018idSEARCH-5345-SAN_L001_L002_L003_L004/",
+    #             output_fp,
+    #             out_json_fp]
+    #
+    #     tsvs_equal = jsons_equal = False
+    #     try:
+    #         generate_acceptance_tsv(args)
+    #
+    #         self.assertTrue(os.path.isfile(output_fp))
+    #         tsvs_equal = cmp(output_fp, expected_results_fp)
+    #         self.assertTrue(tsvs_equal)
+    #
+    #         self.assertTrue(os.path.isfile(out_json_fp))
+    #         jsons_equal = cmp(out_json_fp, expected_json_fp)
+    #         self.assertTrue(jsons_equal)
+    #     finally:
+    #         outputs = [output_fp, out_json_fp]
+    #         passes = [tsvs_equal, jsons_equal]
+    #         for i in range(2):
+    #             try:
+    #                 if passes[i]:
+    #                     os.remove(outputs[i])
+    #             except OSError:
+    #                 pass
 
     def test_generate_acceptance_tsv_no_consensus(self):
         curr_item_name = "SU002_S13_L001"
@@ -31144,6 +31157,9 @@ NC_045512.2	46	2
                 f"{curr_item_name}.trimmed.sorted.pileup.consensus.fa",
                 f"{working_dir}/{curr_item_name}.trimmed.sorted.depth.txt",
                 f"{self.ref_data_dir}/NC_045512.2.fas",
+                f"SU002_S13_L001.trimmed.sorted.bam",
+                f"SU002_S13_L001.trimmed.sorted.pileup.variants.tsv",
+                f"s3://ucsd-other/PDH_83-233854622/PDH_83-233854622_results/2021-03-01_19-46-58_se/PDH_83-233854622_samples/SU002_S13_L001/",
                 output_fp,
                 out_json_fp]
 
