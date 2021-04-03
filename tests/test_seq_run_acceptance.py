@@ -6,10 +6,12 @@ from qc.seq_run_acceptance import make_collected_acceptances_tsv
 
 class SeqRunAcceptanceTest(FileTestCase):
     def test_merge_tables(self):
-        expected_results_fp = f"{self.gs_qc_dir}/" \
-                              f"2021-02-08-ARTIC-acceptance.tsv"
+        expected_results_fp = f"{self.dummy_dir}/" \
+                              f"dummy_PDH_83-233854622-acceptance.tsv"
         output_fp = f"{self.test_temp_dir}/temp_seq_run_acceptance.tsv"
-        arg_list = ["seq_run_acceptance.py", self.gs_samples_dir, output_fp]
+        arg_list = ["seq_run_acceptance.py",
+                    f"{self.dummy_dir}/dummy_PDH_83-233854622_samples/",
+                    output_fp]
 
         out_is_file = out_matches = False
         try:

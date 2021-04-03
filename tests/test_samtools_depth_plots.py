@@ -12,7 +12,7 @@
 #         expected_depth_violin_fp = f"{self.gs_qc_dir}/" \
 #                                    f"2021-02-08-ARTIC-depth_violin.pdf"
 #
-#         depth_fps = [str(p) for p in Path(self.test_samples_dir).rglob(
+#         depth_fps = [str(p) for p in Path(self.dummy_samples_dir).rglob(
 #             '*.depth.txt')]
 #         out_depth_lines_fp = f"{self.test_temp_dir}/" \
 #                              f"temp_test_depth_lines.pdf"

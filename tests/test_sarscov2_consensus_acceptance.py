@@ -30374,11 +30374,12 @@ class FileTestCase(TestCase):
     test_file_dir = os.path.dirname(os.path.abspath(__file__))
     test_data_dir = os.path.join(test_file_dir, "data")
     dummy_dir = os.path.join(test_data_dir, "dummy")
-    test_samples_dir = f"{dummy_dir}/dummy_2021-02-08-ARTIC_samples"
-    test_qc_dir = f"{test_data_dir}/2021-02-08-ARTIC_quality_control"
+    dummy_samples_dir = f"{dummy_dir}/dummy_2021-02-08-ARTIC_samples"
+    dummy_qc_dir = f"{dummy_dir}/dummy_2021-02-08-ARTIC_quality_control"
+    # test_qc_dir = f"{test_data_dir}/2021-02-08-ARTIC_quality_control"
     gold_standard_dir = f"{test_data_dir}/gold_standard"
-    gs_samples_dir = f"{gold_standard_dir}/2021-02-08-ARTIC_samples"
-    gs_qc_dir = f"{gold_standard_dir}/2021-02-08-ARTIC_quality_control"
+    # gs_samples_dir = f"{gold_standard_dir}/2021-02-08-ARTIC_samples"
+    # gs_qc_dir = f"{gold_standard_dir}/2021-02-08-ARTIC_quality_control"
     test_temp_dir = f"{test_data_dir}/temp"
     ref_data_dir = os.path.join(os.path.dirname(test_file_dir),
                                 "reference_files")
@@ -31067,7 +31068,7 @@ NC_045512.2	46	2
                         'se_or_pe\tseq_run\t'
                         'consensus_s3\ttrimmed_bam_s3\tvariants_s3\n',
                         '039idSEARCH-5366-SAN_L001_L002_L003_L004\t'
-                        '0.987392746\t15\t1\tSEARCH-5366-SAN\t'
+                        '0.987392746\t0.9999456\t15\t1\tSEARCH-5366-SAN\t'
                         'Consensus_039idSEARCH-5366-SAN_L001_L002_L003_L004.'
                         'trimmed.sorted.pileup.consensus_threshold_0.5_'
                         'quality_20\t'
