@@ -5,7 +5,7 @@ export PATH=/shared/workspace/software/ivar/bin:$PATH
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate covid1.2
 # Set variables
-THREADS=3
+THREADS=2
 WORKSPACE=/scratch/$SAMPLE/$TIMESTAMP
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 REF_FAS="/scratch/reference/NC_045512.2.fas"
@@ -59,8 +59,8 @@ if [[ "$FQ" == pe ]]; then
 fi
 
 # Fastqc
-{ time ( fastqc -t $THREADS $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc ) ; } > $WORKSPACE/"$SAMPLE".log.0.fastqc.log 2>&1
-echo -e "$SAMPLE\tFastqc exit code: $?" > $WORKSPACE/"$SAMPLE".exit.log
+# { time ( fastqc -t $THREADS $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc ) ; } > $WORKSPACE/"$SAMPLE".log.0.fastqc.log 2>&1
+# echo -e "$SAMPLE\tFastqc exit code: $?" > $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 1: Map Reads + Sort
 if [[ "$READ_CAP" == all ]]; then
@@ -79,6 +79,7 @@ echo -e "$SAMPLE\tivar trim exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 echo -e "$SAMPLE\tsamtools sort exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 4: Generate Pile-Up
+<<<<<<<<< Temporary merge branch 1
 { time ( samtools mpileup -B -A -aa -d 0 -Q 0 --reference $REF_FAS $WORKSPACE/"$SAMPLE".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.txt 2> $WORKSPACE/"$SAMPLE".log.4.pileup.log
 echo -e "$SAMPLE\tsamtools mpileup exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
