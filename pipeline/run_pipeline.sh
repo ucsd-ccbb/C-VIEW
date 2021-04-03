@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INPUT=$1 # Sample Sheet with header - organization,batch,primers,reads,merge,variants,qc,lineage,tree_build,read_cap,istest
+INPUT=$1 # Sample Sheet with header - organization,seqrun,primers,reads,merge,variants,qc,lineage,tree_build,read_cap,istest
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 S3HELIX=s3://ucsd-helix
 S3UCSD=s3://ucsd-other
@@ -97,7 +97,7 @@ do
 		DELIMITER=_R
 	fi
 
-	SAMPLE_LIST=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ | grep fastq.gz | awk '{print $NF}' | awk -F $DELIMITER '{print $1}' | sort | uniq | grep -v Undetermined)
+	SAMPLE_LIST=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ | grep fastq.gz | sort -k3 -n | awk '{print $NF}' | awk -F $DELIMITER '{print $1}' | sort | uniq | grep -v Undetermined)
 	if [[ "$SAMPLE_LIST" == "" ]]; then
 		echo "Error: There are no samples to run in $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ "
 		exit 1
