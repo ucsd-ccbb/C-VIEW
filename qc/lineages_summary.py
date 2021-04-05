@@ -61,7 +61,7 @@ def expand_with_added_fa_names(merged_summaries_df, added_fa_names_fp):
         added_fastq_ids_df,
         left_on=[CONS_NAME, SAMPLE_NAME, SAMPLE_ID],
         right_on=[CONS_NAME, SAMPLE_NAME, SAMPLE_ID], how="outer")
-    expanded_df.fillna('', inplace=True)
+    expanded_df.fillna({CONS_NAME: ''}, inplace=True)
 
     # add a "modded_consensus_seq_name" col
     # by modifying the consensus name column contents according to
@@ -109,12 +109,27 @@ def create_lineages_summary_and_metadata(arg_list):
     # both samples that went through lineage calling and those that didn't)
     output_df = expanded_summaries_df.merge(
         lineage_df, left_on=MOD_CONS_NAME, right_on=MOD_CONS_NAME, how="outer")
-    output_df.to_csv(out_summary_fp, index=False)
+
+    # calculate usable_for: nothing, variant, variant_and_epidemiology
+    fraction_coverage = output_df['coverage_gte_10_reads'].astype(float)
+    # believe checking as below should exclude NAs ...
+    passes_pangolin = output_df['status'] == "passed_qc"
+    gte_70_and_passes_pangolin = passes_pangolin & (fraction_coverage >= 0.70)
+    gt_95_and_passes_pangolin = passes_pangolin & (fraction_coverage > 0.95)
+    output_df['usable_for'] = "nothing"
+    output_df.loc[gte_70_and_passes_pangolin, 'usable_for'] = "variant"
+    output_df.loc[gt_95_and_passes_pangolin, 'usable_for'] = \
+        "variant_and_epidemiology"
+    # TODO: Right now the usable_for column is NOT going into the EMPress
+    #  metadata; I am not changing that now because I believe the metadata is
+    #  likely to need a considerable overhaul soon so it is not worth messing
+    #  with now.
 
     # there *shouldn't* be any rows in the lineage that aren't in the
     # expanded summaries ... if there are, something is wrong.  Raise
     # an error (but *after* writing the output file, so we have some chance of
     # figuring out what went wrong).
+    output_df.to_csv(out_summary_fp, index=False)
     if len(output_df) != len(expanded_summaries_df):
         raise ValueError(f"Expected {len(expanded_summaries_df)} rows, "
                          f"got {len(output_df)}")
