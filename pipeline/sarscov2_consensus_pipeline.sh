@@ -79,7 +79,6 @@ echo -e "$SAMPLE\tivar trim exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 echo -e "$SAMPLE\tsamtools sort exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 4: Generate Pile-Up
-<<<<<<<<< Temporary merge branch 1
 { time ( samtools mpileup -B -A -aa -d 0 -Q 0 --reference $REF_FAS $WORKSPACE/"$SAMPLE".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.txt 2> $WORKSPACE/"$SAMPLE".log.4.pileup.log
 echo -e "$SAMPLE\tsamtools mpileup exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
