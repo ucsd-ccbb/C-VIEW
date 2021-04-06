@@ -98,11 +98,18 @@ echo -e "$SAMPLE\tsamtools depth exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 { time ( qualimap bamqc -bam $WORKSPACE/"$SAMPLE".sorted.bam -nt $THREADS --java-mem-size=4G -outdir $WORKSPACE/"$SAMPLE".sorted.stats ) ; } > $WORKSPACE/"$SAMPLE".log.8.qualimap.sorted.log 2>&1
 echo -e "$SAMPLE\tqualimap exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
-# QC
+# Step 9: Acceptance
 IVAR_VER=$(ivar version)
 { time ( python $PIPELINEDIR/pipeline/sarscov2_consensus_acceptance.py $SEQ_RUN $TIMESTAMP $FQ "$IVAR_VER" $SAMPLE $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt $REF_FAS $WORKSPACE/"$SAMPLE".acceptance.tsv $WORKSPACE/"$SAMPLE".align.json ) ; } 2> $WORKSPACE/"$SAMPLE".log.9.acceptance.log
 echo -e "$SAMPLE\tacceptance.py exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
+# Step 10: Coverage
+{ time ( echo -e "SAMPLE\tCOVERAGE\tAVG_DEPTH\tMIN\tMAX\tZERO_DEPTH" > $WORKSPACE/"$SAMPLE".coverage.txt
+  samtools depth -r NC_045512.2:266-29674 -d 0 -a $WORKSPACE/"$SAMPLE".trimmed.sorted.bam | \
+  awk -v b="$SAMPLE" 'BEGIN{MIN=10000000000;MAX=0;NUC=0;COV=0;DEPTH=0;NUCZERO=0;}{if(MIN > $3){MIN=$3;};if(MAX < $3){MAX=$3;};if($3==0){NUCZERO+=1};if($3 >= 10){COV+=1;}NUC+=1;DEPTH+=$3;}END{if(NUC>0){print b"\t"(COV/NUC)*100"\t"DEPTH/NUC"\t"MIN"\t"MAX"\t"NUCZERO}else{print b"\t"0"\t"0"\t"MIN"\t"MAX"\t"NUCZERO}}' ) ; } >> $WORKSPACE/"$SAMPLE".coverage.txt 2> $WORKSPACE/"$SAMPLE".log.10.coverage.log
+echo -e "$SAMPLE\tcoverage exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
+
+#QC
 grep -v "exit code: 0" $WORKSPACE/"$SAMPLE".exit.log | head -n 1 > $WORKSPACE/"$SAMPLE".error.log
 
 aws s3 cp $WORKSPACE/ $RESULTS/ --recursive --include "*" --exclude "*fastq.gz"
