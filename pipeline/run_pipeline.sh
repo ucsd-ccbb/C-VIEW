@@ -94,10 +94,10 @@ do
 		DELIMITER=_L00
 		QSUBSAMPLEPARAMS=' -hold_jid merge_fq_lanes_'$SEQ_RUN''
 	else
-		DELIMITER=_R
+		DELIMITER=_R1_001.fastq.gz
 	fi
 
-	SAMPLE_LIST=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ | grep fastq.gz | sort -k3 -n | awk '{print $NF}' | awk -F $DELIMITER '{print $1}' | sort | uniq | grep -v Undetermined)
+	SAMPLE_LIST=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ | grep _R1_001.fastq.gz | sort -k3 -n | awk '{print $NF}' | awk -F $DELIMITER '{print $1}' | sort | uniq | grep -v Undetermined)
 	if [[ "$SAMPLE_LIST" == "" ]]; then
 		echo "Error: There are no samples to run in $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ "
 		exit 1
