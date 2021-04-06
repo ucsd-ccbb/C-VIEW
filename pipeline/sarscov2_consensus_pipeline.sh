@@ -75,7 +75,7 @@ echo -e "$SAMPLE\tminimap2 exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 echo -e "$SAMPLE\tivar trim exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 3: Sort Trimmed BAM
-{ time ( samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLE".trimmed.sorted.bam $WORKSPACE/"$SAMPLE".trimmed.bam && rm $WORKSPACE/"$SAMPLE".trimmed.bam ) ; } 2> $WORKSPACE/"$SAMPLE".log.3.sorttrimmed.log
+{ time ( samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLE".trimmed.sorted.bam $WORKSPACE/"$SAMPLE".trimmed.bam && samtools index $WORKSPACE/"$SAMPLE".trimmed.sorted.bam && rm $WORKSPACE/"$SAMPLE".trimmed.bam) ; } 2> $WORKSPACE/"$SAMPLE".log.3.sorttrimmed.log
 echo -e "$SAMPLE\tsamtools sort exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 4: Generate Pile-Up
@@ -104,8 +104,7 @@ IVAR_VER=$(ivar version)
 echo -e "$SAMPLE\tacceptance.py exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 10: Coverage
-{ time ( echo -e "SAMPLE\tCOVERAGE\tAVG_DEPTH\tMIN\tMAX\tZERO_DEPTH" > $WORKSPACE/"$SAMPLE".coverage.txt
-  samtools depth -r NC_045512.2:266-29674 -d 0 -a $WORKSPACE/"$SAMPLE".trimmed.sorted.bam | \
+{ time ( samtools depth -r NC_045512.2:266-29674 -d 0 -a $WORKSPACE/"$SAMPLE".trimmed.sorted.bam | \
   awk -v b="$SAMPLE" 'BEGIN{MIN=10000000000;MAX=0;NUC=0;COV=0;DEPTH=0;NUCZERO=0;}{if(MIN > $3){MIN=$3;};if(MAX < $3){MAX=$3;};if($3==0){NUCZERO+=1};if($3 >= 10){COV+=1;}NUC+=1;DEPTH+=$3;}END{if(NUC>0){print b"\t"(COV/NUC)*100"\t"DEPTH/NUC"\t"MIN"\t"MAX"\t"NUCZERO}else{print b"\t"0"\t"0"\t"MIN"\t"MAX"\t"NUCZERO}}' ) ; } >> $WORKSPACE/"$SAMPLE".coverage.txt 2> $WORKSPACE/"$SAMPLE".log.10.coverage.log
 echo -e "$SAMPLE\tcoverage exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
