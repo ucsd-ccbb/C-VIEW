@@ -31058,7 +31058,7 @@ NC_045512.2	46	2
                  'consensus_s3': "s3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa",  # noqa 501
                  'trimmed_bam_s3': "s3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.bam",  # noqa 501
                  'variants_s3': "s3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.variants.tsv"  # noqa 501
-                }
+                 }
 
         expected_out = ['fastq_id\t'
                         'coverage_gte_10_reads\t'
