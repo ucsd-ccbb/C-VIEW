@@ -49,4 +49,3 @@ class CustomGenStatsMultiQcTest(FileTestCase):
                         os.remove(fp)
                     except OSError:
                         pass
-
