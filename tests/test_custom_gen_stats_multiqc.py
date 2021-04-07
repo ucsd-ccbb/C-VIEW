@@ -33,15 +33,20 @@ class CustomGenStatsMultiQcTest(FileTestCase):
         with open(expected_result_fp) as f:
             expected_dict = yaml.load(f, Loader=yaml.FullLoader)
 
-        out_dict = {}
+        passes = False
         try:
             out_dict = write_custom_multiqc_yaml(arg_list)
-            self.assertTrue(os.path.isfile(output_fp))
-        finally:
-            for fp in [qualimap_paths_fp, q30_data_paths_fp, output_fp]:
-                try:
-                    os.remove(fp)
-                except OSError:
-                    pass
+            is_file = os.path.isfile(output_fp)
+            dicts_match = expected_dict == out_dict
+            passes = is_file and dicts_match
 
-        self.assertEqual(expected_dict, out_dict)
+            self.assertEqual(expected_dict, out_dict)
+            self.assertTrue(is_file)
+        finally:
+            if passes:
+                for fp in [qualimap_paths_fp, q30_data_paths_fp, output_fp]:
+                    try:
+                        os.remove(fp)
+                    except OSError:
+                        pass
+

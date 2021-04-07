@@ -4,8 +4,7 @@ from filecmp import cmp
 from unittest import TestCase
 from pipeline.sarscov2_consensus_acceptance import \
     _read_input_fps, \
-    check_acceptance, _pairwise_align, \
-    _attempt_extract_search_id, _extract_putative_sample_id, \
+    check_acceptance, _pairwise_align, get_search_id, \
     _generate_header_and_data_lines, _read_depths, _read_input_files, \
     IS_ACCEPTED, PASS_DEPTH_FRACTION, NUM_INSERTS, NUM_DELS, \
     REF_FIRST_ORF_START_1BASED, REF_LAST_ORF_END_1BASED, \
@@ -30999,53 +30998,18 @@ NC_045512.2	46	2
     #     self.assertEqual(0, real_out[NUM_INSERTS])
     #     self.assertEqual(0, real_out[NUM_DELS])
 
-    def test__extract_putative_sample_id_search_id(self):
-        input = "002idSEARCH-5329-SAN_L001_L002_L003_L004"
-        expected_out = "SEARCH-5329-SAN"
-        real_out = _extract_putative_sample_id(input)
+    def test_get_search_id(self):
+        input = "SEARCH10001__D105000__A01__201309_A00953_0250_BH2M2TDRXY" \
+                "___S133_L001L002L003L004"
+        expected_out = "SEARCH10001"
+        real_out = get_search_id(input)
         self.assertEqual(expected_out, real_out)
-
-    def test__extract_putative_sample_id_other_ids(self):
-        input = "EXC_Pt_MTM_014170_MINI_PLUS_S39_L001"
-        expected_out = "EXC_Pt_MTM_014170_MINI_PLUS_S39"
-        real_out = _extract_putative_sample_id(input)
-        self.assertEqual(expected_out, real_out)
-
-        input = "CALM_SEP_001970_01_S137_L001"
-        expected_out = "CALM_SEP_001970_01_S137"
-        real_out = _extract_putative_sample_id(input)
-        self.assertEqual(expected_out, real_out)
-
-        input = "STM-0000027-A2_S76_L001"
-        expected_out = "STM-0000027-A2_S76"
-        real_out = _extract_putative_sample_id(input)
-        self.assertEqual(expected_out, real_out)
-
-    def test__extract_putative_sample_id_no_extraction(self):
-        input = "002idSERCH-5329-SAN_L001_L002_L003_L004"
-        real_out = _attempt_extract_search_id(input)
-        self.assertEqual(input, real_out)
-
-    def test__attempt_extract_search_id(self):
-        input = "002idSEARCH-5329-SAN"
-        expected_out = "SEARCH-5329-SAN"
-        real_out = _attempt_extract_search_id(input)
-        self.assertEqual(expected_out, real_out)
-
-    def test__attempt_extract_search_id_partial_extraction(self):
-        input = "002idSEARCH-5329-SAN_L001_L002_L003_L004"
-        expected_out = "SEARCH-5329-SAN_L001_L002_L003_L004"
-        real_out = _attempt_extract_search_id(input)
-        self.assertEqual(expected_out, real_out)
-
-    def test__attempt_extract_search_id_no_extraction(self):
-        input = "002idSERCH-5329-SAN_L001_L002_L003_L004"
-        real_out = _attempt_extract_search_id(input)
-        self.assertEqual(input, real_out)
 
     def test__generate_header_and_data_lines(self):
-        input = {'fastq_id': '039idSEARCH-5366-SAN_L001_L002_L003_L004',
-                 'sample_id': 'SEARCH-5366-SAN',
+        input = {'search_id': 'SEARCH-5366',
+                 'sequenced_pool_component_id':
+                     "SEARCH-5366__D105000__A01__201309_A00953_0250_"
+                     "BH2M2TDRXY__001002003004",
                  'seq_run': '2021-02-08-ARTIC',
                  'timestamp': '2021-02-26_19-40-24',
                  'se_or_pe': 'pe',
@@ -31060,16 +31024,19 @@ NC_045512.2	46	2
                  'variants_s3': "s3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.variants.tsv"  # noqa 501
                  }
 
-        expected_out = ['fastq_id\t'
+        expected_out = ['sequenced_pool_component_id\tsearch_id\t'
                         'coverage_gte_10_reads\t'
                         'fraction_acgt_bases\t'
                         'num_inserts_in_consensus\t'
-                        'num_deletions_in_consensus\tsample_id\t'
-                        'consensus_seq_name\tassembly_method\ttimestamp\t'
+                        'num_deletions_in_consensus\t'
+                        'consensus_seq_name\t'
+                        'assembly_method\ttimestamp\t'
                         'se_or_pe\tseq_run\t'
                         'consensus_s3\ttrimmed_bam_s3\tvariants_s3\n',
-                        '039idSEARCH-5366-SAN_L001_L002_L003_L004\t'
-                        '0.987392746\t0.9999456\t15\t1\tSEARCH-5366-SAN\t'
+                        'SEARCH-5366__D105000__A01__201309_A00953_0250_'
+                        'BH2M2TDRXY__001002003004\t'
+                        'SEARCH-5366\t'
+                        '0.987392746\t0.9999456\t15\t1\t'
                         'Consensus_039idSEARCH-5366-SAN_L001_L002_L003_L004.'
                         'trimmed.sorted.pileup.consensus_threshold_0.5_'
                         'quality_20\t'
@@ -31086,7 +31053,7 @@ NC_045512.2	46	2
     # Github actions CI dies on this test with what looks like an out-of-memory
     # error; apparently doing a real 30kbp needleman-wunsch is too much for it
     # def test_generate_acceptance_tsv(self):
-    #     curr_item_name = "018idSEARCH-5345-SAN_L001_L002_L003_L004"
+    #     curr_item_name = "SEARCH-5345__LIBPLATE1__C04__001002003004"
     #     dummy_item_dir = f"{self.dummy_samples_dir}/{curr_item_name}"
     #     expected_results_fp = f"{dummy_item_dir}/{curr_item_name}" \
     #                           f".acceptance.tsv"
@@ -31106,13 +31073,13 @@ NC_045512.2	46	2
     #             f"{dummy_item_dir}/{curr_item_name}."
     #             f"trimmed.sorted.depth.txt",
     #             f"{self.ref_data_dir}/NC_045512.2.fas",
-    #             f"018idSEARCH-5345-SAN_L001_L002_L003_L004."
+    #             f"SEARCH-5345__LIBPLATE1__C04__001002003004."
     #             f"trimmed.sorted.bam",
-    #             f"018idSEARCH-5345-SAN_L001_L002_L003_L004."
+    #             f"SEARCH-5345__LIBPLATE1__C04__001002003004."
     #             f"trimmed.sorted.pileup.variants.tsv",
     #             f"s3://ucsd-other/2021-02-08-ARTIC/2021-02-08-"
     #             f"ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-"
-    #             f"ARTIC_samples/018idSEARCH-5345-SAN_L001_L002_L003_L004/",
+    #             f"ARTIC_samples/SEARCH-5345__LIBPLATE1__C04__001002003004/",
     #             output_fp,
     #             out_json_fp]
     #
@@ -31138,7 +31105,7 @@ NC_045512.2	46	2
     #                 pass
 
     def test_generate_acceptance_tsv_no_consensus(self):
-        curr_item_name = "SU002_S13_L001"
+        curr_item_name = "SU002__DUMLIB__DUMWELL__001"
         working_dir = f"{self.dummy_dir}/dummy_PDH_83-233854622_samples/" \
                       f"{curr_item_name}"
         expected_results_fp = f"{working_dir}/{curr_item_name}.acceptance.tsv"
@@ -31157,9 +31124,9 @@ NC_045512.2	46	2
                 f"{curr_item_name}.trimmed.sorted.pileup.consensus.fa",
                 f"{working_dir}/{curr_item_name}.trimmed.sorted.depth.txt",
                 f"{self.ref_data_dir}/NC_045512.2.fas",
-                "SU002_S13_L001.trimmed.sorted.bam",
-                "SU002_S13_L001.trimmed.sorted.pileup.variants.tsv",
-                "s3://ucsd-other/PDH_83-233854622/PDH_83-233854622_results/2021-03-01_19-46-58_se/PDH_83-233854622_samples/SU002_S13_L001/",  # noqa 501
+                "SU002__DUMLIB__DUMWELL__001.trimmed.sorted.bam",
+                "SU002__DUMLIB__DUMWELL__001.trimmed.sorted.pileup.variants.tsv",
+                "s3://ucsd-other/PDH_83-233854622/PDH_83-233854622_results/2021-03-01_19-46-58_se/PDH_83-233854622_samples/SU002__DUMLIB__DUMWELL__001/",  # noqa 501
                 output_fp,
                 out_json_fp]
 

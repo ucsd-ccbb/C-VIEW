@@ -1,23 +1,21 @@
-
-
-custom_data: 
-    my_genstats:
-        plot_type: "generalstats"
-        pconfig:
-            - P25 Ins. size:
-                min: 0
-                scale: "RdYlGn"
-            - Pct >=Q30:
-                max: 100
-                min: 0
-                suffix: "%"
-        data:
-            002idSEARCH-5329-SAN_L001_L002_L003_L004:
-                P25 Ins. size: 195
-                Pct >=Q30: 94.271
-            005idSEARCH-5332-SAN_L001_L002_L003_L004:
-                P25 Ins. size: 202
-                Pct >=Q30: 94.679
-            007idSEARCH-5334-SAN_L001_L002_L003_L004:
-                P25 Ins. size: 227
-                Pct >=Q30: 94.327
+custom_data:
+  my_genstats:
+    data:
+      SEARCH-5329__LIBPLATE1__A01__001002003004:
+        P25 Ins. size: 195
+        Pct >=Q30: 94.271
+      SEARCH-5332__LIBPLATE2__D03__001002003004:
+        P25 Ins. size: 202
+        Pct >=Q30: 94.679
+      SEARCH-5334__LIBPLATE9__F12__001002003004:
+        P25 Ins. size: 227
+        Pct >=Q30: 94.327
+    pconfig:
+    - P25 Ins. size:
+        min: 0
+        scale: RdYlGn
+    - Pct >=Q30:
+        max: 100
+        min: 0
+        suffix: '%'
+    plot_type: generalstats

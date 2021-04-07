@@ -10,7 +10,7 @@ import glob
 import os
 
 SAMPLE_NAME = "Sample"
-SAMPLE_ID = "sample_id"
+SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
 CONS_NAME = "consensus_seq_name"
 MOD_CONS_NAME = "modded_consensus_seq_name"
 
@@ -46,10 +46,10 @@ def expand_with_added_fa_names(merged_summaries_df, added_fa_names_fp):
     # names have commas in them so can't read as csv ...
     added_fastq_ids_df = pd.read_csv(added_fa_names_fp, sep="\t", dtype=str)
 
-    # make a column to hold the sample id; for these added ids, the sample
-    # name is the same as the fas name (for now, until naming conventions are
-    # nailed down; sorry, Yoshiki :( )
-    added_fastq_ids_df[SAMPLE_ID] = added_fastq_ids_df[fas_col_name]
+    # make a column to hold the sequenced pool component id;
+    # for these added ids, punt to this being the same as the fas name
+    added_fastq_ids_df[SEQ_POOL_COMP_ID] = added_fastq_ids_df[fas_col_name]
+
     # also copy it into "Sample" column for now, just so it has something there
     added_fastq_ids_df[SAMPLE_NAME] = added_fastq_ids_df[fas_col_name]
 
@@ -59,8 +59,8 @@ def expand_with_added_fa_names(merged_summaries_df, added_fa_names_fp):
 
     expanded_df = merged_summaries_df.merge(
         added_fastq_ids_df,
-        left_on=[CONS_NAME, SAMPLE_NAME, SAMPLE_ID],
-        right_on=[CONS_NAME, SAMPLE_NAME, SAMPLE_ID], how="outer")
+        left_on=[CONS_NAME, SAMPLE_NAME, SEQ_POOL_COMP_ID],
+        right_on=[CONS_NAME, SAMPLE_NAME, SEQ_POOL_COMP_ID], how="outer")
     expanded_df.fillna({CONS_NAME: ''}, inplace=True)
 
     # add a "modded_consensus_seq_name" col
