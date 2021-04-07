@@ -78,9 +78,6 @@ do
 	echo "Run tree building: $TREE_BUILD"
 	echo "Is test run: $ISTEST"
 
-	# Append Results URL
-	RESULTS="$TIMESTAMP"_"$FQ"
-
 	# Merge fastq files from multiple lanes
 	if [[ "$MERGE_LANES" == true ]]; then
 		qsub -v SEQ_RUN=$SEQ_RUN \
@@ -91,13 +88,11 @@ do
 			 -pe smp 16 \
 			 -S /bin/bash \
 			 $PIPELINEDIR/pipeline/merge_lanes.sh
-		DELIMITER=_L00
 		QSUBSAMPLEPARAMS=' -hold_jid merge_fq_lanes_'$SEQ_RUN''
-	else
-		DELIMITER=_R1_001.fastq.gz
 	fi
 
-	SAMPLE_LIST=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ | grep _R1_001.fastq.gz | sort -k3 -n | awk '{print $NF}' | awk -F $DELIMITER '{print $1}' | sort | uniq | grep -v Undetermined)
+	DELIMITER=_R1_001.fastq.gz
+	SAMPLE_LIST=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ | grep $DELIMITER | sort -k3 -n | awk '{print $NF}' | awk -F $DELIMITER '{print $1}' | sort | uniq | grep -v Undetermined)
 	if [[ "$SAMPLE_LIST" == "" ]]; then
 		echo "Error: There are no samples to run in $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ "
 		exit 1
