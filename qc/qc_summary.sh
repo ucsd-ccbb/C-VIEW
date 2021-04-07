@@ -24,6 +24,7 @@ runQC () {
 		--include "*fastqc.zip" \
 		--include "*.sorted.stats*" \
 		--include "*.acceptance.tsv" \
+		--include "*coverage.txt" \
 		--include "*error.log"
 
 	# Zip files
@@ -50,6 +51,12 @@ runQC () {
 	multiqc --config $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml --module qualimap --module custom_content $WORKSPACE
     echo -e "multiqc exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
+    # Concatenate coverage files
+    echo "Concatenating coverage files"
+    echo -e "SAMPLE\tCOVERAGE\tAVG_DEPTH\tMIN\tMAX\tZERO_DEPTH" > $WORKSPACE/"$SEQ_RUN"-coverage.tsv
+    cat $WORKSPACE/*/*coverage.txt | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-coverage.tsv
+    echo -e "coverage cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
+  
     # TODO: This is where the download of the full InspectSeq metadata should go
 
 	# Make summary table
@@ -88,6 +95,7 @@ runQC () {
 	aws s3 cp $WORKSPACE/qc/ $QCRESULTS/ --recursive --quiet
     aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $QCRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-coverage.tsv $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".error.tsv $QCRESULTS/
 
 	# Tree building data

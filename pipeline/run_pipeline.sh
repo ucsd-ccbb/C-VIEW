@@ -14,6 +14,7 @@ do
 
 	if [[ ! "$ORGANIZATION" =~ ^(ucsd|helix)$ ]]; then
 		echo "Error: Parameter ORGANIZATION must be one of ucsd or helix"
+		echo $ORGANIZATION
 		exit 1
 	fi
 
