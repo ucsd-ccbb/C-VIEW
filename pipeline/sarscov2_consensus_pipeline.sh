@@ -45,17 +45,25 @@ else
   S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq
 fi
 
+FASTQBASE=$SAMPLE
+INSPECT_DELIMITER=__
+INTERNAL_DELIMITER=_
+SEQUENCING_INFO=$(echo $SAMPLE | awk -F $INSPECT_DELIMITER '{print $5}')
+LANE_INFO=$(echo $SEQUENCING_INFO | awk -F $INTERNAL_DELIMITER '{print $2}')
+SAMPLE=$(echo $SAMPLE | sed "s/$SEQUENCING_INFO/$LANE_INFO/g")
+
 # Step 0: Download fastq
-if [[ "$FQ" == se ]]; then
-  # leave out any files for this sample that
-  # contain in their filename the string "R2" anywhere
-  # after the sample name but before the "fastq.gz"
-	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*fastq.gz" --exclude "$SAMPLE*R2*fastq.gz"
-fi
+# always download read 1
+aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$FASTQBASE*R1_001.fastq.gz"
+
+{ time ( python $PIPELINEDIR/qc/q30/q30.py $WORKSPACE/fastq/"$SAMPLE"*R1_001_fastq.gz $WORKSPACE/q30/"$SAMPLE"_R1_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLE"_R1.log.0.q30.log
+echo -e "$SAMPLE\tq30 R1 exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 if [[ "$FQ" == pe ]]; then
-	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R1*fastq.gz"
-	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R2*fastq.gz"
+	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$FASTQBASE*R2_001.fastq.gz"
+
+  { time ( python $PIPELINEDIR/qc/q30/q30.py $WORKSPACE/fastq/"$SAMPLE"*R2_001.fastq.gz $WORKSPACE/q30/"$SAMPLE"_R2_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLE"_R2.log.0.q30.log
+  echo -e "$SAMPLE\tq30 R2 exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 fi
 
 # Fastqc
@@ -64,9 +72,9 @@ fi
 
 # Step 1: Map Reads + Sort
 if [[ "$READ_CAP" == all ]]; then
-  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$SAMPLE"*.fastq.gz | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLE".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLE".log.1.map.log
+  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLE".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLE".log.1.map.log
 else
-  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$SAMPLE"*.fastq.gz | samtools view -h -F 4 | head -n $READ_CAP | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLE".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLE".log.1.map.log
+  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz | samtools view -h -F 4 | head -n $READ_CAP | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLE".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLE".log.1.map.log
 fi
 echo -e "$SAMPLE\tminimap2 exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
