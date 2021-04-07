@@ -1,3 +1,5 @@
+#!/bin/bash
+
 mkdir -p $WORKSPACE/"$SEQ_RUN"_lane_merged_fastq
 
 aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ --recursive --exclude "*" --include "*fastq.gz"

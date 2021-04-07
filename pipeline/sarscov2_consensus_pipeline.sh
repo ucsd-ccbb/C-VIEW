@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PATH=/shared/workspace/software/ivar/bin:$PATH
+export PATH=/shared/workspace/software/ivar/bin:/shared/workspace/software/q30:$PATH
 # Activate conda env covid1.2
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate covid1.2
@@ -15,7 +15,7 @@ RESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_sa
 # Clear fastq directory if node is being reused
 rm -rf $WORKSPACE/*
 mkdir -p $WORKSPACE/fastq
-mkdir -p $WORKSPACE/fastqc
+mkdir -p $WORKSPACE/q30
 
 # Move reference files to compute node once
 if [[ ! -f "$REF_FAS" ]]; then
@@ -66,9 +66,9 @@ if [[ "$FQ" == pe ]]; then
   echo -e "$SAMPLE\tq30 R2 exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 fi
 
-# Fastqc
-# { time ( fastqc -t $THREADS $WORKSPACE/fastq/"$SAMPLE"*fastq.gz -o $WORKSPACE/fastqc ) ; } > $WORKSPACE/"$SAMPLE".log.0.fastqc.log 2>&1
-# echo -e "$SAMPLE\tFastqc exit code: $?" > $WORKSPACE/"$SAMPLE".exit.log
+# q30
+{ time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*fastq.gz $WORKSPACE/q30/"$SAMPLE"_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLE".log.0.q30.log
+echo -e "$SAMPLE\tq30.py exit code: $?" > $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 1: Map Reads + Sort
 if [[ "$READ_CAP" == all ]]; then
