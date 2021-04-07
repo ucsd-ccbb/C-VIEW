@@ -8,7 +8,7 @@ from qc.custom_gen_stats_multiqc import write_custom_multiqc_yaml
 class CustomGenStatsMultiQcTest(FileTestCase):
     def _make_paths_file(self, output_fname, glob_pattern):
         output_fp = f"{self.test_temp_dir}/{output_fname}"
-        relevant_paths = Path(self.test_samples_dir).rglob(glob_pattern)
+        relevant_paths = Path(self.dummy_samples_dir).rglob(glob_pattern)
         relevant_fps = [f"{str(p)}\n" for p in relevant_paths]
         sorted_relevant_fps = sorted(relevant_fps)
         with open(output_fp, "w") as f:
