@@ -31055,10 +31055,10 @@ NC_045512.2	46	2
                  'fraction_acgt_bases': 0.9999456,
                  'num_inserts_in_consensus': 15,
                  'num_deletions_in_consensus': 1,
-                 'consensus_s3': "s3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa",
-                 'trimmed_bam_s3': "s3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.bam",
-                 'variants_s3': "s3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.variants.tsv"
-        }
+                 'consensus_s3': "s3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa",  # noqa 501
+                 'trimmed_bam_s3': "s3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.bam",  # noqa 501
+                 'variants_s3': "s3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.variants.tsv"  # noqa 501
+                }
 
         expected_out = ['fastq_id\t'
                         'coverage_gte_10_reads\t'
@@ -31075,9 +31075,9 @@ NC_045512.2	46	2
                         'quality_20\t'
                         'iVar version 1.3.1\t2021-02-26_19-40-24\tpe\t'
                         '2021-02-08-ARTIC\t'
-                        's3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa\t'
-                        's3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.bam\t'
-                        's3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.variants.tsv\n'
+                        's3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus.fa\t'  # noqa 501
+                        's3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.bam\t'  # noqa 501
+                        's3://ucsd-other/2021-02-08-ARTIC/2021-02-08-ARTIC_results/2021-03-22_23-30-22_pe/2021-02-08-ARTIC_samples/039idSEARCH-5366-SAN_L001_L002_L003_L004/039idSEARCH-5366-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.variants.tsv\n'  # noqa 501
                         ]
 
         real_out = _generate_header_and_data_lines(input)
@@ -31157,9 +31157,9 @@ NC_045512.2	46	2
                 f"{curr_item_name}.trimmed.sorted.pileup.consensus.fa",
                 f"{working_dir}/{curr_item_name}.trimmed.sorted.depth.txt",
                 f"{self.ref_data_dir}/NC_045512.2.fas",
-                f"SU002_S13_L001.trimmed.sorted.bam",
-                f"SU002_S13_L001.trimmed.sorted.pileup.variants.tsv",
-                f"s3://ucsd-other/PDH_83-233854622/PDH_83-233854622_results/2021-03-01_19-46-58_se/PDH_83-233854622_samples/SU002_S13_L001/",
+                "SU002_S13_L001.trimmed.sorted.bam",
+                "SU002_S13_L001.trimmed.sorted.pileup.variants.tsv",
+                "s3://ucsd-other/PDH_83-233854622/PDH_83-233854622_results/2021-03-01_19-46-58_se/PDH_83-233854622_samples/SU002_S13_L001/",  # noqa 501
                 output_fp,
                 out_json_fp]
 

@@ -11,7 +11,6 @@
 
 
 from sys import argv
-from collections import Counter
 import re
 import yaml
 
@@ -28,13 +27,14 @@ def parseSeqQual(q30File):
             parsing = True
         if line.startswith("q30 reads"):
             parsing = True
-            #continue  # Skip header
+            # continue  # Skip header
         if parsing:
             value = line.strip().split(" ")[2]
             value = int(float(value))
             data.append(value)
     file_obj.close()
     return data
+
 
 def pairwise(it):
     """ From https://stackoverflow.com/questions/5389507/iterating-over-every-two-elements-in-a-list user mic_e. """
@@ -44,6 +44,7 @@ def pairwise(it):
             yield next(it), next(it)
         except StopIteration:
             return
+
 
 def getSampleName(x):
     """ Parses sample name from q30 path. """
