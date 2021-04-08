@@ -11,6 +11,7 @@
 
 
 from sys import argv
+import os
 import re
 import yaml
 
@@ -46,12 +47,13 @@ def pairwise(it):
             return
 
 
-def getSampleName(x):
-    """ Parses sample name from q30 path. """
-    name = x.split("/")
-    name = name[-2]
-    name = name.replace("_R1_001", "")
-    name = name.replace("_R1", "")
+def get_sequenced_pool_component_id(filepath):
+    """ Parses sequenced pool component id from a file path. """
+
+    # get the name of the folder that the file is in
+    fname = os.path.basename(os.path.dirname(filepath))
+    # replace qualimap name cruft if extant
+    name = fname.replace(".sorted.stats", "")
     return name
 
 
@@ -66,9 +68,7 @@ def gather_p25_ins_sizes(qmap_file_list_fp):
     # Extract and store insert sizes from qr_paths
     for qr in qr_paths:
         with open(qr) as file:
-            # Clean qr to get sample name
-            x = qr.split("/")
-            sample_name = x[-3]
+            sample_name = get_sequenced_pool_component_id(qr)
             for line in file:
                 if line.startswith("<td class=column1>P25/Median/P75</td>"):
                     stats = next(file)
@@ -98,10 +98,10 @@ def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
 
     if se_or_pe == "se":
         for R1 in q30s_paths:
-            getSampleName(R1)
+            get_sequenced_pool_component_id(R1)
             S1 = parseSeqQual(R1)
             # tbl = Counter(S1)
-            name = getSampleName(R1)
+            name = get_sequenced_pool_component_id(R1)
             # pctQ30 = calcQ30(tbl)
             pctQ30 = S1[1]/S1[0]
             data_dict[name] = insert_pct_gte_q30_in_sample_dict(
@@ -112,7 +112,7 @@ def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
             S1 = parseSeqQual(R1)
             S2 = parseSeqQual(R2)
             # combined = Counter(S1) + Counter(S2)
-            name = getSampleName(R1)
+            name = get_sequenced_pool_component_id(R1)
             # pctQ30 = calcQ30(combined)
             pctQ30 = (S1[1] + S2[1])/(S1[0] + S2[0]) * 100
             data_dict[name] = insert_pct_gte_q30_in_sample_dict(
