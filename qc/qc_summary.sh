@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
-PHYLORESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_phylogenetic_results
+ZIPRESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_zips
 QCRESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_quality_control
 S3TEST=s3://ucsd-rtl-test
 
@@ -24,7 +24,7 @@ runQC () {
 		--include "*q30_reads.txt" \
 		--include "*.sorted.stats*" \
 		--include "*.acceptance.tsv" \
-		--include "*coverage.txt" \
+		--include "*coverage.tsv" \
 		--include "*error.log"
 
 	# Zip files
@@ -82,13 +82,13 @@ runQC () {
 
 	# Upload Results
 	echo "Uploading QC and summary results."
-	# phylogenetic results folder
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-variants.zip $PHYLORESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-consensus.zip $PHYLORESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-depth.zip $PHYLORESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $PHYLORESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $PHYLORESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $PHYLORESULTS/
+	# zipped results folder
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-variants.zip $ZIPRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-consensus.zip $ZIPRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-depth.zip $ZIPRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $ZIPRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $ZIPRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $ZIPRESULTS/
 
 	# quality control folder
 	aws s3 cp $WORKSPACE/multiqc_data/ $QCRESULTS/"$SEQ_RUN"_multiqc_data/ --recursive --quiet
