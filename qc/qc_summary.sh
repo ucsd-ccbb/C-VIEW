@@ -1,8 +1,7 @@
 #!/bin/bash
 
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
-ZIPRESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_zips
-QCRESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_quality_control
+QCRESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_summary_files
 S3TEST=s3://ucsd-rtl-test
 
 # Activate conda env covid1.2
@@ -82,15 +81,7 @@ runQC () {
 
 	# Upload Results
 	echo "Uploading QC and summary results."
-	# zipped results folder
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-variants.zip $ZIPRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-consensus.zip $ZIPRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-depth.zip $ZIPRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $ZIPRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $ZIPRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $ZIPRESULTS/
-
-	# quality control folder
+	# summary files folder
 	aws s3 cp $WORKSPACE/multiqc_data/ $QCRESULTS/"$SEQ_RUN"_multiqc_data/ --recursive --quiet
 	aws s3 cp $WORKSPACE/multiqc_report.html $QCRESULTS/"$SEQ_RUN"_multiqc_report.html
 	aws s3 cp $WORKSPACE/qc/ $QCRESULTS/ --recursive --quiet
@@ -98,8 +89,13 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-coverage.tsv $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".error.tsv $QCRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-variants.zip $QCRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-consensus.zip $QCRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-depth.zip $QCRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $QCRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $QCRESULTS/
 
-	# Tree building data
+	# cumulative data folder
   if [[ "$ISTEST" = false ]]; then
     S3CUMULATIVE=$S3DOWNLOAD
   else
