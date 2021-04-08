@@ -12,9 +12,19 @@ PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 REF_FAS="/scratch/reference/NC_045512.2.fas"
 REF_MMI="/scratch/reference/NC_045512.2.fas.mmi"
 REF_GFF="/scratch/reference/NC_045512.2.gff3"
+INSPECT_DELIMITER=__
+INTERNAL_DELIMITER=_
 
-WORKSPACE=/scratch/$SAMPLE/$TIMESTAMP
-RESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_samples/$SAMPLE
+FASTQBASE=$SAMPLE
+SEQUENCING_INFO=$(echo $SAMPLE | awk -F $INSPECT_DELIMITER '{print $5}')
+LANE_INFO=$(echo $SEQUENCING_INFO | awk -F $INTERNAL_DELIMITER '{print $2}' | sed "s/L//g")
+SAMPLEID=$(echo $SAMPLE | sed "s/$SEQUENCING_INFO/$LANE_INFO/g")
+echo $SEQUENCING_INFO >> $WORKSPACE/"$SAMPLE"var.log
+echo $LANE_INFO >> $WORKSPACE/"$SAMPLE"var.log
+echo $SAMPLEID >> $WORKSPACE/"$SAMPLE"var.log
+
+WORKSPACE=/scratch/$SAMPLEID/$TIMESTAMP
+RESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_samples/$SAMPLEID
 
 # Clear fastq directory if node is being reused
 rm -rf $WORKSPACE/*
@@ -48,16 +58,6 @@ if [[ "$MERGE_LANES" == true ]]; then
 else
   S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq
 fi
-
-FASTQBASE=$SAMPLE
-INSPECT_DELIMITER=__
-INTERNAL_DELIMITER=_
-SEQUENCING_INFO=$(echo $SAMPLE | awk -F $INSPECT_DELIMITER '{print $5}')
-LANE_INFO=$(echo $SEQUENCING_INFO | awk -F $INTERNAL_DELIMITER '{print $2}' | sed "s/L//g")
-SAMPLEID=$(echo $SAMPLE | sed "s/$SEQUENCING_INFO/$LANE_INFO/g")
-echo $SEQUENCING_INFO >> $WORKSPACE/"$SAMPLE"var.log
-echo $LANE_INFO >> $WORKSPACE/"$SAMPLE"var.log
-echo $SAMPLEID >> $WORKSPACE/"$SAMPLE"var.log
 
 # Step 0: Download fastq
 # always download read 1
