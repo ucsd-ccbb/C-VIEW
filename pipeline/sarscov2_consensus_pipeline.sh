@@ -56,7 +56,7 @@ FASTQBASE=$SAMPLE
 # always download read 1
 aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$FASTQBASE*R1_001.fastq.gz"
 
-{ time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R1_001_fastq.gz $WORKSPACE/q30/"$SAMPLE"_R1_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLE"_R1.log.0.q30.log
+{ time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R1_001.fastq.gz $WORKSPACE/q30/"$SAMPLE"_R1_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLE"_R1.log.0.q30.log
 echo -e "$SAMPLE\tq30 R1 exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 if [[ "$FQ" == pe ]]; then
