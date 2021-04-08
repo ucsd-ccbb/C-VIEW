@@ -55,7 +55,7 @@ runQC () {
     # Concatenate coverage files
     echo "Concatenating coverage files"
     echo -e "SAMPLE\tCOVERAGE\tAVG_DEPTH\tMIN\tMAX\tZERO_DEPTH" > $WORKSPACE/"$SEQ_RUN"-coverage.tsv
-    cat $WORKSPACE/*/*coverage.txt | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-coverage.tsv
+    cat $WORKSPACE/*/*coverage.tsv | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-coverage.tsv
     echo -e "coverage cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
     # TODO: This is where the download of the full InspectSeq metadata should go

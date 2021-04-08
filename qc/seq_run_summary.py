@@ -1,6 +1,9 @@
 from sys import argv
 import pandas as pd
 
+MULTIQC_SEQ_POOL_COMP_ID = "Sample"
+ACCEPTANCE_SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
+
 
 # Makes a combined table from:
 # 1. sequencing run's multiqc_general_stats.txt file
@@ -23,8 +26,9 @@ def merge_multiqc_and_acceptance(arg_list):
     multiqc_df = multiqc_df.drop("general_error_rate", axis=1)
 
     # *outer* merge all fields in acceptance df into multiqc df
-    combined = multiqc_df.merge(accept_df, left_on="Sample",
-                                right_on="fastq_id", how="outer")
+    combined = multiqc_df.merge(accept_df, left_on=MULTIQC_SEQ_POOL_COMP_ID,
+                                right_on=ACCEPTANCE_SEQ_POOL_COMP_ID,
+                                how="outer")
     combined.to_csv(output_fp, index=False)
 
 

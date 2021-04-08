@@ -7,6 +7,7 @@
 from sys import argv
 import pandas as pd
 
+SUMMARY_SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
 LINES_TO_FILE = "filtered_lines"
 ACCEPTED_CONS_FNAMES = "accepted_cons_fnames"
 INDEL_FLAGGED_CONS_FNAMES = "indel_flagged_cons_fnames"
@@ -45,13 +46,13 @@ def _read_df(csv_fp):
 
 
 def _get_consensus_fnames(filtered_df, dir_prefix):
-    fastq_ids = filtered_df['fastq_id'].to_list()
+    seq_pool_comp_ids = filtered_df[SUMMARY_SEQ_POOL_COMP_ID].to_list()
     if dir_prefix is not None:
         dir_prefix = dir_prefix + "/"
     else:
         dir_prefix = ""
     consensus_fnames = [f"{dir_prefix}{x}.trimmed.sorted.pileup.consensus.fa"
-                        for x in fastq_ids]
+                        for x in seq_pool_comp_ids]
     return " ".join(consensus_fnames)
 
 

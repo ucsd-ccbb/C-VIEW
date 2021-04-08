@@ -59,14 +59,14 @@ fi
 # always download read 1
 aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$FASTQBASE*R1_001.fastq.gz"
 
-{ time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R1_001.fastq.gz $WORKSPACE/q30/"$SAMPLE"_R1_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLE"_R1.log.0.q30.log
-echo -e "$SAMPLE\tq30 R1 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
+{ time ( q30.py $WORKSPACE/fastq/"$FASTQBASE"*R1_001.fastq.gz $WORKSPACE/q30/"$SAMPLEID"_R1_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R1.log.0.q30.log
+echo -e "$SAMPLEID\tq30 R1 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 if [[ "$FQ" == pe ]]; then
 	aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$FASTQBASE*R2_001.fastq.gz"
 
-  { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R2_001.fastq.gz $WORKSPACE/q30/"$SAMPLE"_R2_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLE"_R2.log.0.q30.log
-  echo -e "$SAMPLE\tq30 R2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
+  { time ( q30.py $WORKSPACE/fastq/"$FASTQBASE"*R2_001.fastq.gz $WORKSPACE/q30/"$SAMPLEID"_R2_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R2.log.0.q30.log
+  echo -e "$SAMPLEID\tq30 R2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 fi
 
 # Step 1: Map Reads + Sort

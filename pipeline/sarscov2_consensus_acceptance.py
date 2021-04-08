@@ -3,7 +3,6 @@ import os
 import json
 import nwalign3 as nw
 
-SEARCH_ID_PREFIX = "SEARCH"
 ID_DELIMITER = "__"
 REF_FIRST_ORF_START_1BASED = 266
 REF_LAST_ORF_END_1BASED = 29674
