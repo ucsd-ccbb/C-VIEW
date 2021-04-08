@@ -1,17 +1,21 @@
 #!/bin/bash
 
 export PATH=/shared/workspace/software/ivar/bin:/shared/workspace/software/q30:$PATH
+
 # Activate conda env covid1.2
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate covid1.2
+
 # Set variables
 THREADS=2
-WORKSPACE=/scratch/$SAMPLE/$TIMESTAMP
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 REF_FAS="/scratch/reference/NC_045512.2.fas"
 REF_MMI="/scratch/reference/NC_045512.2.fas.mmi"
 REF_GFF="/scratch/reference/NC_045512.2.gff3"
+
+WORKSPACE=/scratch/$SAMPLE/$TIMESTAMP
 RESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_samples/$SAMPLE
+
 # Clear fastq directory if node is being reused
 rm -rf $WORKSPACE/*
 mkdir -p $WORKSPACE/fastq
@@ -49,7 +53,7 @@ FASTQBASE=$SAMPLE
 INSPECT_DELIMITER=__
 INTERNAL_DELIMITER=_
 SEQUENCING_INFO=$(echo $SAMPLE | awk -F $INSPECT_DELIMITER '{print $5}')
-LANE_INFO=$(echo $SEQUENCING_INFO | awk -F $INTERNAL_DELIMITER '{print $2}')
+LANE_INFO=$(echo $SEQUENCING_INFO | awk -F $INTERNAL_DELIMITER '{print $2}' | sed "s/L//g")
 SAMPLEID=$(echo $SAMPLE | sed "s/$SEQUENCING_INFO/$LANE_INFO/g")
 echo $SEQUENCING_INFO >> $WORKSPACE/"$SAMPLE"var.log
 echo $LANE_INFO >> $WORKSPACE/"$SAMPLE"var.log
