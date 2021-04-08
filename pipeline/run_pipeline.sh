@@ -14,7 +14,6 @@ do
 
 	if [[ ! "$ORGANIZATION" =~ ^(ucsd|helix)$ ]]; then
 		echo "Error: Parameter ORGANIZATION must be one of ucsd or helix"
-		echo $ORGANIZATION
 		exit 1
 	fi
 
@@ -79,6 +78,8 @@ do
 	echo "Run tree building: $TREE_BUILD"
 	echo "Is test run: $ISTEST"
 
+	FASTQS_PATH=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq
+
 	# Merge fastq files from multiple lanes
 	if [[ "$MERGE_LANES" == true ]]; then
 		qsub -v SEQ_RUN=$SEQ_RUN \
@@ -90,12 +91,13 @@ do
 			 -S /bin/bash \
 			 $PIPELINEDIR/pipeline/merge_lanes.sh
 		QSUBSAMPLEPARAMS=' -hold_jid merge_fq_lanes_'$SEQ_RUN''
+		FASTQS_PATH=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/"$SEQ_RUN"_lane_merged_fastq
 	fi
 
 	DELIMITER=_R1_001.fastq.gz
-	SAMPLE_LIST=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ | grep $DELIMITER | sort -k3 -n | awk '{print $NF}' | awk -F $DELIMITER '{print $1}' | sort | uniq | grep -v Undetermined)
+	SAMPLE_LIST=$(aws s3 ls $FASTQS_PATH | grep $DELIMITER | sort -k3 -n | awk '{print $NF}' | awk -F $DELIMITER '{print $1}' | sort | uniq | grep -v Undetermined)
 	if [[ "$SAMPLE_LIST" == "" ]]; then
-		echo "Error: There are no samples to run in $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ "
+		echo "Error: There are no samples to run in $FASTQS_PATH"
 		exit 1
 	fi
 
@@ -106,6 +108,7 @@ do
 			qsub $QSUBSAMPLEPARAMS \
 				-v SEQ_RUN="$SEQ_RUN" \
 				-v SAMPLE=$SAMPLE \
+				-v FASTQS_PATH=FASTQS_PATH \
 				-v S3DOWNLOAD=$S3DOWNLOAD \
 				-v PRIMER_SET=$PRIMER_SET \
 				-v MERGE_LANES=$MERGE_LANES \
