@@ -46,11 +46,14 @@ else
 fi
 
 FASTQBASE=$SAMPLE
-#INSPECT_DELIMITER=__
-#INTERNAL_DELIMITER=_
-#SEQUENCING_INFO=$(echo $SAMPLE | awk -F $INSPECT_DELIMITER '{print $5}')
-#LANE_INFO=$(echo $SEQUENCING_INFO | awk -F $INTERNAL_DELIMITER '{print $2}')
-#SAMPLE=$(echo $SAMPLE | sed "s/$SEQUENCING_INFO/$LANE_INFO/g")
+INSPECT_DELIMITER=__
+INTERNAL_DELIMITER=_
+SEQUENCING_INFO=$(echo $SAMPLE | awk -F $INSPECT_DELIMITER '{print $5}')
+LANE_INFO=$(echo $SEQUENCING_INFO | awk -F $INTERNAL_DELIMITER '{print $2}')
+SAMPLEID=$(echo $SAMPLE | sed "s/$SEQUENCING_INFO/$LANE_INFO/g")
+echo $SEQUENCING_INFO >> $WORKSPACE/"$SAMPLE"var.log
+echo $LANE_INFO >> $WORKSPACE/"$SAMPLE"var.log
+echo $SAMPLEID >> $WORKSPACE/"$SAMPLE"var.log
 
 # Step 0: Download fastq
 # always download read 1
@@ -105,7 +108,7 @@ echo -e "$SAMPLE\tqualimap exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 9: Acceptance
 IVAR_VER=$(ivar version)
-{ time ( python $PIPELINEDIR/pipeline/sarscov2_consensus_acceptance.py $SEQ_RUN $TIMESTAMP $FQ "$IVAR_VER" $SAMPLE $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt $REF_FAS $WORKSPACE/"$SAMPLE".acceptance.tsv $WORKSPACE/"$SAMPLE".align.json ) ; } 2> $WORKSPACE/"$SAMPLE".log.9.acceptance.log
+{ time ( python $PIPELINEDIR/pipeline/sarscov2_consensus_acceptance.py $SEQ_RUN $TIMESTAMP $FQ "$IVAR_VER" $SAMPLE $WORKSPACE/"$SAMPLE".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLE".trimmed.sorted.depth.txt $REF_FAS "$SAMPLE".trimmed.sorted.bam "$SAMPLE".trimmed.sorted.pileup.variants.tsv $RESULTS $WORKSPACE/"$SAMPLE".acceptance.tsv $WORKSPACE/"$SAMPLE".align.json ) ; } 2> $WORKSPACE/"$SAMPLE".log.9.acceptance.log
 echo -e "$SAMPLE\tacceptance.py exit code: $?" >> $WORKSPACE/"$SAMPLE".exit.log
 
 # Step 10: Coverage
