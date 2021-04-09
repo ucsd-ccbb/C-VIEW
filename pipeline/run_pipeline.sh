@@ -80,8 +80,9 @@ do
 
 	DELIMITER=_R1_001.fastq.gz
 	R1_FASTQS=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq |  grep $DELIMITER | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
+  echo $(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq)
   echo "original r1 fastqs"
-  echo $R1_FASTQS
+  echo "$R1_FASTQS"
 
 	# Merge fastq files from multiple lanes
 	if [[ "$MERGE_LANES" == true ]]; then
@@ -109,7 +110,7 @@ do
 	fi
 
   echo "revised R1 fastqs"
-  echo $R1_FASTQS
+  echo "$R1_FASTQS"
 
 	SAMPLE_LIST=$(echo $R1_FASTQS | awk -F $DELIMITER '{print $1}' | sort | uniq)
 	if [[ "$SAMPLE_LIST" == "" ]]; then
@@ -118,7 +119,7 @@ do
 	fi
 
 	echo "sample list"
-	echo $SAMPLE_LIST
+	echo "$SAMPLE_LIST"
 
 	if [[ "$VARIANTS" == true ]]; then
 
