@@ -105,13 +105,12 @@ do
       LANES_COMBINED=$(echo $LANES | sed 's/ //g')
       SAMPLE_W_LANES_COMBINED="$SAMPLE"_"$LANES_COMBINED"
       UNIQ_SAMPLES_W_LANES_COMBINED+=($SAMPLE_W_LANES_COMBINED)
+
       FINAL_R1_FASTQS+=("$SAMPLE"_"$LANES_COMBINED""$DELIMITER")
     done
 
     UNIQ_SAMPLES_WO_LANE_INFO_STR="${UNIQ_SAMPLES_WO_LANE_INFO[@]}"
     UNIQ_SAMPLES_W_LANES_COMBINED_STR="${UNIQ_SAMPLES_W_LANES_COMBINED[@]}"
-    echo $UNIQ_SAMPLES_WO_LANE_INFO_STR
-    echo $UNIQ_SAMPLES_W_LANES_COMBINED_STR
 
 		qsub -v SEQ_RUN=$SEQ_RUN \
 			 -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
@@ -191,7 +190,6 @@ do
 
 	echo "organization,seq_run,primers,reads,merge,variants,qc,lineage,tree_build,read_cap,is_test" > "$SEQ_RUN"-"$TIMESTAMP".csv
 	echo "$ORGANIZATION,$SEQ_RUN,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD,$READ_CAP,$ISTEST" >> "$SEQ_RUN"-"$TIMESTAMP".csv
-	# TODO: put this upload back!
-	#aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
+	aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
 	rm "$SEQ_RUN"-"$TIMESTAMP".csv
 done
