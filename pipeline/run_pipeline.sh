@@ -82,7 +82,7 @@ do
 
 	# Merge fastq files from multiple lanes
 	if [[ "$MERGE_LANES" == true ]]; then
-		qsub -v SEQ_RUN=$SEQ_RUN \
+		qsub -sync y -v SEQ_RUN=$SEQ_RUN \
 			 -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
 			 -v S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq \
 			 -wd /shared/workspace/projects/covid/logs \
