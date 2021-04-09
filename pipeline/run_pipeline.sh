@@ -79,8 +79,8 @@ do
 	echo "Is test run: $ISTEST"
 
 	DELIMITER=_R1_001.fastq.gz
-	R1_FASTQS=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq |  grep $DELIMITER | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
-  echo $(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq)
+	R1_FASTQS=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ |  grep $DELIMITER | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
+
   echo "original r1 fastqs"
   echo "$R1_FASTQS"
 
