@@ -80,7 +80,7 @@ do
 
 	DELIMITER=_R1_001.fastq.gz
   BOTH_FASTQS=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ |  grep ".fastq.gz" | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
-	R1_FASTQS=$(echo $BOTH_FASTQS |  grep $DELIMITER  | aws '{print $NF}')
+	R1_FASTQS=$(echo $BOTH_FASTQS |  grep $DELIMITER  | awk '{print $NF}')
 
   echo "both fastqs"
   echo "$BOTH_FASTQS"
