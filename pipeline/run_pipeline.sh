@@ -80,8 +80,8 @@ do
 
 	DELIMITER=_R1_001.fastq.gz
 	R1_FASTQS=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq |  grep $DELIMITER | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
-  $echo "original r1 fastqs"
-  $echo $R1_FASTQS
+  echo "original r1 fastqs"
+  echo $R1_FASTQS
 
 	# Merge fastq files from multiple lanes
 	if [[ "$MERGE_LANES" == true ]]; then
