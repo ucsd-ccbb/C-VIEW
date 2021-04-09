@@ -80,7 +80,7 @@ do
 
 	DELIMITER=_R1_001.fastq.gz
   BOTH_FASTQS=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ |  grep ".fastq.gz" | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
-	R1_FASTQS=$(echo $BOTH_FASTQS |  grep $DELIMITER  | awk '{print $NF}')
+	R1_FASTQS=$(echo ""$BOTH_FASTQS"" |  grep $DELIMITER )
 
   echo "both fastqs"
   echo "$BOTH_FASTQS"
@@ -102,9 +102,9 @@ do
     FINAL_R1_FASTQS=()
     for SAMPLE in $(printf '%s\n' "${SAMPLES_WO_LANES_LIST[@]}" | sort | uniq ); do
       echo "sample: $SAMPLE"
-      echo $(echo $BOTH_FASTQS | grep "$SAMPLE*" | awk -F $INSPECT_DELIMITER '{print $NF}')
+      echo $(echo "$BOTH_FASTQS" | grep "$SAMPLE" | awk -F $INSPECT_DELIMITER '{print $NF}')
 
-      LANES=$(echo $BOTH_FASTQS | grep "$SAMPLE*" | awk -F $INSPECT_DELIMITER '{print $NF}'| awk -F '_L|_R' '{print $2}' | sort | uniq | grep 00)
+      LANES=$(echo "$BOTH_FASTQS" | grep "$SAMPLE" | awk -F $INSPECT_DELIMITER '{print $NF}'| awk -F '_L|_R' '{print $2}' | sort | uniq | grep 00)
       LANES_COMBINED=$(echo $LANES | sed 's/ //g')
 
       echo "lanes: $LANES"
