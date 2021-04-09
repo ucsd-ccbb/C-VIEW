@@ -79,7 +79,11 @@ do
 	echo "Is test run: $ISTEST"
 
 	DELIMITER=_R1_001.fastq.gz
-	R1_FASTQS=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ |  grep $DELIMITER | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
+  BOTH_FASTQS=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ |  grep ".fastq.gz" | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
+	R1_FASTQS=$(echo $BOTH_FASTQS |  grep $DELIMITER )
+
+  echo "both fastqs"
+  echo "$BOTH_FASTQS"
 
   echo "original r1 fastqs"
   echo "$R1_FASTQS"
@@ -99,7 +103,7 @@ do
     for SAMPLE in $(printf '%s\n' "${SAMPLES_WO_LANES_LIST[@]}" | sort | uniq ); do
       echo "sample: $SAMPLE"
 
-      LANES=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/$SAMPLE* | awk -F $INSPECT_DELIMITER '{print $NF}'| awk -F '_L|_R' '{print $2}' | sort | uniq | grep 00)
+      LANES=$(echo $BOTH_FASTQS | grep "$SAMPLE*" | awk -F $INSPECT_DELIMITER '{print $NF}'| awk -F '_L|_R' '{print $2}' | sort | uniq | grep 00)
       LANES_COMBINED=$(echo $LANES | sed 's/ //g')
 
       echo "lanes: $LANES"
@@ -183,6 +187,7 @@ do
 
 	echo "organization,seq_run,primers,reads,merge,variants,qc,lineage,tree_build,read_cap,is_test" > "$SEQ_RUN"-"$TIMESTAMP".csv
 	echo "$ORGANIZATION,$SEQ_RUN,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD,$READ_CAP,$ISTEST" >> "$SEQ_RUN"-"$TIMESTAMP".csv
-	aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
+	# TODO: put this upload back!
+	#aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
 	rm "$SEQ_RUN"-"$TIMESTAMP".csv
 done
