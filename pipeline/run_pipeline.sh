@@ -113,7 +113,7 @@ do
   echo "revised R1 fastqs"
   echo "$R1_FASTQS"
 
-	SAMPLE_LIST=$(echo $R1_FASTQS | awk -F $DELIMITER '{print $1}' | sort | uniq)
+	SAMPLE_LIST=$(echo "$R1_FASTQS" | awk -F $DELIMITER '{print $1}' | sort | uniq)
 	if [[ "$SAMPLE_LIST" == "" ]]; then
 		echo "Error: There are no samples to run in $FASTQS_PATH"
 		exit 1
