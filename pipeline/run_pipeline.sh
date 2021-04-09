@@ -85,8 +85,11 @@ do
   echo "original r1 fastqs"
   echo "$R1_FASTQS"
 
+  # TODO: remove test setting
+  MERGE_LANES=false
 	# Merge fastq files from multiple lanes
 	if [[ "$MERGE_LANES" == true ]]; then
+	  # get the (non-unique) list of sample identifiers without lane/read info (but with sample number)
     INSPECT_DELIMITER=__
     SAMPLES_WO_LANES_LIST=()
     for R1_FASTQ in $(echo $R1_FASTQS); do
@@ -96,6 +99,7 @@ do
       SAMPLES_WO_LANES_LIST+=($A_SAMPLE)
     done
 
+    # reduce above list to only unique values and loop over them
     FINAL_R1_FASTQS=()
     for SAMPLE in $(printf '%s\n' "${SAMPLES_WO_LANES_LIST[@]}" | sort | uniq ); do
       LANES=$(echo "$BOTH_FASTQS" | grep "$SAMPLE" | awk -F $INSPECT_DELIMITER '{print $NF}'| awk -F '_L|_R' '{print $2}' | sort | uniq | grep 00)
