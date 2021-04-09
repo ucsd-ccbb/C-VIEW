@@ -59,31 +59,33 @@ runPangolin () {
 	source $ANACONDADIR/activate pangolin
 	pangolin --update
 	pangolin -t $THREADS --outfile $WORKSPACE/"$TIMESTAMP".lineage_report.csv $WORKSPACE/"$TIMESTAMP".fas
+  echo -e "pangolin exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
-    # produce merged_qc_and_lineages.csv and "$TIMESTAMP".empress_metadata.tsv
-    python $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE/added_fa_names.txt $WORKSPACE "-summary.csv" $WORKSPACE/"$TIMESTAMP".lineage_report.csv $WORKSPACE/"$TIMESTAMP".qc_and_lineages.csv $WORKSPACE/"$TIMESTAMP".empress_metadata.tsv
-	
-	aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$TIMESTAMP/ --recursive --quiet
+  # produce merged_qc_and_lineages.csv and "$TIMESTAMP".empress_metadata.tsv
+  python $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE/added_fa_names.txt $WORKSPACE "-summary.csv" $WORKSPACE/"$TIMESTAMP".lineage_report.csv $WORKSPACE/"$TIMESTAMP".qc_and_lineages.csv $WORKSPACE/"$TIMESTAMP".empress_metadata.tsv
+  echo -e "lineages_summary.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 }
 
 buildTree () {
 	# Must use biopy env due to numpy conflicts
 	source $ANACONDADIR/activate biopy
 	ViralMSA.py -s $WORKSPACE/"$TIMESTAMP".fas -r SARS-CoV-2 -o $WORKSPACE/viralmsa_out -t $THREADS -e aws-CCBB@health.ucsd.edu
+  echo -e "ViralMSA.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
 	python $PIPELINEDIR/pipeline/trim_msa.py -i $WORKSPACE/viralmsa_out/"$TIMESTAMP".fas.aln -s 100 -e 50 -o $WORKSPACE/"$TIMESTAMP".trimmed.aln
+  echo -e "trim_msa.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
 	iqtree2 -T $THREADS -m GTR+F+G4 --polytomy -blmin 1e-9 -s $WORKSPACE/"$TIMESTAMP".trimmed.aln
+  echo -e "iqtree2 exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
 	python /shared/workspace/software/MinVar-Rooting-master/FastRoot.py -i $WORKSPACE/"$TIMESTAMP".trimmed.aln.treefile -o $WORKSPACE/"$TIMESTAMP".trimmed.aln.rooted.treefile -m OG -g "hCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25"
+  echo -e "iFastRoot.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
 	# tree building 
 	source $ANACONDADIR/activate qiime2-2020.11
 
 	empress tree-plot --tree $WORKSPACE/"$TIMESTAMP".trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/"$TIMESTAMP".empress_metadata.tsv --output-dir $WORKSPACE/tree-viz
-
-	aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$TIMESTAMP/ --recursive --quiet
-
+  echo -e "empress tree-plot exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 }
 
 # Always run Pangolin
@@ -96,4 +98,5 @@ if [[ "$TREE_BUILD" == true ]]; then
 	aws s3 cp $WORKSPACE/"$TIMESTAMP"-treebuild.log $S3UPLOAD/phylogeny/$TIMESTAMP/
 fi
 
-
+grep -v "exit code: 0" $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log | head -n 1 >> $WORKSPACE/"$TIMESTAMP"-phylogeny.error.log
+aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$TIMESTAMP/ --recursive --quiet
