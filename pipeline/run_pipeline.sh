@@ -190,10 +190,7 @@ do
 
 	echo "organization,seq_run,primers,reads,merge,variants,qc,lineage,tree_build,read_cap,is_test" > "$SEQ_RUN"-"$TIMESTAMP".csv
 	echo "$ORGANIZATION,$SEQ_RUN,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD,$READ_CAP,$ISTEST" >> "$SEQ_RUN"-"$TIMESTAMP".csv
+	$PIPELINEDIR/pipeline/show_version.sh >> "$SEQ_RUN"-"$TIMESTAMP".csv
 	aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
 	rm "$SEQ_RUN"-"$TIMESTAMP".csv
-
-	$PIPELINEDIR/pipeline/show_version.sh >> version.txt
-	aws s3 cp version.txt $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
-  rm version.txt
 done
