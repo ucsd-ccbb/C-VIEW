@@ -78,28 +78,47 @@ do
 	echo "Run tree building: $TREE_BUILD"
 	echo "Is test run: $ISTEST"
 
-	FASTQS_PATH=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq
+	DELIMITER=_R1_001.fastq.gz
+	R1_FASTQS=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq |  grep $DELIMITER | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
+  $echo "original r1 fastqs"
+  $echo $R1_FASTQS
 
 	# Merge fastq files from multiple lanes
 	if [[ "$MERGE_LANES" == true ]]; then
-		qsub -sync y -v SEQ_RUN=$SEQ_RUN \
-			 -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
-			 -v S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq \
-			 -wd /shared/workspace/projects/covid/logs \
-			 -N merge_fq_lanes_"$SEQ_RUN" \
-			 -pe smp 16 \
-			 -S /bin/bash \
-			 $PIPELINEDIR/pipeline/merge_lanes.sh
+    INSPECT_DELIMITER=__
+    SAMPLES_WO_LANES_LIST=()
+    for R1_FASTQ in $(echo $R1_FASTQS); do
+      SEQUENCING_INFO=$(echo $R1_FASTQ | awk -F $INSPECT_DELIMITER '{print $NF}')
+      SAMPLE_NUM=$(echo $SEQUENCING_INFO | awk -F _ '{print $1}')
+      A_SAMPLE=$(echo $R1_FASTQ | sed "s/$SEQUENCING_INFO/$SAMPLE_NUM/g")
+      SAMPLES_WO_LANES_LIST+=($A_SAMPLE)
+    done
+
+    FINAL_R1_FASTQS=()
+    for SAMPLE in $(printf '%s\n' "${SAMPLES_WO_LANES_LIST[@]}" | sort | uniq ); do
+      LANES=$(ls $WORKSPACE/$SAMPLE* | awk -F $INSPECT_DELIMITER '{print $NF}'| awk -F '_L|_R' '{print $2}' | sort | uniq | grep 00)
+      LANES_COMBINED=$(echo $LANES | sed 's/ //g')
+      FINAL_R1_FASTQS+=("$SAMPLE"_"$LANES_COMBINED"_R1_001.fastq.gz)
+      FINAL_R2_FASTQS+=("$SAMPLE"_"$LANES_COMBINED"_R2_001.fastq.gz)
+    done
+
+    # TODO: put back real merge
+
+		R1_FASTQS=$(printf '%s\n' "${FINAL_R1_FASTQS[@]}")
 		QSUBSAMPLEPARAMS=' -hold_jid merge_fq_lanes_'$SEQ_RUN''
-		FASTQS_PATH=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/"$SEQ_RUN"_lane_merged_fastq
 	fi
 
-	DELIMITER=_R1_001.fastq.gz
-	SAMPLE_LIST=$(aws s3 ls $FASTQS_PATH | grep $DELIMITER | sort -k3 -n | awk '{print $NF}' | awk -F $DELIMITER '{print $1}' | sort | uniq | grep -v Undetermined)
+  echo "revised R1 fastqs"
+  echo $R1_FASTQS
+
+	SAMPLE_LIST=$(echo $R1_FASTQS | awk -F $DELIMITER '{print $1}' | sort | uniq)
 	if [[ "$SAMPLE_LIST" == "" ]]; then
 		echo "Error: There are no samples to run in $FASTQS_PATH"
 		exit 1
 	fi
+
+	echo "sample list"
+	echo $SAMPLE_LIST
 
 	if [[ "$VARIANTS" == true ]]; then
 
