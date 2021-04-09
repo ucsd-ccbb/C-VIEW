@@ -3,6 +3,7 @@
 #mkdir -p $WORKSPACE/"$SEQ_RUN"_lane_merged_fastq
 
 #aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ --recursive --exclude "*" --include "*fastq.gz"
+echo "in merge lanes"
 
 IFS=' ' read -ra SAMPLES_WO_LANE_INFO <<< "$SAMPLES_WO_LANE_INFO_STR"
 IFS=' ' read -ra SAMPLES_W_LANES_COMBINED <<< "$SAMPLES_W_LANES_COMBINED_STR"

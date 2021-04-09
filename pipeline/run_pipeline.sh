@@ -113,8 +113,8 @@ do
 		qsub -v SEQ_RUN=$SEQ_RUN \
 			 -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
 			 -v S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq \
-			 -v SAMPLES_WO_LANE_INFO_STR=$SAMPLES_WO_LANE_INFO_STR \
-			 -v SAMPLES_W_LANES_COMBINED_STR=$SAMPLES_W_LANES_COMBINED_STR \
+			 -v SAMPLES_WO_LANE_INFO_STR="$SAMPLES_WO_LANE_INFO_STR" \
+			 -v SAMPLES_W_LANES_COMBINED_STR="$SAMPLES_W_LANES_COMBINED_STR" \
 			 -wd /shared/workspace/projects/covid/logs \
 			 -N merge_fq_lanes_"$SEQ_RUN" \
 			 -pe smp 16 \
@@ -130,9 +130,6 @@ do
 		echo "Error: There are no samples to run in $FASTQS_PATH"
 		exit 1
 	fi
-
-	echo "sample list"
-	echo "$SAMPLE_LIST"
 
 	if [[ "$VARIANTS" == true ]]; then
 
