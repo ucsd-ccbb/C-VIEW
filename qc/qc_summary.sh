@@ -76,8 +76,8 @@ runQC () {
 
 	# Exit codes
 	echo "Gathering per-sample exit codes."
-	cat $WORKSPACE/*/*error.log > $WORKSPACE/"$SEQ_RUN".error.tsv
-	grep -v "exit code: 0" $WORKSPACE/"$SEQ_RUN"-qc.exit.log | head -n 1 >> $WORKSPACE/"$SEQ_RUN".error.tsv
+	cat $WORKSPACE/*/*error.log > $WORKSPACE/"$SEQ_RUN".error.log
+	grep -v "exit code: 0" $WORKSPACE/"$SEQ_RUN"-qc.exit.log | head -n 1 >> $WORKSPACE/"$SEQ_RUN".error.log
 
 	# Upload Results
 	echo "Uploading QC and summary results."
@@ -88,7 +88,7 @@ runQC () {
   aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-coverage.tsv $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".error.tsv $QCRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN".error.log $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-variants.zip $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-consensus.zip $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-depth.zip $QCRESULTS/
