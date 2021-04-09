@@ -48,12 +48,11 @@ if [[ ! -f "$SCRATCH_PRIMER_FP" ]]; then
   cp $PIPELINEDIR/reference_files/$PRIMER_BED_FNAME $SCRATCH_PRIMER_FP
 fi
 
-#if [[ "$MERGE_LANES" == true ]]; then
-#  S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/"$SEQ_RUN"_lane_merged_fastq
-#else
-#  S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq
-#fi
-S3DOWNLOAD=$FASTQS_PATH
+if [[ "$MERGE_LANES" == true ]]; then
+  S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/"$SEQ_RUN"_lane_merged_fastq
+else
+  S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq
+fi
 
 # Step 0: Download fastq
 # always download read 1

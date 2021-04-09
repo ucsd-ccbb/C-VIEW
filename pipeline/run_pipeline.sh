@@ -22,6 +22,7 @@ do
 	elif [[ "$ORGANIZATION" == helix ]]; then
 		S3DOWNLOAD=$S3HELIX
 	fi
+	FASTQS_PATH=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq
 
 	if [[ ! "$PRIMER_SET" =~ ^(artic|swift_v2)$ ]]; then
 		echo "Error: Parameter PRIMER_SET must be one of artic or swift_v2"
@@ -67,7 +68,7 @@ do
 	echo "Organization: $ORGANIZATION"
 	echo "Seq_Run: $SEQ_RUN"
 	echo "Timestamp: $TIMESTAMP"
-	echo "S3 Fastq path: $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq"
+	echo "S3 Fastq path: $FASTQS_PATH"
 	echo "Primers: $PRIMER_SET"
 	echo "Fastq Reads: $FQ"
 	echo "Merge Lanes: $MERGE_LANES"
@@ -79,7 +80,7 @@ do
 	echo "Is test run: $ISTEST"
 
 	DELIMITER=_R1_001.fastq.gz
-  BOTH_FASTQS=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ |  grep ".fastq.gz" | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
+  BOTH_FASTQS=$(aws s3 ls $FASTQS_PATH/ |  grep ".fastq.gz" | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
 	R1_FASTQS=$(echo "$BOTH_FASTQS" |  grep $DELIMITER )
 
 	# Merge fastq files from multiple lanes
@@ -140,7 +141,6 @@ do
 			qsub $QSUBSAMPLEPARAMS \
 				-v SEQ_RUN="$SEQ_RUN" \
 				-v SAMPLE=$SAMPLE \
-				-v FASTQS_PATH=FASTQS_PATH \
 				-v S3DOWNLOAD=$S3DOWNLOAD \
 				-v PRIMER_SET=$PRIMER_SET \
 				-v MERGE_LANES=$MERGE_LANES \
