@@ -97,8 +97,13 @@ do
 
     FINAL_R1_FASTQS=()
     for SAMPLE in $(printf '%s\n' "${SAMPLES_WO_LANES_LIST[@]}" | sort | uniq ); do
+      echo "sample: $SAMPLE"
+
       LANES=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/$SAMPLE* | awk -F $INSPECT_DELIMITER '{print $NF}'| awk -F '_L|_R' '{print $2}' | sort | uniq | grep 00)
       LANES_COMBINED=$(echo $LANES | sed 's/ //g')
+
+      echo "lanes: $LANES"
+      echo "lanes combined: $LANES_COMBINED"
       FINAL_R1_FASTQS+=("$SAMPLE"_"$LANES_COMBINED"_R1_001.fastq.gz)
       FINAL_R2_FASTQS+=("$SAMPLE"_"$LANES_COMBINED"_R2_001.fastq.gz)
     done
