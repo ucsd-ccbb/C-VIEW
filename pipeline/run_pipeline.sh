@@ -82,11 +82,6 @@ do
   BOTH_FASTQS=$(aws s3 ls $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/ |  grep ".fastq.gz" | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
 	R1_FASTQS=$(echo "$BOTH_FASTQS" |  grep $DELIMITER )
 
-  echo "original r1 fastqs"
-  echo "$R1_FASTQS"
-
-  # TODO: remove test setting
-  MERGE_LANES=false
 	# Merge fastq files from multiple lanes
 	if [[ "$MERGE_LANES" == true ]]; then
 	  # get the (non-unique) list of sample identifiers without lane/read info (but with sample number)
@@ -101,21 +96,34 @@ do
 
     # reduce above list to only unique values and loop over them
     FINAL_R1_FASTQS=()
+    SAMPLES_W_LANES_COMBINED=()
     for SAMPLE in $(printf '%s\n' "${SAMPLES_WO_LANES_LIST[@]}" | sort | uniq ); do
       LANES=$(echo "$BOTH_FASTQS" | grep "$SAMPLE" | awk -F $INSPECT_DELIMITER '{print $NF}'| awk -F '_L|_R' '{print $2}' | sort | uniq | grep 00)
       LANES_COMBINED=$(echo $LANES | sed 's/ //g')
-      FINAL_R1_FASTQS+=("$SAMPLE"_"$LANES_COMBINED"_R1_001.fastq.gz)
-      FINAL_R2_FASTQS+=("$SAMPLE"_"$LANES_COMBINED"_R2_001.fastq.gz)
+      SAMPLE_W_LANES_COMBINED="$SAMPLE"_"$LANES_COMBINED"
+      SAMPLES_W_LANES_COMBINED+=($SAMPLE_W_LANES_COMBINED)
+      FINAL_R1_FASTQS+=("$SAMPLE"_"$LANES_COMBINED""$DELIMITER")
     done
 
-    # TODO: put back real merge
+    SAMPLES_WO_LANE_INFO_STR="${SAMPLES_WO_LANES_LIST[@]}"
+    SAMPLES_W_LANES_COMBINED_STR="${SAMPLES_W_LANES_COMBINED[@]}"
+    echo $SAMPLES_WO_LANE_INFO_STR
+    echo $SAMPLES_W_LANES_COMBINED_STR
+
+		qsub -v SEQ_RUN=$SEQ_RUN \
+			 -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
+			 -v S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq \
+			 -v SAMPLES_WO_LANE_INFO_STR=$SAMPLES_WO_LANE_INFO_STR \
+			 -v SAMPLES_W_LANES_COMBINED_STR=$SAMPLES_W_LANES_COMBINED_STR \
+			 -wd /shared/workspace/projects/covid/logs \
+			 -N merge_fq_lanes_"$SEQ_RUN" \
+			 -pe smp 16 \
+			 -S /bin/bash \
+			 $PIPELINEDIR/pipeline/merge_lanes.sh
 
 		R1_FASTQS=$(printf '%s\n' "${FINAL_R1_FASTQS[@]}")
 		QSUBSAMPLEPARAMS=' -hold_jid merge_fq_lanes_'$SEQ_RUN''
 	fi
-
-  echo "revised R1 fastqs"
-  echo "$R1_FASTQS"
 
 	SAMPLE_LIST=$(echo "$R1_FASTQS" | awk -F $DELIMITER '{print $1}' | sort | uniq)
 	if [[ "$SAMPLE_LIST" == "" ]]; then
