@@ -2,8 +2,8 @@
 
 INPUT=$1 # Sample Sheet with header
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
-S3HELIX=s3://ucsd-helix
-S3UCSD=s3://ucsd-other
+S3HELIX=s3://helix-all
+S3UCSD=s3://ucsd-all
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
 sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD TIMESTAMP ISTEST

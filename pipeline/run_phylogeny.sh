@@ -3,8 +3,8 @@
 INPUT=$1 # Sample Sheet with header
 #TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
-S3HELIX=s3://ucsd-helix
-S3UCSD=s3://ucsd-other
+S3HELIX=s3://helix-all
+S3UCSD=s3://ucsd-all
 TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
