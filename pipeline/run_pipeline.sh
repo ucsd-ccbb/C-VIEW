@@ -62,7 +62,10 @@ do
 	re='^[0-9]+$'
 	if [[ ! $READ_CAP =~ ^($re|all)$ ]] ; then
 	   echo "Error: READ_CAP must be an integer or 'all'"
-	   exit 1
+	   #exit 1
+	fi
+	if [[ $READ_CAP != all ]] ; then
+		READ_CAP=$((READ_CAP+3))
 	fi
 
 	echo "Organization: $ORGANIZATION"
