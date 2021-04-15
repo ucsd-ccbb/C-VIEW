@@ -5,6 +5,8 @@ PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
 QSUBSAMPLEPARAMS=''
+ANACONDADIR=/shared/workspace/software/anaconda3/bin
+source $ANACONDADIR/activate covid1.2
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
 sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD READ_CAP ISTEST
@@ -82,8 +84,12 @@ do
 	echo "Run tree building: $TREE_BUILD"
 	echo "Is test run: $ISTEST"
 
+	# add_seq_run_to_fastq_name.py
+	echo "Checking fastq names for seq_run."
+	python $PIPELINEDIR/pipeline/add_seq_run_to_fastq_name.py $SEQ_RUN $FASTQS_PATH/ > $SEQ_RUN.fastq_rename.log 2>&1
+	
 	DELIMITER=_R1_001.fastq.gz
-  BOTH_FASTQS=$(aws s3 ls $FASTQS_PATH/ |  grep ".fastq.gz" | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
+  	BOTH_FASTQS=$(aws s3 ls $FASTQS_PATH/ |  grep ".fastq.gz" | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
 	R1_FASTQS=$(echo "$BOTH_FASTQS" |  grep $DELIMITER )
 
 	# Merge fastq files from multiple lanes
@@ -184,5 +190,7 @@ do
 	echo "$ORGANIZATION,$SEQ_RUN,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD,$READ_CAP,$ISTEST" >> "$SEQ_RUN"-"$TIMESTAMP".csv
 	#$PIPELINEDIR/pipeline/show_version.sh >> "$SEQ_RUN"-"$TIMESTAMP".csv
 	aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
+	aws s3 cp $SEQ_RUN.fastq_rename.log $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
 	rm "$SEQ_RUN"-"$TIMESTAMP".csv
+	rm $SEQ_RUN.fastq_rename.log
 done
