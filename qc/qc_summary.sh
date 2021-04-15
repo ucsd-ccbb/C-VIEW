@@ -57,11 +57,8 @@ runQC () {
     cat $WORKSPACE/*/*coverage.tsv | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-coverage.tsv
     echo -e "coverage cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
-    # TODO: This is where the download of the full InspectSeq metadata should go
-
 	# Make summary table
 	echo "Making run summary table."
-	# TODO: extend seq_run_summary.py to include merging in (only relevant records from) InspectSeq metadata
 	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-summary.csv
     echo -e "seq_run_summary.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 

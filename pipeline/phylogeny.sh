@@ -29,6 +29,8 @@ else
   S3UPLOAD=$S3TEST
 fi
 
+# TODO: Download inspect metadata file
+
 	
 runPangolin () {
 
@@ -61,9 +63,14 @@ runPangolin () {
 	pangolin -t $THREADS --outfile $WORKSPACE/"$TIMESTAMP".lineage_report.csv $WORKSPACE/"$TIMESTAMP".fas
   echo -e "pangolin exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
+  # TODO: expand script to take in inspect metadata and qc+lineages file,
+  #  output merged file and Andersen lab sample_sheet_metadata.csv
+
   # produce merged_qc_and_lineages.csv and "$TIMESTAMP".empress_metadata.tsv
   python $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE/added_fa_names.txt $WORKSPACE "-summary.csv" $WORKSPACE/"$TIMESTAMP".lineage_report.csv $WORKSPACE/"$TIMESTAMP".qc_and_lineages.csv $WORKSPACE/"$TIMESTAMP".empress_metadata.tsv
   echo -e "lineages_summary.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
+
+  # TODO: upload new merged file to inspect bucket
 }
 
 buildTree () {
