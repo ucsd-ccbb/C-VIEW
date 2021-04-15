@@ -23,8 +23,8 @@ def main(args):
         if curr_old_name.find('.fastq.gz') > -1:
             # only add seq_run if not already in name
             if curr_old_name.find(seq_run) != -1:
-                print(f"Name {curr_old_name} already has sequence name "
-                      f"inserted and cannot be rewritten")
+                print(f"Name {curr_old_name} already has sequence run name "
+                      f"inserted. Skipping.")
             else:
                 curr_new_name = add_seq_run(curr_old_name, seq_run)
                 # if the file was renameable, then move
