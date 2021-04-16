@@ -6,7 +6,7 @@ ANACONDADIR=/shared/workspace/software/anaconda3/bin
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
 S3TEST=s3://ucsd-rtl-test
-THREADS=16
+THREADS=8
 rm -rf $WORKSPACE
 mkdir -p $WORKSPACE
 
@@ -77,22 +77,22 @@ buildTree () {
 	# Must use biopy env due to numpy conflicts
 	source $ANACONDADIR/activate biopy
 	ViralMSA.py -s $WORKSPACE/"$TIMESTAMP".fas -r SARS-CoV-2 -o $WORKSPACE/viralmsa_out -t $THREADS -e aws-CCBB@health.ucsd.edu
-  echo -e "ViralMSA.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
+    echo -e "ViralMSA.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
 	python $PIPELINEDIR/pipeline/trim_msa.py -i $WORKSPACE/viralmsa_out/"$TIMESTAMP".fas.aln -s 100 -e 50 -o $WORKSPACE/"$TIMESTAMP".trimmed.aln
-  echo -e "trim_msa.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
+    echo -e "trim_msa.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
 	iqtree2 -T $THREADS -m GTR+F+G4 --polytomy -blmin 1e-9 -s $WORKSPACE/"$TIMESTAMP".trimmed.aln
-  echo -e "iqtree2 exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
+    echo -e "iqtree2 exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
 	python /shared/workspace/software/MinVar-Rooting-master/FastRoot.py -i $WORKSPACE/"$TIMESTAMP".trimmed.aln.treefile -o $WORKSPACE/"$TIMESTAMP".trimmed.aln.rooted.treefile -m OG -g "hCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25"
-  echo -e "iFastRoot.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
+    echo -e "iFastRoot.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
 	# tree building 
 	source $ANACONDADIR/activate qiime2-2020.11
 
 	empress tree-plot --tree $WORKSPACE/"$TIMESTAMP".trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/"$TIMESTAMP".empress_metadata.tsv --output-dir $WORKSPACE/tree-viz
-  echo -e "empress tree-plot exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
+    echo -e "empress tree-plot exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 }
 
 # Always run Pangolin
