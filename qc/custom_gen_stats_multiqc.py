@@ -28,7 +28,7 @@ def parseSeqQual(q30File):
             parsing = True
         if line.startswith("q30 reads"):
             parsing = True
-            # continue  # Skip header
+            #continue  # Skip header
         if parsing:
             value = line.strip().split(" ")[2]
             value = int(float(value))
@@ -61,7 +61,7 @@ def gather_p25_ins_sizes(qmap_file_list_fp):
     with open(qmap_file_list_fp) as qmapFile:
         qr_paths = [line.strip() for line in qmapFile]
 
-    # Dict to store P25s and %>Q30
+    # Dict to store P25s, %>Q30, and uncapped reads
     # p25sQ30s = defaultdict(list)
     data_dict = {}
 
@@ -90,9 +90,13 @@ def insert_pct_gte_q30_in_sample_dict(data_dict, name, pctQ30):
     temp_sample_dict["Pct >=Q30"] = round(pctQ30, 3)
     return temp_sample_dict
 
+def insert_uncapped_reads_in_sample_dict(data_dict, name, uncappedReads):
+    temp_sample_dict = data_dict.get(name, dict())
+    temp_sample_dict["Uncapped Reads"] = uncappedReads
+    return temp_sample_dict
 
 def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
-    # Load q30s
+    # Load q30s and total uncapped reads
     with open(q30_file_list_fp) as q30sFile:
         q30s_paths = [line.strip() for line in q30sFile]
 
@@ -106,6 +110,8 @@ def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
             pctQ30 = S1[1]/S1[0]
             data_dict[name] = insert_pct_gte_q30_in_sample_dict(
                 data_dict, name, pctQ30)
+            data_dict[name] = insert_uncapped_reads_in_sample_dict(
+                data_dict, name, S1[0])
     elif se_or_pe == "pe":
         # Get Q30s for both R1 and R2
         for R1, R2 in pairwise(q30s_paths):
@@ -117,6 +123,8 @@ def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
             pctQ30 = (S1[1] + S2[1])/(S1[0] + S2[0]) * 100
             data_dict[name] = insert_pct_gte_q30_in_sample_dict(
                 data_dict, name, pctQ30)
+            data_dict[name] = insert_uncapped_reads_in_sample_dict(
+                data_dict, name, (S1[0] + S2[0]))
     else:
         raise ValueError(f"Unrecognized se or pe value '{se_or_pe}'")
 
@@ -137,6 +145,9 @@ def generate_multiqc_dict(data_dict):
                         "max": 100,
                         "min": 0,
                         "suffix": "%"
+                    }},
+                    {"Uncapped Reads": {
+                        "min": 0
                     }}
                 ],
                 "data": data_dict

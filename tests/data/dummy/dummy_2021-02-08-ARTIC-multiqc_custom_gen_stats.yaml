@@ -4,12 +4,15 @@ custom_data:
       SEARCH-5329__LIBPLATE1__A01__001002003004:
         P25 Ins. size: 195
         Pct >=Q30: 94.271
+        Uncapped Reads: 4881624
       SEARCH-5332__LIBPLATE2__D03__001002003004:
         P25 Ins. size: 202
         Pct >=Q30: 94.679
+        Uncapped Reads: 3393714
       SEARCH-5334__LIBPLATE9__F12__001002003004:
         P25 Ins. size: 227
         Pct >=Q30: 94.327
+        Uncapped Reads: 3792386
     pconfig:
     - P25 Ins. size:
         min: 0
@@ -18,4 +21,6 @@ custom_data:
         max: 100
         min: 0
         suffix: '%'
+    - Uncapped Reads:
+        min: 0
     plot_type: generalstats
