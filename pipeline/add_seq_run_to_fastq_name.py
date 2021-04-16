@@ -72,4 +72,3 @@ if __name__ == "__main__":
     #                   's3://helix-all/210411_A00953_0274_BH3MJMDSX2/'
     #                   '210411_A00953_0274_BH3MJMDSX2_fastq/']
     main(sys.argv)
-

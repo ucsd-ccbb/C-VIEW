@@ -28,7 +28,6 @@ def parseSeqQual(q30File):
             parsing = True
         if line.startswith("q30 reads"):
             parsing = True
-            #continue  # Skip header
         if parsing:
             value = line.strip().split(" ")[2]
             value = int(float(value))
@@ -38,7 +37,8 @@ def parseSeqQual(q30File):
 
 
 def pairwise(it):
-    """ From https://stackoverflow.com/questions/5389507/iterating-over-every-two-elements-in-a-list user mic_e. """
+    # From https://stackoverflow.com/questions/5389507/
+    # iterating-over-every-two-elements-in-a-list user mic_e
     it = iter(it)
     while True:
         try:
@@ -90,10 +90,12 @@ def insert_pct_gte_q30_in_sample_dict(data_dict, name, pctQ30):
     temp_sample_dict["Pct >=Q30"] = round(pctQ30, 3)
     return temp_sample_dict
 
+
 def insert_uncapped_reads_in_sample_dict(data_dict, name, uncappedReads):
     temp_sample_dict = data_dict.get(name, dict())
     temp_sample_dict["Uncapped Reads"] = uncappedReads
     return temp_sample_dict
+
 
 def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
     # Load q30s and total uncapped reads
