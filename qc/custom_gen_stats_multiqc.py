@@ -104,7 +104,7 @@ def insert_uncapped_reads_in_sample_dict(data_dict, name, uncappedReads):
 def generate_q30_based_values(input_dict, R1, S1, R2=None, S2=None):
     name = get_sequenced_pool_component_id(R1)
 
-    if not R2 is None:
+    if R2 is not None:
         second_name = get_sequenced_pool_component_id(R2)
         if name != second_name:
             raise ValueError(f"Found different sequenced pool component "
@@ -112,7 +112,7 @@ def generate_q30_based_values(input_dict, R1, S1, R2=None, S2=None):
 
     pctQ30 = uncapped_reads = NA_VAL
     try:
-        if not S2 is None:
+        if S2 is not None:
             uncapped_reads = S1[0] + S2[0]
             pctQ30 = (S1[1] + S2[1]) / (S1[0] + S2[0]) * 100
         else:
