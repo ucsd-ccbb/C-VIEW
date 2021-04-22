@@ -15,6 +15,8 @@ import os
 import re
 import yaml
 
+NA_VAL = "NA"
+
 
 def parseSeqQual(q30File):
     """ Parses q30.txt for and stores as a list [total seqs, q30 seqs]. """
@@ -78,7 +80,7 @@ def gather_p25_ins_sizes(qmap_file_list_fp):
                     stats[0] = int(stats[0])
                     break
                 else:
-                    stats = ["NA"]
+                    stats = [NA_VAL]
             data_dict[sample_name] = {"P25 Ins. size": stats[0]}
     # p25sQ30s[sample_name].append(stats[0])
 
@@ -87,7 +89,9 @@ def gather_p25_ins_sizes(qmap_file_list_fp):
 
 def insert_pct_gte_q30_in_sample_dict(data_dict, name, pctQ30):
     temp_sample_dict = data_dict.get(name, dict())
-    temp_sample_dict["Pct >=Q30"] = round(pctQ30, 3)
+    if pctQ30 != NA_VAL:
+        pctQ30 = round(pctQ30, 3)
+    temp_sample_dict["Pct >=Q30"] = pctQ30
     return temp_sample_dict
 
 
@@ -97,6 +101,35 @@ def insert_uncapped_reads_in_sample_dict(data_dict, name, uncappedReads):
     return temp_sample_dict
 
 
+def generate_q30_based_values(input_dict, R1, S1, R2=None, S2=None):
+    name = get_sequenced_pool_component_id(R1)
+
+    if not R2 is None:
+        second_name = get_sequenced_pool_component_id(R2)
+        if name != second_name:
+            raise ValueError(f"Found different sequenced pool component "
+                             f"ids in R1 and R2 paths ('{R1}' and '{R2}')")
+
+    pctQ30 = uncapped_reads = NA_VAL
+    try:
+        if not S2 is None:
+            uncapped_reads = S1[0] + S2[0]
+            pctQ30 = (S1[1] + S2[1]) / (S1[0] + S2[0]) * 100
+        else:
+            uncapped_reads = S1[0]
+            pctQ30 = S1[1] / S1[0]
+    except ZeroDivisionError:
+        print(f"Warning: Unable to calculate values from q30 file due "
+              f"to division by zero; reporting as {NA_VAL}")
+
+    temp_pctQ30_dict = insert_pct_gte_q30_in_sample_dict(
+        input_dict, name, pctQ30)
+    temp_uncapped_reads_dict = insert_uncapped_reads_in_sample_dict(
+        input_dict, name, uncapped_reads)
+
+    return name, temp_pctQ30_dict, temp_uncapped_reads_dict
+
+
 def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
     # Load q30s and total uncapped reads
     with open(q30_file_list_fp) as q30sFile:
@@ -104,29 +137,24 @@ def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
 
     if se_or_pe == "se":
         for R1 in q30s_paths:
-            get_sequenced_pool_component_id(R1)
             S1 = parseSeqQual(R1)
-            # tbl = Counter(S1)
-            name = get_sequenced_pool_component_id(R1)
-            # pctQ30 = calcQ30(tbl)
-            pctQ30 = S1[1]/S1[0]
-            data_dict[name] = insert_pct_gte_q30_in_sample_dict(
-                data_dict, name, pctQ30)
-            data_dict[name] = insert_uncapped_reads_in_sample_dict(
-                data_dict, name, S1[0])
+
+            name, temp_pctQ30_dict, temp_uncapped_reads_dict = \
+                generate_q30_based_values(data_dict, R1, S1)
+
+            data_dict[name] = temp_pctQ30_dict
+            data_dict[name] = temp_uncapped_reads_dict
     elif se_or_pe == "pe":
         # Get Q30s for both R1 and R2
         for R1, R2 in pairwise(q30s_paths):
             S1 = parseSeqQual(R1)
             S2 = parseSeqQual(R2)
-            # combined = Counter(S1) + Counter(S2)
-            name = get_sequenced_pool_component_id(R1)
-            # pctQ30 = calcQ30(combined)
-            pctQ30 = (S1[1] + S2[1])/(S1[0] + S2[0]) * 100
-            data_dict[name] = insert_pct_gte_q30_in_sample_dict(
-                data_dict, name, pctQ30)
-            data_dict[name] = insert_uncapped_reads_in_sample_dict(
-                data_dict, name, (S1[0] + S2[0]))
+
+            name, temp_pctQ30_dict, temp_uncapped_reads_dict = \
+                generate_q30_based_values(data_dict, R1, S1, R2, S2)
+
+            data_dict[name] = temp_pctQ30_dict
+            data_dict[name] = temp_uncapped_reads_dict
     else:
         raise ValueError(f"Unrecognized se or pe value '{se_or_pe}'")
 
