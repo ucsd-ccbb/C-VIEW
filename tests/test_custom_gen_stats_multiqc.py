@@ -22,13 +22,15 @@ class CustomGenStatsMultiQcTest(FileTestCase):
             "qualimapReport_paths.txt", 'qualimapReport.html')
         q30_data_paths_fp = self._make_paths_file(
             "q30_data_paths.txt", '*q30_data.txt')
+        sub_map_paths_fp = self._make_paths_file(
+            "sub_map_paths.txt", '*_subsampled_mapping_stats.tsv')
         output_fp = f"{self.test_temp_dir}/" \
                     f"temp_test_cust_gen_stats_multiqc.yaml"
         expected_result_fp = f"{self.dummy_dir}/" \
                              f"dummy_2021-02-08-ARTIC-multiqc_custom_gen_stats.yaml"
 
         arg_list = ["custom_gen_stats_multiqc.py", qualimap_paths_fp,
-                    q30_data_paths_fp, "pe", output_fp]
+                    q30_data_paths_fp, sub_map_paths_fp, "pe", output_fp]
 
         with open(expected_result_fp) as f:
             expected_dict = yaml.load(f, Loader=yaml.FullLoader)

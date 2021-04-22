@@ -24,6 +24,7 @@ runQC () {
 		--include "*.sorted.stats*" \
 		--include "*.acceptance.tsv" \
 		--include "*coverage.tsv" \
+		--include "*_subsampled_mapping_stats.tsv" \
 		--include "*error.log"
 
 	# Zip files
@@ -43,6 +44,7 @@ runQC () {
 	echo "Configuring Multiqc"
 	find $WORKSPACE -name "qualimapReport.html" | sort -n > $WORKSPACE/qc/qualimapReport_paths.txt
 	find $WORKSPACE -name "*q30_reads.txt" | sort -n > $WORKSPACE/qc/q30_reads_paths.txt
+	find $WORKSPACE -name "*_subsampled_mapping_stats.tsv" | sort -n > $WORKSPACE/qc/subsampled_mapping_stats_paths.txt
 
 	python $PIPELINEDIR/qc/custom_gen_stats_multiqc.py $WORKSPACE/qc/qualimapReport_paths.txt $WORKSPACE/qc/q30_reads_paths.txt $FQ $WORKSPACE/multiqc_custom_gen_stats.yaml
   echo -e "custom_gen_stats_multiqc.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log

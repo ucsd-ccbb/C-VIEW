@@ -66,9 +66,6 @@ do
 	   echo "Error: READ_CAP must be an integer or 'all'"
 	   #exit 1
 	fi
-	if [[ $READ_CAP != all ]] ; then
-		READ_CAP=$((READ_CAP+3))
-	fi
 
 	echo "Organization: $ORGANIZATION"
 	echo "Seq_Run: $SEQ_RUN"

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PATH=/shared/workspace/software/ivar/bin:/shared/workspace/software/q30:$PATH
+export PATH=/shared/workspace/software/ivar/bin:/shared/workspace/software/q30:/shared/workspace/software/SD-COVID-Sequencing/samhead/:$PATH
 
 # Activate conda env covid1.2
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
@@ -72,7 +72,7 @@ fi
 if [[ "$READ_CAP" == all ]]; then
   { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
 else
-  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz | samtools view -h -F 4 | head -n $READ_CAP | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
+  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz | samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
 fi
 echo -e "$SAMPLEID\tminimap2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 

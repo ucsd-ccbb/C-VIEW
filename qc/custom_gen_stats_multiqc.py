@@ -3,11 +3,13 @@
 # Art Nasamran <cnasamran@health.ucsd.edu>
 # Extracts P25 insert sizes from qualimapReports
 # Calculates % >=Q30 from q30.txt
+# Calculates % alignment from subsampled_mapping_stats.tsv
 # Takes 4 arguments:
 # 1. qualimapReports_paths.txt
 # 2. q30_reads_paths.txt
-# 3. se (single-end) or pe (paired-end)
-# 4. output file path
+# 3. subsampled_mapping_stats_paths.txt
+# 4. se (single-end) or pe (paired-end)
+# 5. output file path
 
 
 from sys import argv
@@ -37,6 +39,24 @@ def parseSeqQual(q30File):
     file_obj.close()
     return data
 
+def parseSubMapStats(subMapStatsFile):
+    """ Parses _subsampled_mapping_stats.tsv and stores as a list [Mapped seqs, Unmapped seqs]. """
+    file_obj = open(subMapStatsFile)
+    file = file_obj.readlines()
+    data = []
+    parsing = False
+    for line in file:
+        line = line.strip()
+        if line.startswith("Mapped"):
+            parsing = True
+        if line.startswith("Unmapped"):
+            parsing = True
+        if parsing:
+            value = line.strip().split("\t")[1]
+            value = int(float(value))
+            data.append(value)
+    file_obj.close()
+    return data
 
 def pairwise(it):
     # From https://stackoverflow.com/questions/5389507/
@@ -101,6 +121,12 @@ def insert_uncapped_reads_in_sample_dict(data_dict, name, uncappedReads):
     return temp_sample_dict
 
 
+def insert_sub_map_pct_in_sample_dict(data_dict, name, pctSubMap):
+    temp_sample_dict = data_dict.get(name, dict())
+    temp_sample_dict["Sub Map Pct Aligned"] = pctSubMap
+    return temp_sample_dict
+
+
 def generate_q30_based_values(input_dict, R1, S1, R2=None, S2=None):
     name = get_sequenced_pool_component_id(R1)
 
@@ -160,6 +186,21 @@ def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
 
     return data_dict
 
+def gather_sub_map_pct(sub_map_stats_file_list_fp, data_dict):
+    with open(sub_map_stats_file_list_fp) as subMapStatsFileList:
+        subMapStats_paths = [line.strip() for line in subMapStatsFileList]
+
+    for sample in subMapStats_paths:
+        name = get_sequenced_pool_component_id(sample)
+        reads = parseSubMapStats(sample) #format: [Mapped, Unmapped]
+        pctAligned = round(reads[0]/(reads[0]+reads[1])*100, 3)
+
+        temp_pctAligned_dict = insert_sub_map_pct_in_sample_dict(data_dict, name, pctAligned)
+
+        data_dict[name] = temp_pctAligned_dict
+
+    return data_dict
+
 
 def generate_multiqc_dict(data_dict):
     yaml_dict = {
@@ -178,6 +219,11 @@ def generate_multiqc_dict(data_dict):
                     }},
                     {"Uncapped Reads": {
                         "min": 0
+                    }},
+                    {"Sub Map Pct Aligned": {
+                        "max": 100,
+                        "min": 0,
+                        "suffix": "%"
                     }}
                 ],
                 "data": data_dict
@@ -191,11 +237,13 @@ def generate_multiqc_dict(data_dict):
 def write_custom_multiqc_yaml(arg_list):
     qmap_file_list_fp = arg_list[1]
     q30_file_list_fp = arg_list[2]
-    se_or_pe = arg_list[3]
-    output_fp = arg_list[4]
+    sub_map_stats_file_list_fp = arg_list[3]
+    se_or_pe = arg_list[4]
+    output_fp = arg_list[5]
 
     data_dict = gather_p25_ins_sizes(qmap_file_list_fp)
     data_dict = gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict)
+    data_dict = gather_sub_map_pct(sub_map_stats_file_list_fp, data_dict)
     yaml_dict = generate_multiqc_dict(data_dict)
 
     with open(output_fp, 'w') as yaml_file:
