@@ -69,8 +69,9 @@ if [[ "$FQ" == pe ]]; then
 fi
 
 # Step 1: Map Reads + Sort
+# C/C++ Unsigned long max = 4294967295
 if [[ "$READ_CAP" == all ]]; then
-  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
+  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz | samtools view -h | samhead 4294967295 successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
 else
   { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz | samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
 fi
