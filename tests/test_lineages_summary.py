@@ -26,7 +26,7 @@ class LineagesSummaryTest(FileTestCase):
         try:
             create_lineages_summary_and_metadata(arg_list)
 
-            qc_is_file = os.path.isfile(expected_qc_and_lineages_fp)
+            qc_is_file = os.path.isfile(out_summary_fp)
             self.assertTrue(qc_is_file)
 
             qc_equal = filecmp.cmp(out_summary_fp, expected_qc_and_lineages_fp)
