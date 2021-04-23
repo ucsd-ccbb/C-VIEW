@@ -81,9 +81,10 @@ do
 	echo "Run tree building: $TREE_BUILD"
 	echo "Is test run: $ISTEST"
 
+  # TODO: move this out of this script? Should be an optional pre-step that we rarely need
 	# add_seq_run_to_fastq_name.py
-	echo "Checking fastq names for seq_run."
-	python $PIPELINEDIR/pipeline/add_seq_run_to_fastq_name.py $SEQ_RUN $FASTQS_PATH/ > $SEQ_RUN.fastq_rename.log 2>&1
+	# echo "Checking fastq names for seq_run."
+	# python $PIPELINEDIR/pipeline/add_seq_run_to_fastq_name.py $SEQ_RUN $FASTQS_PATH/ > $SEQ_RUN.fastq_rename.log 2>&1
 	
 	DELIMITER=_R1_001.fastq.gz
   	BOTH_FASTQS=$(aws s3 ls $FASTQS_PATH/ |  grep ".fastq.gz" | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
