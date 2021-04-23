@@ -124,6 +124,8 @@ def create_lineages_summary_and_metadata(arg_list):
     # an error (but *after* writing the output file, so we have some chance of
     # figuring out what went wrong).
     output_df.to_csv(out_summary_fp, index=False)
+    # TODO: remove print
+    print(output_df)
     if len(output_df) != len(expanded_summaries_df):
         raise ValueError(f"Expected {len(expanded_summaries_df)} rows, "
                          f"got {len(output_df)}")
