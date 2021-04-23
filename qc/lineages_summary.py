@@ -4,6 +4,7 @@ import glob
 import os
 
 SAMPLE_NAME = "Sample"
+SEARCH_ID = "search_id"
 SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
 CONS_NAME = "consensus_seq_name"
 MOD_CONS_NAME = "modded_consensus_seq_name"
@@ -119,13 +120,14 @@ def create_lineages_summary_and_metadata(arg_list):
     #  likely to need a considerable overhaul soon so it is not worth messing
     #  with now.
 
+    # sort to ensure deterministic output order
+    output_df.sort_values(by=[SEARCH_ID, SEQ_POOL_COMP_ID], inplace=True)
+
     # there *shouldn't* be any rows in the lineage that aren't in the
     # expanded summaries ... if there are, something is wrong.  Raise
     # an error (but *after* writing the output file, so we have some chance of
     # figuring out what went wrong).
     output_df.to_csv(out_summary_fp, index=False)
-    # TODO: remove print
-    print(output_df)
     if len(output_df) != len(expanded_summaries_df):
         raise ValueError(f"Expected {len(expanded_summaries_df)} rows, "
                          f"got {len(output_df)}")
