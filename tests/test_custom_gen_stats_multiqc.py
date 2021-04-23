@@ -46,7 +46,8 @@ class CustomGenStatsMultiQcTest(FileTestCase):
             self.assertTrue(is_file)
         finally:
             if passes:
-                for fp in [qualimap_paths_fp, q30_data_paths_fp, output_fp]:
+                for fp in [qualimap_paths_fp, q30_data_paths_fp,
+                           sub_map_paths_fp, output_fp]:
                     try:
                         os.remove(fp)
                     except OSError:
