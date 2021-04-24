@@ -2,7 +2,7 @@
 
 This software implements a high-throughput data processing pipeline to identify and charaterize SARS-CoV-2 variant sequences in specimens from COVID-19 positive hosts or environments.  It is based on https://github.com/niemasd/SD-COVID-Sequencing and built for use with Amazon Web Services (AWS) EC2 machine instances and S3 data storage.
 
-Pipeline version 1.9 is pre-installed on the snap-XXXX Amazon Web Services snapshot in region us-west-2 (Oregon).  
+Pipeline version 1.9.5 is pre-installed on the snap-XXXX Amazon Web Services snapshot in region us-west-2 (Oregon).  
 
 ## Installing the pipeline
 The pipeline uses the following external software programs:
@@ -11,13 +11,14 @@ The pipeline uses the following external software programs:
 * minimap2 2.17-r941
 * samtools 1.11
 * QualiMap v.2.2.2-dev
-* FastQC v0.11.9
 * Pangolin (variable version)
 * viralMSA 1.1.11
 * IQTree 2.1.2
 * FastRoot v1.5
 * EMPress 1.1.0
 * q30 (no version info)
+* samhead (no version info)
+* git 2.7.4 or higher
 
 Should one wish to set up the pipeline on a fresh AWS ubuntu instance, download the `install.sh` script from this repository, set the 
 necessary variables at the top of the script, and run it. Sudo permissions are required.
@@ -70,9 +71,7 @@ ucsd,210213_A00953_0232_BHY3GLDRXX,swift_v2,pe,true,true,true,true,true,all,fals
 It is also possible to run more granular elements of the pipeline directly.  
 `run_phylogeny.sh` executes only the `lineage` and/or `tree_build` functionality on all cumulative data available to the organization. It takes the inputs
 
-`organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build,is_test`
-
-Note that `read_cap` is not included.
+`organization,lineage,tree_build,is_test`
 
 Some of the more granular scripts require an additional `processing_run` argument:
 
