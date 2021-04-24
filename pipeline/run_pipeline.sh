@@ -4,13 +4,13 @@ INPUT=$1 # Sample Sheet with header - organization,seqrun,primers,reads,merge,va
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
-QSUBSAMPLEPARAMS=''
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate covid1.2
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
 sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD READ_CAP ISTEST
 do
+  QSUBSAMPLEPARAMS=''
 	TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
 	sleep 1
 
