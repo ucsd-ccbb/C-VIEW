@@ -75,11 +75,11 @@ runQC () {
     echo -e "subset_csv.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
     cat $PASSING_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-passQC.fas
 
-  CURRDIR=$(pwd)
-  cd $PIPELINEDIR
-  bash $PIPELINEDIR/show_version.sh >> $WORKSPACE/"$SEQ_RUN".version.log
-  echo -e "show_version.sh exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
-  cd $CURRDIR
+  # CURRDIR=$(pwd)
+  # cd $PIPELINEDIR
+  # bash $PIPELINEDIR/show_version.sh >> $WORKSPACE/"$SEQ_RUN".version.log
+  # echo -e "show_version.sh exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
+  # cd $CURRDIR
 
 	# Exit codes
 	echo "Gathering per-sample exit codes."
