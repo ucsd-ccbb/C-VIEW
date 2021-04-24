@@ -2,7 +2,7 @@
 
 This software implements a high-throughput data processing pipeline to identify and charaterize SARS-CoV-2 variant sequences in specimens from COVID-19 positive hosts or environments.  It is based on https://github.com/niemasd/SD-COVID-Sequencing and built for use with Amazon Web Services (AWS) EC2 machine instances and S3 data storage.
 
-Pipeline version 1.9.5 is pre-installed on the snap-XXXX Amazon Web Services snapshot in region us-west-2 (Oregon).  
+Pipeline version 1.9.6 is pre-installed on the snap-XXXX Amazon Web Services snapshot in region us-west-2 (Oregon).  
 
 ## Installing the pipeline
 The pipeline uses the following external software programs:
