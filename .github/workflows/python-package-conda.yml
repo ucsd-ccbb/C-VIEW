@@ -23,15 +23,15 @@ jobs:
         # conda env update --file covid1.1_environment.yml --name base
         conda install numpy
         conda install boto3
-        conda install wand -c conda-forge
-        conda install -c bioconda fastqc
+        # conda install wand -c conda-forge
+        # conda install -c bioconda fastqc
         conda install -c bioconda qualimap
         conda install -c bioconda minimap2
         conda install -c bioconda samtools
         pip install multiqc
         pip install nwalign3
         pip install pandas
-        pip install seaborn
+        # pip install seaborn
     - name: Lint with flake8
       run: |
         conda install flake8
