@@ -10,6 +10,8 @@ THREADS=8
 rm -rf $WORKSPACE
 mkdir -p $WORKSPACE
 
+echo "$VERSION_INFO" >> $WORKSPACE/"$TIMESTAMP".version.log
+
 if [[ "$ISTEST" = false ]]; then
   if [[ "$ORGANIZATION" == ucsd ]]; then
     # only if NOT is_helix
@@ -104,12 +106,6 @@ if [[ "$TREE_BUILD" == true ]]; then
 	{ time ( buildTree ) ; } > $WORKSPACE/"$TIMESTAMP"-treebuild.log 2>&1
 	aws s3 cp $WORKSPACE/"$TIMESTAMP"-treebuild.log $S3UPLOAD/phylogeny/$TIMESTAMP/
 fi
-
-  # CURRDIR=$(pwd)
-  # cd $PIPELINEDIR
-  # bash $PIPELINEDIR/show_version.sh >> $WORKSPACE/"$SEQ_RUN".version.log
-  # echo -e "show_version.sh exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
-  # cd $CURRDIR
 
 grep -v "exit code: 0" $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log | head -n 1 >> $WORKSPACE/"$TIMESTAMP"-phylogeny.error.log
 aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$TIMESTAMP/ --recursive --quiet

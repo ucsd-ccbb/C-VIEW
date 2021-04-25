@@ -12,6 +12,7 @@ rm -rf $WORKSPACE/*
 mkdir -p $WORKSPACE/qc
 
 runQC () {
+  echo "$VERSION_INFO" >> $WORKSPACE/"$SEQ_RUN".version.log
 
 	aws s3 cp $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_samples/ $WORKSPACE/ \
 		--quiet \
@@ -101,6 +102,7 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-depth.zip $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $QCRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN".version.log $QCRESULTS/
 
 	# cumulative data folder
 	if [[ "$ISTEST" = false ]]; then

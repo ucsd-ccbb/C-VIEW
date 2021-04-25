@@ -5,6 +5,8 @@ PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
 
+VERSION_INFO=$(bash $PIPELINEDIR/pipeline/show_version.sh)
+
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
 sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD TIMESTAMP ISTEST
 do
@@ -85,6 +87,7 @@ do
 		-v FQ=$FQ \
 		-v TIMESTAMP=$TIMESTAMP \
 		-v ISTEST=$ISTEST \
+		-v VERSION_INFO="$VERSION_INFO" \
 		-N QC_summary_"$SEQ_RUN" \
 		-wd /shared/workspace/projects/covid/logs \
 		-pe smp 32 \
