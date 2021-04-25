@@ -1,8 +1,5 @@
 import pandas as pd
 from sys import argv
-from datetime import datetime
-import glob
-import os
 
 
 SEARCH_ID_KEY = "search_id"
