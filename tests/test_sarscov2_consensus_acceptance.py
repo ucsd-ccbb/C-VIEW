@@ -30654,6 +30654,7 @@ class Sarscov2ConsensusAcceptanceTest(FileTestCase):
         self.assertEqual(1, real_out[PASS_BASE_IDENTITY_FRACTION])
         self.assertEqual(False, real_out[INDELS_FLAGGED])
 
+
     def test_check_acceptance_true_base(self):
         # 2 bases 5' utr, 25 bases of orfs, 3 bases 3' utr
 

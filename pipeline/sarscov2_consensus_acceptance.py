@@ -61,9 +61,14 @@ def check_acceptance(consensus_seq, consensus_depths,
 
             pass_list.append(int(base_pass and depth_pass))
 
-    depth_pass_fraction = sum(depth_pass_list)/len(depth_pass_list)
-    identity_pass_fraction = sum(identity_pass_list)/len(identity_pass_list)
-    pass_fraction = sum(pass_list)/len(pass_list)
+    depth_pass_fraction = identity_pass_fraction = pass_fraction = 0
+    if len(depth_pass_list) > 0:
+        depth_pass_fraction = sum(depth_pass_list)/len(depth_pass_list)
+    if len(identity_pass_list) > 0:
+        identity_pass_fraction = sum(identity_pass_list)/len(
+            identity_pass_list)
+    if len(pass_list) > 0:
+        pass_fraction = sum(pass_list)/len(pass_list)
     fraction_passes = pass_fraction >= fraction_threshold
 
     # if the number of ref gaps (consensus insertions) and/or
