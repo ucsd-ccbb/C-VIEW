@@ -105,7 +105,7 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".version.log $QCRESULTS/
 
 	# cumulative data folder
-	if [[ "$ISTEST" = false ]]; then
+	if [[ "$ISTEST" == false ]]; then
 	  S3CUMULATIVE=$S3DOWNLOAD
 	else
 	  S3CUMULATIVE=$S3TEST
