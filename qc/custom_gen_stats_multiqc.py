@@ -189,6 +189,17 @@ def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
     return data_dict
 
 
+def _calc_pct_aligned(reads):  # reads format: [Mapped, Unmapped]
+    pctAligned = NA_VAL
+    try:
+        pctAligned = round(reads[0] / (reads[0] + reads[1]) * 100, 3)
+    except ZeroDivisionError:
+        print(f"Warning: Unable to calculate values from sub map stats "
+              f"file due to division by zero; reporting as {NA_VAL}")
+
+    return pctAligned
+
+
 def gather_sub_map_pct(sub_map_stats_file_list_fp, data_dict):
     with open(sub_map_stats_file_list_fp) as subMapStatsFileList:
         subMapStats_paths = [line.strip() for line in subMapStatsFileList]
@@ -196,7 +207,7 @@ def gather_sub_map_pct(sub_map_stats_file_list_fp, data_dict):
     for sample in subMapStats_paths:
         name = get_sequenced_pool_component_id(sample)
         reads = parseSubMapStats(sample)  # format: [Mapped, Unmapped]
-        pctAligned = round(reads[0]/(reads[0]+reads[1])*100, 3)
+        pctAligned = _calc_pct_aligned(reads)
 
         temp_pctAligned_dict = insert_sub_map_pct_in_sample_dict(
             data_dict, name, pctAligned)
