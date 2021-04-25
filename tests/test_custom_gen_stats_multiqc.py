@@ -90,7 +90,6 @@ class CustomGenStatsMultiQcTest(FileTestCase):
         self.assertDictEqual({'Uncapped Reads': 2440812},
                              out_uncapped_reads_dict)
 
-
     def test_generate_q30_based_values_pe_zero_both(self):
         r1 = '/Users/amandabirmingham/Work/Repositories/' \
              'covid_sequencing_analysis_pipeline/tests/data/dummy/' \
