@@ -35,7 +35,7 @@ else
 fi
 
 # TODO: Need real file name
-aws s3 cp $S3INSPECT/$INSPECT_INPUT_FNAME $WORKSPACE/$INSPECT_INPUT_FNAMEecho -e "aws cp download of inspect metadata exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
+aws s3 cp $S3INSPECT/$INSPECT_INPUT_FNAME $WORKSPACE/$INSPECT_INPUT_FNAME
 
 runPangolin () {
 
