@@ -6,7 +6,8 @@ ANACONDADIR=/shared/workspace/software/anaconda3/bin
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
 S3TEST=s3://ucsd-rtl-test
-S3INSPECT=s3://ucsd-inspect
+# TODO: put back to real value
+S3INSPECT=$S3TEST # s3://ucsd-inspect
 INSPECT_INPUT_FNAME=metadata.csv
 THREADS=8
 rm -rf $WORKSPACE
@@ -14,7 +15,7 @@ mkdir -p $WORKSPACE
 
 echo "$VERSION_INFO" >> $WORKSPACE/"$TIMESTAMP".version.log
 
-if [[ "$ISTEST" = false ]]; then
+if [[ "$ISTEST" == false ]]; then
   if [[ "$ORGANIZATION" == ucsd ]]; then
     # only if NOT is_helix
     aws s3 cp $S3UCSD/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
@@ -34,8 +35,8 @@ else
 fi
 
 # TODO: Need real file name
-aws s3 cp $S3INSPECT/$INSPECT_INPUT_FNAME $WORKSPACE/$INSPECT_INPUT_FNAME
-	
+aws s3 cp $S3INSPECT/$INSPECT_INPUT_FNAME $WORKSPACE/$INSPECT_INPUT_FNAMEecho -e "aws cp download of inspect metadata exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
+
 runPangolin () {
 
 	# start with the reference sequence
