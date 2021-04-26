@@ -36,6 +36,9 @@ scheduler = sge
 compute_root_volume_size = 500
 ```
 
+Note that, after creating a new cluster, the `aws cli` software must be configured on the head node with credentials
+ for accessing the necessary AWS S3 resources.
+
 
 ## Running the pipeline
 
