@@ -7,8 +7,8 @@ S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
 S3TEST=s3://ucsd-rtl-test
 # TODO: put back to real value
-S3INSPECT=$S3TEST # s3://ucsd-inspect
-INSPECT_INPUT_FNAME=metadata.csv
+# S3INSPECT=$S3TEST # s3://ucsd-inspect
+# INSPECT_INPUT_FNAME=metadata.csv
 THREADS=8
 rm -rf $WORKSPACE
 mkdir -p $WORKSPACE
@@ -35,7 +35,7 @@ else
 fi
 
 # TODO: Need real file name
-aws s3 cp $S3INSPECT/$INSPECT_INPUT_FNAME $WORKSPACE/$INSPECT_INPUT_FNAME
+# aws s3 cp $S3INSPECT/$INSPECT_INPUT_FNAME $WORKSPACE/$INSPECT_INPUT_FNAME
 
 runPangolin () {
 
@@ -73,10 +73,10 @@ runPangolin () {
   echo -e "lineages_summary.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
   # merge with inspect metadata to produce full summary, bjorn summary, and empress metadata
-  python $PIPELINEDIR/qc/metadata_generation.py $WORKSPACE/$INSPECT_INPUT_FNAME $WORKSPACE/"$TIMESTAMP".qc_and_lineages.csv $WORKSPACE/"$TIMESTAMP".full_summary.csv $WORKSPACE/"$TIMESTAMP".bjorn_summary.csv $WORKSPACE/"$TIMESTAMP".empress_metadata.tsv
-  echo -e "metadata_generation.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
+  # python $PIPELINEDIR/qc/metadata_generation.py $WORKSPACE/$INSPECT_INPUT_FNAME $WORKSPACE/"$TIMESTAMP".qc_and_lineages.csv $WORKSPACE/"$TIMESTAMP".full_summary.csv $WORKSPACE/"$TIMESTAMP".bjorn_summary.csv $WORKSPACE/"$TIMESTAMP".empress_metadata.tsv
+  # echo -e "metadata_generation.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
-  aws s3 cp $WORKSPACE/"$TIMESTAMP".full_summary.csv s3://$S3INSPECT/full_summary.csv
+  # aws s3 cp $WORKSPACE/"$TIMESTAMP".full_summary.csv s3://$S3INSPECT/full_summary.csv
 }
 
 buildTree () {
