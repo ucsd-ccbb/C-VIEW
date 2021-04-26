@@ -26,6 +26,8 @@ RESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_sa
 rm -rf $WORKSPACE/*
 mkdir -p $WORKSPACE/fastq
 
+echo "$VERSION_INFO" >> $WORKSPACE/"$SAMPLEID".version.log
+
 # Move reference files to compute node once
 if [[ ! -f "$REF_FAS" ]]; then
 	mkdir -p /scratch/reference/

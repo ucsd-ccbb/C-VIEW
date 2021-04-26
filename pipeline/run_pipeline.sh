@@ -4,13 +4,15 @@ INPUT=$1 # Sample Sheet with header - organization,seqrun,primers,reads,merge,va
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
-QSUBSAMPLEPARAMS=''
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate covid1.2
+
+VERSION_INFO=$(bash $PIPELINEDIR/pipeline/show_version.sh)
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
 sed 1d $INPUT | while IFS=',' read ORGANIZATION SEQ_RUN PRIMER_SET FQ MERGE_LANES VARIANTS QC LINEAGE TREE_BUILD READ_CAP ISTEST
 do
+  QSUBSAMPLEPARAMS=''
 	TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
 	sleep 1
 
@@ -81,9 +83,10 @@ do
 	echo "Run tree building: $TREE_BUILD"
 	echo "Is test run: $ISTEST"
 
+  # TODO: move this out of this script? Should be an optional pre-step that we rarely need
 	# add_seq_run_to_fastq_name.py
-	echo "Checking fastq names for seq_run."
-	python $PIPELINEDIR/pipeline/add_seq_run_to_fastq_name.py $SEQ_RUN $FASTQS_PATH/ > $SEQ_RUN.fastq_rename.log 2>&1
+	# echo "Checking fastq names for seq_run."
+	# python $PIPELINEDIR/pipeline/add_seq_run_to_fastq_name.py $SEQ_RUN $FASTQS_PATH/ > $SEQ_RUN.fastq_rename.log 2>&1
 	
 	DELIMITER=_R1_001.fastq.gz
   	BOTH_FASTQS=$(aws s3 ls $FASTQS_PATH/ |  grep ".fastq.gz" | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
@@ -141,6 +144,7 @@ do
 				-v MERGE_LANES=$MERGE_LANES \
 				-v FQ=$FQ \
 				-v TIMESTAMP=$TIMESTAMP \
+				-v VERSION_INFO="$VERSION_INFO" \
 				-v READ_CAP=$READ_CAP \
 				-N Covid19_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
 				-wd /shared/workspace/projects/covid/logs \
@@ -159,6 +163,7 @@ do
 				-v FQ=$FQ \
 				-v TIMESTAMP=$TIMESTAMP \
 				-v ISTEST=$ISTEST \
+				-v VERSION_INFO="$VERSION_INFO" \
 				-N QC_summary_"$SEQ_RUN" \
 				-wd /shared/workspace/projects/covid/logs \
 				-pe smp 32 \
@@ -175,6 +180,7 @@ do
 			-v TIMESTAMP=$TIMESTAMP \
 			-v ISTEST=$ISTEST \
 			-v WORKSPACE=/scratch/phylogeny/$TIMESTAMP \
+			-v VERSION_INFO="$VERSION_INFO" \
 			-N tree_building \
 			-wd /shared/workspace/projects/covid/logs \
 			-pe smp 96 \
@@ -185,9 +191,14 @@ do
 
 	echo "organization,seq_run,primers,reads,merge,variants,qc,lineage,tree_build,read_cap,is_test" > "$SEQ_RUN"-"$TIMESTAMP".csv
 	echo "$ORGANIZATION,$SEQ_RUN,$PRIMER_SET,$FQ,$MERGE_LANES,$VARIANTS,$QC,$LINEAGE,$TREE_BUILD,$READ_CAP,$ISTEST" >> "$SEQ_RUN"-"$TIMESTAMP".csv
-	#$PIPELINEDIR/pipeline/show_version.sh >> "$SEQ_RUN"-"$TIMESTAMP".csv
+
+	# bash $PIPELINEDIR/pipeline/show_version.sh >> "$SEQ_RUN"-"$TIMESTAMP".version.log
+
 	aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".csv $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_summary_files/
-	aws s3 cp $SEQ_RUN.fastq_rename.log $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_summary_files/
+	# aws s3 cp "$SEQ_RUN"-"$TIMESTAMP".version.log $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_summary_files/
+	# aws s3 cp $SEQ_RUN.fastq_rename.log $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_summary_files/
+
 	rm "$SEQ_RUN"-"$TIMESTAMP".csv
-	rm $SEQ_RUN.fastq_rename.log
+	# rm "$SEQ_RUN"-"$TIMESTAMP".version.log
+	# rm $SEQ_RUN.fastq_rename.log
 done

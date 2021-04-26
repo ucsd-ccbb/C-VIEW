@@ -5,6 +5,7 @@ PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
 TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
+VERSION_INFO=$(bash $PIPELINEDIR/pipeline/show_version.sh)
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
 sed 1d $INPUT | while IFS=',' read ORGANIZATION LINEAGE TREE_BUILD ISTEST
@@ -42,6 +43,7 @@ do
 		-v TIMESTAMP=$TIMESTAMP \
 		-v WORKSPACE=/scratch/phylogeny/$TIMESTAMP \
 		-v ISTEST=$ISTEST \
+		-v VERSION_INFO="$VERSION_INFO" \
 		-N tree_building \
 		-wd /shared/workspace/projects/covid/logs \
 		-pe smp 16 \

@@ -6,11 +6,15 @@ ANACONDADIR=/shared/workspace/software/anaconda3/bin
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
 S3TEST=s3://ucsd-rtl-test
+S3INSPECT=s3://ucsd-inspect
+INSPECT_INPUT_FNAME=metadata.csv
 THREADS=8
 rm -rf $WORKSPACE
 mkdir -p $WORKSPACE
 
-if [[ "$ISTEST" = false ]]; then
+echo "$VERSION_INFO" >> $WORKSPACE/"$TIMESTAMP".version.log
+
+if [[ "$ISTEST" == false ]]; then
   if [[ "$ORGANIZATION" == ucsd ]]; then
     # only if NOT is_helix
     aws s3 cp $S3UCSD/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
@@ -29,9 +33,9 @@ else
   S3UPLOAD=$S3TEST
 fi
 
-# TODO: Download inspect metadata file
+# TODO: Need real file name
+aws s3 cp $S3INSPECT/$INSPECT_INPUT_FNAME $WORKSPACE/$INSPECT_INPUT_FNAME
 
-	
 runPangolin () {
 
 	# start with the reference sequence
@@ -63,14 +67,15 @@ runPangolin () {
 	pangolin -t $THREADS --outfile $WORKSPACE/"$TIMESTAMP".lineage_report.csv $WORKSPACE/"$TIMESTAMP".fas
   echo -e "pangolin exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
-  # TODO: expand script to take in inspect metadata and qc+lineages file,
-  #  output merged file and Andersen lab sample_sheet_metadata.csv
-
-  # produce merged_qc_and_lineages.csv and "$TIMESTAMP".empress_metadata.tsv
-  python $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE/added_fa_names.txt $WORKSPACE "-summary.csv" $WORKSPACE/"$TIMESTAMP".lineage_report.csv $WORKSPACE/"$TIMESTAMP".qc_and_lineages.csv $WORKSPACE/"$TIMESTAMP".empress_metadata.tsv
+  # produce merged_qc_and_lineages.csv
+  python $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE/added_fa_names.txt $WORKSPACE "-summary.csv" $WORKSPACE/"$TIMESTAMP".lineage_report.csv $WORKSPACE/"$TIMESTAMP".qc_and_lineages.csv
   echo -e "lineages_summary.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
-  # TODO: upload new merged file to inspect bucket
+  # merge with inspect metadata to produce full summary, bjorn summary, and empress metadata
+  python $PIPELINEDIR/qc/metadata_generation.py $WORKSPACE/$INSPECT_INPUT_FNAME $WORKSPACE/"$TIMESTAMP".qc_and_lineages.csv $WORKSPACE/"$TIMESTAMP".full_summary.csv $WORKSPACE/"$TIMESTAMP".bjorn_summary.csv $WORKSPACE/"$TIMESTAMP".empress_metadata.tsv
+  echo -e "metadata_generation.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
+
+  aws s3 cp $WORKSPACE/"$TIMESTAMP".full_summary.csv s3://$S3INSPECT/full_summary.csv
 }
 
 buildTree () {

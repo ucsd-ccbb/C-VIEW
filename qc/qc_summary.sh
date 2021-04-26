@@ -12,6 +12,7 @@ rm -rf $WORKSPACE/*
 mkdir -p $WORKSPACE/qc
 
 runQC () {
+  echo "$VERSION_INFO" >> $WORKSPACE/"$SEQ_RUN".version.log
 
 	aws s3 cp $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_samples/ $WORKSPACE/ \
 		--quiet \
@@ -61,8 +62,10 @@ runQC () {
 
 	# Make summary table
 	echo "Making run summary table."
-	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-summary.csv
+	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-temp-summary.csv
     echo -e "seq_run_summary.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
+	python $PIPELINEDIR/qc/integrate_bjorn_coverage.py $WORKSPACE/"$SEQ_RUN"-temp-summary.csv $WORKSPACE/"$SEQ_RUN"-coverage.tsv $WORKSPACE/"$SEQ_RUN"-summary.csv
+    echo -e "integrate_bjorn_coverage.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
 	# Concatenate all consensus files to a .fas file
 	cat $WORKSPACE/*.consensus.fa > $WORKSPACE/"$SEQ_RUN".fas
@@ -72,6 +75,12 @@ runQC () {
     PASSING_CONS_FNAMES=$(python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv not_na_cons_fnames $WORKSPACE)
     echo -e "subset_csv.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
     cat $PASSING_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-passQC.fas
+
+  # CURRDIR=$(pwd)
+  # cd $PIPELINEDIR
+  # bash $PIPELINEDIR/show_version.sh >> $WORKSPACE/"$SEQ_RUN".version.log
+  # echo -e "show_version.sh exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
+  # cd $CURRDIR
 
 	# Exit codes
 	echo "Gathering per-sample exit codes."
@@ -93,9 +102,10 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-depth.zip $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $QCRESULTS/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $QCRESULTS/
+	aws s3 cp $WORKSPACE/"$SEQ_RUN".version.log $QCRESULTS/
 
 	# cumulative data folder
-	if [[ "$ISTEST" = false ]]; then
+	if [[ "$ISTEST" == false ]]; then
 	  S3CUMULATIVE=$S3DOWNLOAD
 	else
 	  S3CUMULATIVE=$S3TEST
