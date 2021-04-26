@@ -34,6 +34,12 @@ git clone https://github.com/ucsd-ccbb/covid_sequencing_analysis_pipeline.git $S
 git clone https://github.com/artnasamran/q30.git $SOFTWAREDIR/q30
 chmod u+x SOFTWAREDIR/q30/q30.py
 
+# ------- samhead -------
+git clone https://github.com/niemasd/SD-COVID-Sequencing.git $SOFTWAREDIR/SD-COVID-Sequencing
+cd $SOFTWAREDIR/SD-COVID-Sequencing/samhead
+make
+cd ~
+
 # ------- covid1.1 env from pre-release README on github -------
 conda create --name covid1.1
 source $ANACONDADIR/bin/activate covid1.1
