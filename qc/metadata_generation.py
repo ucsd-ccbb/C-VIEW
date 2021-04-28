@@ -36,7 +36,7 @@ def filter_metadata_for_bjorn(full_df):
     is_excluded = (has_no_search_id | has_no_specimen_type |
                    has_no_consensus_seq | is_control |
                    is_human_wo_demographics)
-    filtered_df = full_df[~is_excluded]
+    filtered_df = full_df[~is_excluded].copy()
     return filtered_df
 
 
@@ -49,46 +49,48 @@ def generate_bjorn_df(filtered_df):
         "sample_collection_date"].str.split("-", expand=True)
 
     output_df = pd.DataFrame()
-    output_df['sample_id'] = filtered_df['sample_id']
-    output_df['search_id'] = filtered_df['search_id']
-    output_df["ready_for_release"] = "Yes"
-    output_df["new_seqs_ready_for_release"] = "Yes"
-    output_df["released"] = ""
-    output_df["submitter"] = ""
-    output_df["fasta_fname"] = ""
-    output_df["virus_name"] = "hCoV-19/USA/" + output_df["search_id"] + "/" + \
-                              filtered_df["sample_collection_year"]
-    output_df["type"] = "betacoronavirus"
-    output_df["passage_details"] = filtered_df["passage_details"]
-    output_df["sample_collection_date"] = filtered_df["sample_collection_date"]
-    output_df["sample_collection_location"] = filtered_df[
+    output_df.loc[:, 'sample_id'] = filtered_df['sample_id']
+    output_df.loc[:, 'search_id'] = filtered_df['search_id']
+    output_df.loc[:, "ready_for_release"] = "Yes"
+    output_df.loc[:, "new_seqs_ready_for_release"] = "Yes"
+    output_df.loc[:, "released"] = ""
+    output_df.loc[:, "submitter"] = ""
+    output_df.loc[:, "fasta_fname"] = ""
+    output_df.loc[:, "virus_name"] = "hCoV-19/USA/" + output_df["search_id"] \
+                                     + "/" \
+                                     + filtered_df["sample_collection_year"]
+    output_df.loc[:, "type"] = "betacoronavirus"
+    output_df.loc[:, "passage_details"] = filtered_df["passage_details"]
+    output_df.loc[:, "sample_collection_date"] = filtered_df[
+        "sample_collection_date"]
+    output_df.loc[:, "sample_collection_location"] = filtered_df[
         "sample_collection_location"]
-    output_df["zip"] = filtered_df["zip"]
-    output_df["subject_species"] = filtered_df["subject_species"]
-    output_df["addl_host_info"] = "N/A"
-    output_df["subject_gender"] = filtered_df["subject_gender"]
-    output_df["subject_age"] = filtered_df["subject_age"]
-    output_df["patient_status"] = "N/A"
-    output_df["specimen_type"] = filtered_df["specimen_type"]
-    output_df["outbreak"] = "N/A"
-    output_df["last_vaccinated"] = "N/A"
-    output_df["treatment"] = "N/A"
-    output_df["sequencing_tech"] = "Illumina"
-    output_df["assembly_method"] = filtered_df["assembly_method"].str.replace(
-        " version", "")
-    output_df["bjorn_coverage"] = filtered_df["bjorn_coverage"]
-    output_df["originating_lab"] = filtered_df["originating_lab"]
-    output_df["originating_lab_address"] = filtered_df[
+    output_df.loc[:, "zip"] = filtered_df["zip"]
+    output_df.loc[:, "subject_species"] = filtered_df["subject_species"]
+    output_df.loc[:, "addl_host_info"] = "N/A"
+    output_df.loc[:, "subject_gender"] = filtered_df["subject_gender"]
+    output_df.loc[:, "subject_age"] = filtered_df["subject_age"]
+    output_df.loc[:, "patient_status"] = "N/A"
+    output_df.loc[:, "specimen_type"] = filtered_df["specimen_type"]
+    output_df.loc[:, "outbreak"] = "N/A"
+    output_df.loc[:, "last_vaccinated"] = "N/A"
+    output_df.loc[:, "treatment"] = "N/A"
+    output_df.loc[:, "sequencing_tech"] = "Illumina"
+    output_df.loc[:, "assembly_method"] = filtered_df[
+        "assembly_method"].str.replace(" version", "")
+    output_df.loc[:, "bjorn_coverage"] = filtered_df["bjorn_coverage"]
+    output_df.loc[:, "originating_lab"] = filtered_df["originating_lab"]
+    output_df.loc[:, "originating_lab_address"] = filtered_df[
         "originating_lab_address"]
-    output_df["sample_provider_sample_id"] = filtered_df["sample_id"]
-    output_df["submitting_lab"] = "Andersen lab at Scripps Research"
-    output_df["submitting_lab_address"] = \
+    output_df.loc[:, "sample_provider_sample_id"] = filtered_df["sample_id"]
+    output_df.loc[:, "submitting_lab"] = "Andersen lab at Scripps Research"
+    output_df.loc[:, "submitting_lab_address"] = \
         "10550 North Torrey Pines Road, La Jolla, CA 92037"
-    output_df["submitting_lab_search_id"] = filtered_df["search_id"]
-    output_df["project_authors"] = filtered_df["project_authors"]
-    output_df["project_name"] = filtered_df["project_name"]
-    output_df["comment_icon"] = ""
-    output_df["released_2"] = ""
+    output_df.loc[:, "submitting_lab_search_id"] = filtered_df["search_id"]
+    output_df.loc[:, "project_authors"] = filtered_df["project_authors"]
+    output_df.loc[:, "project_name"] = filtered_df["project_name"]
+    output_df.loc[:, "comment_icon"] = ""
+    output_df.loc[:, "released_2"] = ""
 
     return output_df
 
@@ -116,7 +118,8 @@ def merge_metadata(arg_list):
 
     qc_and_lineage_df = pd.read_csv(qc_and_lineage_fp, dtype=str)
     records_w_search_ids = qc_and_lineage_df[SEARCH_ID_KEY].notna()
-    qc_and_lineage_w_search_ids_df = qc_and_lineage_df[records_w_search_ids]
+    qc_and_lineage_w_search_ids_df = qc_and_lineage_df[
+        records_w_search_ids].copy()
     metadata_df = pd.read_csv(metadata_fp, dtype=str)
 
     full_df = qc_and_lineage_w_search_ids_df.merge(
@@ -130,7 +133,7 @@ def merge_metadata(arg_list):
 
     # NB that empress metadata files must be tsv
     metadata_w_search_id = metadata_df[SEARCH_ID_KEY].notna()
-    metadata_w_search_ids_df = metadata_df[metadata_w_search_id]
+    metadata_w_search_ids_df = metadata_df[metadata_w_search_id].copy()
     raw_empress_df = qc_and_lineage_df.merge(
         metadata_w_search_ids_df, on=SEARCH_ID_KEY, how="outer")
     empress_df = generate_empress_df(raw_empress_df)
