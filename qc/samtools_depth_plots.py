@@ -1,7 +1,7 @@
 # Modified from code by Niema Moshiri 2021
 
 import os
-from sys import argv, stderr
+from sys import argv
 
 from seaborn import violinplot
 import matplotlib.pyplot as plt

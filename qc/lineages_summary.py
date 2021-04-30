@@ -1,16 +1,11 @@
-# Gathers seq-run_summary.csv files and merges with pangolin lineage table
-# Takes 2 arguments:
-# 1. Path to directory containing per-sequence-run summary.csv files
-# 2. Path of pangolin lineage file
-
-
 import pandas as pd
 from sys import argv
 import glob
 import os
 
 SAMPLE_NAME = "Sample"
-SAMPLE_ID = "sample_id"
+SEARCH_ID = "search_id"
+SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
 CONS_NAME = "consensus_seq_name"
 MOD_CONS_NAME = "modded_consensus_seq_name"
 
@@ -46,10 +41,10 @@ def expand_with_added_fa_names(merged_summaries_df, added_fa_names_fp):
     # names have commas in them so can't read as csv ...
     added_fastq_ids_df = pd.read_csv(added_fa_names_fp, sep="\t", dtype=str)
 
-    # make a column to hold the sample id; for these added ids, the sample
-    # name is the same as the fas name (for now, until naming conventions are
-    # nailed down; sorry, Yoshiki :( )
-    added_fastq_ids_df[SAMPLE_ID] = added_fastq_ids_df[fas_col_name]
+    # make a column to hold the sequenced pool component id;
+    # for these added ids, punt to this being the same as the fas name
+    added_fastq_ids_df[SEQ_POOL_COMP_ID] = added_fastq_ids_df[fas_col_name]
+
     # also copy it into "Sample" column for now, just so it has something there
     added_fastq_ids_df[SAMPLE_NAME] = added_fastq_ids_df[fas_col_name]
 
@@ -59,9 +54,9 @@ def expand_with_added_fa_names(merged_summaries_df, added_fa_names_fp):
 
     expanded_df = merged_summaries_df.merge(
         added_fastq_ids_df,
-        left_on=[CONS_NAME, SAMPLE_NAME, SAMPLE_ID],
-        right_on=[CONS_NAME, SAMPLE_NAME, SAMPLE_ID], how="outer")
-    expanded_df.fillna('', inplace=True)
+        left_on=[CONS_NAME, SAMPLE_NAME, SEQ_POOL_COMP_ID],
+        right_on=[CONS_NAME, SAMPLE_NAME, SEQ_POOL_COMP_ID], how="outer")
+    expanded_df.fillna({CONS_NAME: ''}, inplace=True)
 
     # add a "modded_consensus_seq_name" col
     # by modifying the consensus name column contents according to
@@ -72,33 +67,16 @@ def expand_with_added_fa_names(merged_summaries_df, added_fa_names_fp):
     return expanded_df
 
 
-def generate_metadata_df(expanded_summaries_df, lineage_df):
-    # RIGHT merge expanded summaries with lineages (include ONLY lines
-    # for samples that went through lineage calling)
-    metadata_df = expanded_summaries_df.merge(
-        lineage_df, left_on=MOD_CONS_NAME, right_on=MOD_CONS_NAME, how="right")
-
-    # rearrange columns--want CONS_NAME as first column to match up
-    # with the fas record names, which are used as the tree node names
-    # in the tree file
-    # shift column 'consensus_seq_name' to first position
-    first_column = metadata_df.pop(CONS_NAME)
-    metadata_df.insert(0, CONS_NAME, first_column)
-    return metadata_df
-
-
-def create_lineages_summary_and_metadata(arg_list):
+def create_lineages_summary(arg_list):
     added_fa_names_fp = arg_list[1]
     run_summaries_fp = arg_list[2]
     run_summary_suffix = arg_list[3]
     lineage_fp = arg_list[4]
     out_summary_fp = arg_list[5]
-    out_metadata_fp = arg_list[6]
 
     merged_summaries_df = merge_summaries(run_summaries_fp, run_summary_suffix)
     expanded_summaries_df = expand_with_added_fa_names(
         merged_summaries_df, added_fa_names_fp)
-    expanded_summaries_copy_df = expanded_summaries_df.copy(deep=True)
 
     # Load pangolin file to a dataframe and
     # copy the "taxon" column into a new col named "modded_consensus_seq_name"
@@ -109,23 +87,30 @@ def create_lineages_summary_and_metadata(arg_list):
     # both samples that went through lineage calling and those that didn't)
     output_df = expanded_summaries_df.merge(
         lineage_df, left_on=MOD_CONS_NAME, right_on=MOD_CONS_NAME, how="outer")
-    output_df.to_csv(out_summary_fp, index=False)
+
+    # calculate usable_for: nothing, variant, variant_and_epidemiology
+    fraction_coverage = output_df['coverage_gte_10_reads'].astype(float)
+    # believe checking as below should exclude NAs ...
+    passes_pangolin = output_df['status'] == "passed_qc"
+    gte_70_and_passes_pangolin = passes_pangolin & (fraction_coverage >= 0.70)
+    gt_95_and_passes_pangolin = passes_pangolin & (fraction_coverage > 0.95)
+    output_df['usable_for'] = "nothing"
+    output_df.loc[gte_70_and_passes_pangolin, 'usable_for'] = "variant"
+    output_df.loc[gt_95_and_passes_pangolin, 'usable_for'] = \
+        "variant_and_epidemiology"
+
+    # sort to ensure deterministic output order
+    output_df.sort_values(by=[SEARCH_ID, SEQ_POOL_COMP_ID], inplace=True)
 
     # there *shouldn't* be any rows in the lineage that aren't in the
     # expanded summaries ... if there are, something is wrong.  Raise
     # an error (but *after* writing the output file, so we have some chance of
     # figuring out what went wrong).
+    output_df.to_csv(out_summary_fp, index=False)
     if len(output_df) != len(expanded_summaries_df):
         raise ValueError(f"Expected {len(expanded_summaries_df)} rows, "
                          f"got {len(output_df)}")
 
-    # RIGHT merge expanded summaries with lineages (include ONLY lines
-    # for samples that went through lineage calling because those are also
-    # the only ones that go to tree building.)
-    # NB that empress metadata files must be tsv
-    metadata_df = generate_metadata_df(expanded_summaries_copy_df, lineage_df)
-    metadata_df.to_csv(out_metadata_fp, sep='\t', index=False)
-
 
 if __name__ == '__main__':
-    create_lineages_summary_and_metadata(argv)
+    create_lineages_summary(argv)

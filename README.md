@@ -2,7 +2,7 @@
 
 This software implements a high-throughput data processing pipeline to identify and charaterize SARS-CoV-2 variant sequences in specimens from COVID-19 positive hosts or environments.  It is based on https://github.com/niemasd/SD-COVID-Sequencing and built for use with Amazon Web Services (AWS) EC2 machine instances and S3 data storage.
 
-Pipeline version 1.1.1 is pre-installed on the snap-053dd2e88fb4ebc88 Amazon Web Services snapshot in region us-west-2 (Oregon).  
+Pipeline version 2.0.0 is pre-installed on the so-labeled Amazon Web Services snapshot in region us-west-2 (Oregon).  
 
 ## Installing the pipeline
 The pipeline uses the following external software programs:
@@ -11,44 +11,17 @@ The pipeline uses the following external software programs:
 * minimap2 2.17-r941
 * samtools 1.11
 * QualiMap v.2.2.2-dev
-* FastQC v0.11.9
 * Pangolin (variable version)
 * viralMSA 1.1.11
 * IQTree 2.1.2
 * FastRoot v1.5
 * EMPress 1.1.0
+* q30 (no version info)
+* samhead (no version info)
+* git 2.7.4 or higher
 
-Should one wish to set up the pipeline on a fresh instance, follow the below commands.
-Create a python 3.8 conda environment and activate it, then run:
-
-```
-conda install numpy 
-conda install boto3
-conda install -c bioconda fastqc
-conda install -c bioconda qualimap
-conda install -c bioconda minimap2
-conda install -c bioconda samtools
-
-# to run unit tests, also do the following
-conda install -c conda-forge wand
-```
-
-Followed by:
-```
-pip install multiqc
-pip install nwalign3
-pip install pandas
-pip install seaborn
-```
-
-Then install ivar from source (see https://github.com/andersen-lab/ivar ).
-
-It is also necessary to create a separate conda environment for Pangolin, following the instructions at 
-https://github.com/cov-lineages/pangolin#install-pangolin .
-
-Install viralMSA, IQTree, and FastRoot from github, then install EMPress via a separate qiime2 conda environment (see https://github.com/biocore/empress).
-
-Finally, install the main (latest stable release) branch of this repository from github.
+Should one wish to set up the pipeline on a fresh AWS ubuntu instance, download the `install.sh` script from this repository, set the 
+necessary variables at the top of the script, and run it. Sudo permissions are required.
 
 ## Specifying the pipeline cluster
 
@@ -63,12 +36,15 @@ scheduler = sge
 compute_root_volume_size = 500
 ```
 
+Note that, after creating a new cluster, the `aws cli` software must be configured on the head node with credentials
+ for accessing the necessary AWS S3 resources.
+
 
 ## Running the pipeline
 
 The pipeline is initiated on the head node of the cluster by calling the `run_pipeline.sh` script with an input csv file provided by the user.  This file should have a header line in the following format:
 
-`organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build`
+`organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build,read_cap,is_test`
 
 It must then contain one or more data lines, each of which will trigger a run of the specified part(s) of the pipeline on a specified sequencing run dataset.
 
@@ -84,28 +60,35 @@ The fields are:
 |`qc`|true or false|Indicates whether the pipeline should execute the per-sequencing-run qc-reporting and summarization functionality on the sequencing run dataset specified in this row.|
 |`lineage`|true or false|Indicates whether the pipeline should execute the lineage-calling functionality on all cumulative data available to this organization.|
 |`tree_build`|true or false|Indicates whether the pipeline should execute the tree-building and tree-visualization functionality on all cumulative data available to this organization.|
+|`read_cap`|a positive integer or all|Specifies the maximum number of mapped reads per sample that should be used in the per-sample variant-calling and consensus-sequence-building functionality.|
+|`is_test`|true or false|Indicates whether the pipeline should execute the tree-building and tree-visualization functionality on all cumulative data available to this organization.|
+
 
 An example input for `run_pipeline.sh` might look like:
 
 ```
-organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build
-ucsd,210213_A00953_0232_BHY3GLDRXX,swift_v2,pe,true,true,true,true,true
+organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build,read_cap,is_test
+ucsd,210213_A00953_0232_BHY3GLDRXX,swift_v2,pe,true,true,true,true,true,all,false
 ```
 
-It is also possible to run more granular elements of the pipeline directly: `run_qc_summary.sh` executes only the `qc` functionality described above on a specified sequencing run, while `run_phylogeny.sh` executes only the `lineage` and/or `tree_build` functionality on all cumulative data available to the organization. These two scripts require input files containing the field above as well as one extra final field:
+It is also possible to run more granular elements of the pipeline directly.  
+`run_phylogeny.sh` executes only the `lineage` and/or `tree_build` functionality on all cumulative data available to the organization. It takes the inputs
+
+`organization,lineage,tree_build,is_test`
+
+Some of the more granular scripts require an additional `processing_run` argument:
 
 |Field Name|Allowed Values|Description|
 |----------|--------------|-----------|
-|processing_run|string containing alphanumeric characters, hyphens, and/or underscores only|Specifies an identifier of a data processing run.  For `run_qc_summary.sh`, this specifies the per-sample data processing run to be qc'd. For `run_phylogeny.sh`, it specifies the name of this phylogeny data-processing run, which prefixed to all output artifacts.  Usually this is a timestamp, such as `2021-03-11_21-58-55`.|
+|processing_run|string containing alphanumeric characters, hyphens, and/or underscores only|Specifies an identifier of a data processing run.  For `run_qc_summary.sh`, this specifies the per-sample data processing run to be qc'd. Usually this is a timestamp, such as `2021-03-11_21-58-55`.|
 
-An example input for either of these scripts might look like:
+`run_qc_summary.sh` executes only the `qc` functionality described above on a specified sequencing run; it takes the inputs
 
-```
-organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build,processing_run
-ucsd,210213_A00953_0232_BHY3GLDRXX,swift_v2,pe,true,true,true,true,true,2021-03-11_21-18-32
-```
+`organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build,processing_run,is_test`
 
-Finally, it is possible to run the pipeline on a single sample using the `run_sample.sh` script.  This script requires all of the fields above in the specified order, as well as an additional first field:
+(Note the substitution of `processing_run` for `read_cap`).
+
+Finally, it is possible to run the pipeline on a single sample using the `run_sample.sh` script.  This script requires an additional first field:
 
 
 |Field Name|Allowed Values|Description|
@@ -115,6 +98,7 @@ Finally, it is possible to run the pipeline on a single sample using the `run_sa
 An example input for `run_sample.sh` might look like:
 
 ```
-sample,organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build,processing_run
-002idSEARCH-5329-SAN_L001_L002_L003_L004,ucsd,210213_A00953_0232_BHY3GLDRXX,swift_v2,pe,true,true,true,true,true,2021-03-11_21-18-32
+sample,organization,seq_run,primers,read_type,merge,variants,qc,lineage,tree_build,read_cap,processing_run
+002idSEARCH-5329-SAN_L001_L002_L003_L004,ucsd,210213_A00953_0232_BHY3GLDRXX,swift_v2,pe,true,true,true,true,true,all,2021-03-11_21-18-32
 ```
+Note that this script does not take an `is_test` argument.
