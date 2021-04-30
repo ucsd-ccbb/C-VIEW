@@ -3,6 +3,7 @@ from sys import argv
 
 
 SEARCH_ID_KEY = "search_id"
+SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
 CONS_NAME = "consensus_seq_name"
 
 BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
@@ -17,7 +18,59 @@ BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
                    "Address", "Sample ID given by the sample provider",
                    "Submitting lab", "Address.1",
                    "Sample ID given by the submitting laboratory", "Authors",
-                   "Comment", "Comment Icon", "Released"]
+                   "Comment", "Comment Icon", "Released",
+                   "Sequenced Pool Component Id"]
+
+
+def add_final_qc_filters_inplace(qc_and_lineage_w_search_ids_df):
+    qc_and_lineage_w_search_ids_df.loc[:, "mapped_reads_lt_50k"] = \
+        ((qc_and_lineage_w_search_ids_df["mapped_reads"] < 50000) |
+         qc_and_lineage_w_search_ids_df["mapped_reads"].isna())
+
+    qc_and_lineage_w_search_ids_df.loc[:, "uncapped_reads_lt_100k"] = \
+        ((qc_and_lineage_w_search_ids_df["Uncapped_Reads"] < 50000) |
+         qc_and_lineage_w_search_ids_df["Uncapped_Reads"].isna())
+
+    qc_and_lineage_w_search_ids_df.loc[:, "sub_map_pct_aligned_lt_50"] = \
+        ((qc_and_lineage_w_search_ids_df["Sub_Map_Pct_Aligned"] < 50) |
+         qc_and_lineage_w_search_ids_df["Sub_Map_Pct_Aligned"].isna())
+
+    qc_and_lineage_w_search_ids_df.loc[:, "p25_ins_size_lt_140"] = \
+        ((qc_and_lineage_w_search_ids_df["P25_Ins_size"] < 140) |
+         qc_and_lineage_w_search_ids_df["P25_Ins_size"].isna())
+
+    qc_and_lineage_w_search_ids_df.loc[:, "percent_q30_lt_90"] = \
+        ((qc_and_lineage_w_search_ids_df["Pct_Q30"] < 90) |
+         qc_and_lineage_w_search_ids_df["Pct_Q30"].isna())
+
+    qc_and_lineage_w_search_ids_df.loc[:, "coverage_gte_10_reads_lt_95"] = \
+        ((qc_and_lineage_w_search_ids_df["coverage_gte_10_reads"] < 0.95) |
+         qc_and_lineage_w_search_ids_df["coverage_gte_10_reads"].isna())
+
+    qc_and_lineage_w_search_ids_df.loc[:, "mean_coverage_lt_500"] = \
+        ((qc_and_lineage_w_search_ids_df["mean_coverage"] < 500) |
+         qc_and_lineage_w_search_ids_df["mean_coverage"].isna())
+
+    qc_and_lineage_w_search_ids_df.loc[:, "any_fail"] = \
+        (qc_and_lineage_w_search_ids_df["mapped_reads_lt_50k"] |
+         qc_and_lineage_w_search_ids_df["uncapped_reads_lt_100k"] |
+         qc_and_lineage_w_search_ids_df["sub_map_pct_aligned_lt_50"] |
+         qc_and_lineage_w_search_ids_df["p25_ins_size_lt_140"] |
+         qc_and_lineage_w_search_ids_df["percent_q30_lt_90"] |
+         qc_and_lineage_w_search_ids_df["coverage_gte_10_reads_lt_95"] |
+         qc_and_lineage_w_search_ids_df["mean_coverage_lt_500"])
+
+
+def generate_full_metadata(qc_and_lineages_df, inspect_metadata_df):
+    records_w_search_ids = qc_and_lineages_df[SEARCH_ID_KEY].notna()
+    qc_and_lineage_w_search_ids_df = qc_and_lineages_df[
+        records_w_search_ids].copy()
+
+    add_final_qc_filters_inplace(qc_and_lineage_w_search_ids_df)
+
+    full_df = qc_and_lineage_w_search_ids_df.merge(
+        inspect_metadata_df, on=SEARCH_ID_KEY, how="outer")
+    return full_df
 
 
 def filter_metadata_for_bjorn(full_df):
@@ -51,7 +104,11 @@ def generate_bjorn_df(filtered_df):
     output_df = pd.DataFrame()
     output_df.loc[:, 'sample_id'] = filtered_df['sample_id']
     output_df.loc[:, 'search_id'] = filtered_df['search_id']
-    output_df.loc[:, "ready_for_release"] = "Yes"
+
+    release_mask = filtered_df["any_fail"] == False
+    output_df.loc[:, "ready_for_release"] = "No"
+    output_df.loc[release_mask, "ready_for_release"] = "Yes"
+
     output_df.loc[:, "new_seqs_ready_for_release"] = "Yes"
     output_df.loc[:, "released"] = ""
     output_df.loc[:, "submitter"] = ""
@@ -91,6 +148,7 @@ def generate_bjorn_df(filtered_df):
     output_df.loc[:, "project_name"] = filtered_df["project_name"]
     output_df.loc[:, "comment_icon"] = ""
     output_df.loc[:, "released_2"] = ""
+    output_df.loc[:, SEQ_POOL_COMP_ID] = filtered_df[SEQ_POOL_COMP_ID]
 
     return output_df
 
@@ -116,14 +174,10 @@ def merge_metadata(arg_list):
     out_bjorn_fp = arg_list[4]
     out_empress_fp = arg_list[5]
 
-    qc_and_lineage_df = pd.read_csv(qc_and_lineage_fp, dtype=str)
-    records_w_search_ids = qc_and_lineage_df[SEARCH_ID_KEY].notna()
-    qc_and_lineage_w_search_ids_df = qc_and_lineage_df[
-        records_w_search_ids].copy()
+    qc_and_lineage_df = pd.read_csv(qc_and_lineage_fp)  # , dtype=str)
     metadata_df = pd.read_csv(metadata_fp, dtype=str)
 
-    full_df = qc_and_lineage_w_search_ids_df.merge(
-        metadata_df, on=SEARCH_ID_KEY, how="outer")
+    full_df = generate_full_metadata(qc_and_lineage_df, metadata_df)
     full_df.to_csv(out_full_fp, index=False)
 
     filtered_df = filter_metadata_for_bjorn(full_df)
