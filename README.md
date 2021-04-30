@@ -7,17 +7,17 @@ Pipeline version 2.0.0 is pre-installed on the so-labeled Amazon Web Services sn
 ## Installing the pipeline
 The pipeline uses the following external software programs:
 
-* ivar 1.3.1
-* minimap2 2.17-r941
-* samtools 1.11
-* QualiMap v.2.2.2-dev
-* Pangolin (variable version)
-* viralMSA 1.1.11
-* IQTree 2.1.2
-* FastRoot v1.5
-* EMPress 1.1.0
-* q30 (no version info)
-* samhead (no version info)
+* [Minimap2 2.17-r941](https://github.com/lh3/minimap2/releases/tag/v2.17)
+* [samtools 1.11](https://github.com/samtools/samtools/releases/tag/1.11)
+* [Qualimap 2.2.2-dev](https://bitbucket.org/kokonech/qualimap/src/master/)
+* [ivar 1.3.1](https://github.com/andersen-lab/ivar/releases/tag/v1.3.1)
+* [Pangolin (variable version)](https://github.com/cov-lineages/pangolin)
+* [ViralMSA 1.1.11](https://github.com/niemasd/ViralMSA/releases/tag/1.1.11)
+* [IQ-TREE 2.1.2](https://github.com/iqtree/iqtree2/releases/download/v2.1.2/iqtree-2.1.2-Linux.tar.gz)
+* [FastRoot 1.5](https://github.com/uym2/MinVar-Rooting/releases/tag/v1.5)
+* [EMPress 1.1.0](https://github.com/biocore/empress/releases/tag/v1.1.0)
+* [q30 dev](https://github.com/artnasamran/q30)
+* [samhead dev](https://github.com/niemasd/SD-COVID-Sequencing/tree/main/samhead)
 * git 2.7.4 or higher
 
 Should one wish to set up the pipeline on a fresh AWS ubuntu instance, download the `install.sh` script from this repository, set the 
