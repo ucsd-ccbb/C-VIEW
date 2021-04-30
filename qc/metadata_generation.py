@@ -105,7 +105,7 @@ def generate_bjorn_df(filtered_df):
     output_df.loc[:, 'sample_id'] = filtered_df['sample_id']
     output_df.loc[:, 'search_id'] = filtered_df['search_id']
 
-    release_mask = filtered_df["any_fail"] == False
+    release_mask = filtered_df["any_fail"] == False  # noqa 712
     output_df.loc[:, "ready_for_release"] = "No"
     output_df.loc[release_mask, "ready_for_release"] = "Yes"
 
