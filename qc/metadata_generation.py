@@ -1,10 +1,18 @@
 import pandas as pd
 from sys import argv
+# TODO: make sure this is included in install.sh
+import fastaparser
 
 
 SEARCH_ID_KEY = "search_id"
 SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
 CONS_NAME = "consensus_seq_name"
+USABLE_NAME = "usable_for"
+NOTHING_VAL = "nothing"
+VARIANT_VAL = "variant"
+VARIANT_AND_EP_VAL = "variant_and_epidemiology"
+CONSENSUS_S3 = "consensus_s3"
+IS_HIST_OR_REF = "is_hist_or_ref"
 
 BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
                    "New sequences ready for release", "Released?",
@@ -153,8 +161,8 @@ def generate_bjorn_df(filtered_df):
     return output_df
 
 
-def generate_empress_df(filtered_df):
-    # include ONLY samples that went through lineage calling)
+def generate_base_empress_df(filtered_df):
+    # include ONLY samples that went through lineage calling
     has_pangolin_status = filtered_df["status"].notna()
     empress_df = filtered_df[has_pangolin_status]
 
@@ -167,12 +175,45 @@ def generate_empress_df(filtered_df):
     return empress_df
 
 
+def winnow_fasta(fasta_fp, base_empress_df, out_loose_fp, out_stringent_fp):
+    with open(out_loose_fp, 'w') as loose_file:
+        with open(out_stringent_fp, 'w') as stringent_file:
+            with open(fasta_fp) as fasta_file:
+                parser = fastaparser.Reader(fasta_file)
+                for seq in parser:
+                    # match header to consensus_seq_name column of metadata
+                    # and get the usable_for value for it
+                    seq_metadata_df = base_empress_df.loc[
+                        base_empress_df[CONS_NAME] == seq.id]
+
+                    if len(seq_metadata_df) == 0:
+                        continue
+                    elif len(seq_metadata_df) > 1:
+                        raise ValueError(f"More than one metadata row with"
+                                         f"consensus sequence name "
+                                         f"'{seq.header}' found")
+                    else:
+                        seq_usable_for = seq_metadata_df.loc[:,
+                                         USABLE_NAME].iat[0]
+                        fasta_str = seq.formatted_fasta() + '\n'
+                        if seq_usable_for == VARIANT_VAL:
+                            loose_file.write(fasta_str)
+                        elif seq_usable_for == VARIANT_AND_EP_VAL:
+                            stringent_file.write(fasta_str)
+                        # ignore any other cases
+
+
 def merge_metadata(arg_list):
     qc_and_lineage_fp = arg_list[1]
     metadata_fp = arg_list[2]
     out_full_fp = arg_list[3]
     out_bjorn_fp = arg_list[4]
     out_empress_fp = arg_list[5]
+    out_empress_var_fp = arg_list[6]
+    out_empress_var_and_ep_fp = arg_list[7]
+    full_fasta_fp = arg_list[8]
+    out_loose_fasta_fp = arg_list[9]
+    out_stringent_fasta_fp = arg_list[10]
 
     qc_and_lineage_df = pd.read_csv(qc_and_lineage_fp)  # , dtype=str)
     metadata_df = pd.read_csv(metadata_fp, dtype=str)
@@ -190,8 +231,28 @@ def merge_metadata(arg_list):
     metadata_w_search_ids_df = metadata_df[metadata_w_search_id].copy()
     raw_empress_df = qc_and_lineage_df.merge(
         metadata_w_search_ids_df, on=SEARCH_ID_KEY, how="outer")
-    empress_df = generate_empress_df(raw_empress_df)
-    empress_df.to_csv(out_empress_fp, sep='\t', index=False)
+    base_empress_df = generate_base_empress_df(raw_empress_df)
+    base_empress_df.to_csv(out_empress_fp, sep='\t', index=False)
+
+    usable_is_variant = base_empress_df[USABLE_NAME] == VARIANT_VAL
+    usable_is_var_and_ep = base_empress_df[USABLE_NAME] == VARIANT_AND_EP_VAL
+
+    # these are cumulative: the var_empress_df
+    # contains all records with a "usable_for" value of "variant" OR
+    # "variant_and_epidemiology"--OR the reference and historical records
+    is_hist_or_ref = base_empress_df[IS_HIST_OR_REF] == True
+    var_empress_mask = (usable_is_variant | usable_is_var_and_ep |
+                        is_hist_or_ref)
+    var_empress_df = base_empress_df[var_empress_mask].copy()
+    var_empress_df.to_csv(out_empress_var_fp, sep='\t', index=False)
+
+    var_and_ep_empress_df = var_empress_df.loc[~usable_is_variant].copy()
+    var_and_ep_empress_df.to_csv(out_empress_var_and_ep_fp,
+                                 sep='\t', index=False)
+
+    # the output fastas are NOT cumulative
+    winnow_fasta(full_fasta_fp, base_empress_df,
+                 out_loose_fasta_fp, out_stringent_fasta_fp)
 
 
 if __name__ == '__main__':

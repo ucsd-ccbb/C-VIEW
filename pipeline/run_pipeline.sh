@@ -185,7 +185,7 @@ do
 			-wd /shared/workspace/projects/covid/logs \
 			-pe smp 96 \
 			-S /bin/bash \
-	    	$PIPELINEDIR/pipeline/phylogeny.sh
+	    	$PIPELINEDIR/pipeline/lineages.sh
 
     fi
 

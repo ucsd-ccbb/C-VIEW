@@ -48,6 +48,6 @@ do
 		-wd /shared/workspace/projects/covid/logs \
 		-pe smp 16 \
 		-S /bin/bash \
-    	$PIPELINEDIR/pipeline/phylogeny.sh
+    	$PIPELINEDIR/pipeline/lineages.sh
 
 done
