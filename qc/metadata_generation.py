@@ -1,6 +1,5 @@
 import pandas as pd
 from sys import argv
-# TODO: make sure this is included in install.sh
 import fastaparser
 
 
