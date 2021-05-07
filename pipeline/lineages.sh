@@ -62,12 +62,12 @@ runPangolin () {
 
   # add the ref and historic fast to the passing fas from all the sequencing runs
   cat $WORKSPACE/*passQC.fas >> $WORKSPACE/"$TIMESTAMP"_passQC.fas
-  cat $WORKSPACE/"$TIMESTAMP"_passQC.fas $WORKSPACE/"$TIMESTAMP"_refs_hist.fas >> $WORKSPACE/all/"$TIMESTAMP".fas
+  cat $WORKSPACE/"$TIMESTAMP"_passQC.fas $WORKSPACE/"$TIMESTAMP"_refs_hist.fas >> $WORKSPACE/all/"$TIMESTAMP"_passQC_refs_hist.fas
 
 	# pangolin
 	source $ANACONDADIR/activate pangolin
 	pangolin --update
-	pangolin -t $THREADS --outfile $WORKSPACE/"$TIMESTAMP".lineage_report.csv $WORKSPACE/all/"$TIMESTAMP".fas
+	pangolin -t $THREADS --outfile $WORKSPACE/"$TIMESTAMP".lineage_report.csv $WORKSPACE/all/"$TIMESTAMP"_passQC_refs_hist.fas
   echo -e "pangolin exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
   # produce merged_qc_and_lineages.csv
