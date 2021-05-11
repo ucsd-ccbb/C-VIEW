@@ -76,8 +76,8 @@ runPangolin () {
 
   # merge with inspect metadata to produce full summary, bjorn summary, empress metadata, and winnowed fastas
   python $PIPELINEDIR/qc/metadata_generation.py \
-    $WORKSPACE/$INSPECT_INPUT_FNAME \
     $WORKSPACE/"$TIMESTAMP".qc_and_lineages.csv \
+    $WORKSPACE/$INSPECT_INPUT_FNAME \
     $WORKSPACE/"$TIMESTAMP".full_summary.csv \
     $WORKSPACE/"$TIMESTAMP".bjorn_summary.csv \
     $WORKSPACE/all/"$TIMESTAMP".passQC_refs_hist_empress_metadata.tsv \
