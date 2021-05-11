@@ -34,6 +34,7 @@ else
   aws s3 cp $S3TEST/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
   aws s3 cp $S3TEST/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
   S3UPLOAD=$S3TEST
+  S3INSPECT=$S3TEST
 fi
 
 # TODO: Need real file name
@@ -90,10 +91,10 @@ runPangolin () {
   echo -e "metadata_generation.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
   # add the refs_hist.fas to the stringent_only.fas
-  cat $WORKSPACE/"$TIMESTAMP"_refs_hist.fas $WORKSPACE/"$TIMESTAMP"_stringent_only.fas >> $WORKSPACE/stringent/"$TIMESTAMP"_stringent_refs_hist.fas
+  cat $WORKSPACE/"$TIMESTAMP"_refs_hist.fas $WORKSPACE/stringent/"$TIMESTAMP"_stringent_only.fas >> $WORKSPACE/stringent/"$TIMESTAMP"_stringent_refs_hist.fas
 
   # add the loose_only.fas to the stringent_refs_hist.fas
-  cat $WORKSPACE/"$TIMESTAMP"_stringent_refs_hist.fas $WORKSPACE/"$TIMESTAMP"_loose_only.fas >> $WORKSPACE/loose_stringent/"$TIMESTAMP"_loose_stringent_refs_hist.fas
+  cat $WORKSPACE/stringent/"$TIMESTAMP"_stringent_refs_hist.fas $WORKSPACE/loose_stringent/"$TIMESTAMP"_loose_only.fas >> $WORKSPACE/loose_stringent/"$TIMESTAMP"_loose_stringent_refs_hist.fas
 
   aws s3 cp $WORKSPACE/"$TIMESTAMP".full_summary.csv $S3INSPECT/full_summary.csv
 }
