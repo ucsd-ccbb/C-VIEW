@@ -27,8 +27,8 @@ else
   S3UPLOAD=$S3TEST
 fi
 
-aws s3 cp $S3DOWNLOAD/phylogeny/$TIMESTAMP/"$TIMESTAMP"_"$DATASET"_refs_hist.fas $WORKSPACE/
-aws s3 cp $S3DOWNLOAD/phylogeny/$TIMESTAMP/"$TIMESTAMP"_"$DATASET"_refs_hist_empress_metadata.tsv $WORKSPACE/
+aws s3 cp $S3DOWNLOAD/phylogeny/$TIMESTAMP/"$DATASET"/"$TIMESTAMP"_"$DATASET"_refs_hist.fas $WORKSPACE/
+aws s3 cp $S3DOWNLOAD/phylogeny/$TIMESTAMP/"$DATASET"/"$TIMESTAMP"_"$DATASET"_refs_hist_empress_metadata.tsv $WORKSPACE/
 
 buildTree () {
 	# Must use biopy env due to numpy conflicts
