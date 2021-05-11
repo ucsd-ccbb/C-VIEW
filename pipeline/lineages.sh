@@ -11,7 +11,7 @@ INSPECT_INPUT_FNAME=metadata.csv
 THREADS=8
 rm -rf $WORKSPACE
 mkdir -p $WORKSPACE
-mkdir -p $WORKSPACE/all
+mkdir -p $WORKSPACE/passQC
 mkdir -p $WORKSPACE/loose_stringent
 mkdir -p $WORKSPACE/stringent
 
@@ -34,6 +34,7 @@ else
   aws s3 cp $S3TEST/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet
   aws s3 cp $S3TEST/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
   S3UPLOAD=$S3TEST
+  S3INSPECT=$S3TEST
 fi
 
 # TODO: Need real file name
@@ -62,12 +63,12 @@ runPangolin () {
 
   # add the ref and historic fast to the passing fas from all the sequencing runs
   cat $WORKSPACE/*passQC.fas >> $WORKSPACE/"$TIMESTAMP"_passQC.fas
-  cat $WORKSPACE/"$TIMESTAMP"_passQC.fas $WORKSPACE/"$TIMESTAMP"_refs_hist.fas >> $WORKSPACE/all/"$TIMESTAMP"_passQC_refs_hist.fas
+  cat $WORKSPACE/"$TIMESTAMP"_passQC.fas $WORKSPACE/"$TIMESTAMP"_refs_hist.fas >> $WORKSPACE/passQC/"$TIMESTAMP"_passQC_refs_hist.fas
 
 	# pangolin
 	source $ANACONDADIR/activate pangolin
 	pangolin --update
-	pangolin -t $THREADS --outfile $WORKSPACE/"$TIMESTAMP".lineage_report.csv $WORKSPACE/all/"$TIMESTAMP"_passQC_refs_hist.fas
+	pangolin -t $THREADS --outfile $WORKSPACE/"$TIMESTAMP".lineage_report.csv $WORKSPACE/passQC/"$TIMESTAMP"_passQC_refs_hist.fas
   echo -e "pangolin exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
   # produce merged_qc_and_lineages.csv
@@ -80,7 +81,7 @@ runPangolin () {
     $WORKSPACE/$INSPECT_INPUT_FNAME \
     $WORKSPACE/"$TIMESTAMP".full_summary.csv \
     $WORKSPACE/"$TIMESTAMP".bjorn_summary.csv \
-    $WORKSPACE/all/"$TIMESTAMP".passQC_refs_hist_empress_metadata.tsv \
+    $WORKSPACE/passQC/"$TIMESTAMP".passQC_refs_hist_empress_metadata.tsv \
     $WORKSPACE/loose_stringent/"$TIMESTAMP".loose_stringent_refs_hist_empress_metadata.tsv \
     $WORKSPACE/stringent/"$TIMESTAMP".stringent_refs_hist_empress_metadata.tsv \
     $WORKSPACE/"$TIMESTAMP"_passQC.fas \
@@ -90,10 +91,10 @@ runPangolin () {
   echo -e "metadata_generation.py exit code: $?" >> $WORKSPACE/"$TIMESTAMP"-phylogeny.exit.log
 
   # add the refs_hist.fas to the stringent_only.fas
-  cat $WORKSPACE/"$TIMESTAMP"_refs_hist.fas $WORKSPACE/"$TIMESTAMP"_stringent_only.fas >> $WORKSPACE/"$TIMESTAMP"_stringent_refs_hist.fas
+  cat $WORKSPACE/"$TIMESTAMP"_refs_hist.fas $WORKSPACE/stringent/"$TIMESTAMP"_stringent_only.fas >> $WORKSPACE/stringent/"$TIMESTAMP"_stringent_refs_hist.fas
 
   # add the loose_only.fas to the stringent_refs_hist.fas
-  cat $WORKSPACE/"$TIMESTAMP"_stringent_refs_hist.fas $WORKSPACE/"$TIMESTAMP"_loose_only.fas >> $WORKSPACE/"$TIMESTAMP"_loose_stringent_refs_hist.fas
+  cat $WORKSPACE/stringent/"$TIMESTAMP"_stringent_refs_hist.fas $WORKSPACE/loose_stringent/"$TIMESTAMP"_loose_only.fas >> $WORKSPACE/loose_stringent/"$TIMESTAMP"_loose_stringent_refs_hist.fas
 
   aws s3 cp $WORKSPACE/"$TIMESTAMP".full_summary.csv $S3INSPECT/full_summary.csv
 }
