@@ -81,9 +81,9 @@ runPangolin () {
     $WORKSPACE/$INSPECT_INPUT_FNAME \
     $WORKSPACE/"$TIMESTAMP".full_summary.csv \
     $WORKSPACE/"$TIMESTAMP".bjorn_summary.csv \
-    $WORKSPACE/passQC/"$TIMESTAMP".passQC_refs_hist_empress_metadata.tsv \
-    $WORKSPACE/loose_stringent/"$TIMESTAMP".loose_stringent_refs_hist_empress_metadata.tsv \
-    $WORKSPACE/stringent/"$TIMESTAMP".stringent_refs_hist_empress_metadata.tsv \
+    $WORKSPACE/passQC/"$TIMESTAMP"_passQC_refs_hist_empress_metadata.tsv \
+    $WORKSPACE/loose_stringent/"$TIMESTAMP"_loose_stringent_refs_hist_empress_metadata.tsv \
+    $WORKSPACE/stringent/"$TIMESTAMP"_stringent_refs_hist_empress_metadata.tsv \
     $WORKSPACE/"$TIMESTAMP"_passQC.fas \
     $WORKSPACE/loose_stringent/"$TIMESTAMP"_loose_only.fas \
     $WORKSPACE/stringent/"$TIMESTAMP"_stringent_only.fas
