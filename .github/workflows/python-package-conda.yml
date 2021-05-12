@@ -32,6 +32,7 @@ jobs:
         pip install nwalign3
         pip install pandas
         # pip install seaborn
+        pip install fastaparser
     - name: Lint with flake8
       run: |
         conda install flake8

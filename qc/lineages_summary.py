@@ -8,7 +8,11 @@ SEARCH_ID = "search_id"
 SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
 CONS_NAME = "consensus_seq_name"
 MOD_CONS_NAME = "modded_consensus_seq_name"
-
+USABLE_NAME = "usable_for"
+NOTHING_VAL = "nothing"
+VARIANT_VAL = "variant"
+VARIANT_AND_EP_VAL = "variant_and_epidemiology"
+IS_HIST_OR_REF = "is_hist_or_ref"
 
 # recreate un-reversable pangolin name munge;
 # code pulled and very slightly modded from
@@ -41,6 +45,9 @@ def expand_with_added_fa_names(merged_summaries_df, added_fa_names_fp):
     # names have commas in them so can't read as csv ...
     added_fastq_ids_df = pd.read_csv(added_fa_names_fp, sep="\t", dtype=str)
 
+    # add a column marking these as historic or reference
+    added_fastq_ids_df[IS_HIST_OR_REF] = True
+
     # make a column to hold the sequenced pool component id;
     # for these added ids, punt to this being the same as the fas name
     added_fastq_ids_df[SEQ_POOL_COMP_ID] = added_fastq_ids_df[fas_col_name]
@@ -57,6 +64,7 @@ def expand_with_added_fa_names(merged_summaries_df, added_fa_names_fp):
         left_on=[CONS_NAME, SAMPLE_NAME, SEQ_POOL_COMP_ID],
         right_on=[CONS_NAME, SAMPLE_NAME, SEQ_POOL_COMP_ID], how="outer")
     expanded_df.fillna({CONS_NAME: ''}, inplace=True)
+    expanded_df.fillna({IS_HIST_OR_REF: False}, inplace=True)
 
     # add a "modded_consensus_seq_name" col
     # by modifying the consensus name column contents according to
@@ -94,10 +102,9 @@ def create_lineages_summary(arg_list):
     passes_pangolin = output_df['status'] == "passed_qc"
     gte_70_and_passes_pangolin = passes_pangolin & (fraction_coverage >= 0.70)
     gt_95_and_passes_pangolin = passes_pangolin & (fraction_coverage > 0.95)
-    output_df['usable_for'] = "nothing"
-    output_df.loc[gte_70_and_passes_pangolin, 'usable_for'] = "variant"
-    output_df.loc[gt_95_and_passes_pangolin, 'usable_for'] = \
-        "variant_and_epidemiology"
+    output_df[USABLE_NAME] = NOTHING_VAL
+    output_df.loc[gte_70_and_passes_pangolin, USABLE_NAME] = VARIANT_VAL
+    output_df.loc[gt_95_and_passes_pangolin, USABLE_NAME] = VARIANT_AND_EP_VAL
 
     # sort to ensure deterministic output order
     output_df.sort_values(by=[SEARCH_ID, SEQ_POOL_COMP_ID], inplace=True)

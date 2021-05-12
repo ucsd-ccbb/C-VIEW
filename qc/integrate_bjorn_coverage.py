@@ -24,7 +24,7 @@ def integrate_bjorn_coverage(arg_list):
     coverage_df = pd.read_csv(coverage_fp, sep="\t", dtype=str,
                               names=COVERAGE_COL_NAMES, header=0)
     coverage_df[BJORN_SEQ_POOL_COMP_ID] = coverage_df[SAMPLE_KEY].str.replace(
-        ".trimmed.sorted.bam", "")
+        ".trimmed.sorted.bam", "", regex=False)
 
     # TODO: some kind of check here to make sure the same ids are in each df?
 

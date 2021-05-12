@@ -54,6 +54,7 @@ pip install multiqc
 pip install nwalign3
 pip install pandas
 pip install seaborn
+pip install fastaparser
 
 # ------- iVar v.1.3.1 -------
 source $ANACONDADIR/bin/activate covid1.1
