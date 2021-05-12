@@ -72,7 +72,7 @@ ucsd,210213_A00953_0232_BHY3GLDRXX,swift_v2,pe,true,true,true,true,true,all,fals
 ```
 
 It is also possible to run more granular elements of the pipeline directly.  
-`run_phylogeny.sh` executes only the `lineage` and/or `tree_build` functionality on all cumulative data available to the organization. It takes the inputs
+`run_lineages.sh` executes only the `lineage` and/or `tree_build` functionality on all cumulative data available to the organization. It takes the inputs
 
 `organization,lineage,tree_build,is_test`
 
