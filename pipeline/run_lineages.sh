@@ -55,19 +55,21 @@ do
 		QSUBPARAMS=' -hold_jid lineage'
 	fi
 
-    for DATASET in stringent loose_stringent passQC; do
-	    qsub \
-			$QSUBPARAMS \
-			-v ORGANIZATION=$ORGANIZATION \
-			-v TIMESTAMP=$TIMESTAMP \
-			-v DATASET=$DATASET \
-			-v WORKSPACE=/scratch/treebuilding/$TIMESTAMP/$DATASET \
-			-v VERSION_INFO="$VERSION_INFO" \
-			-N treebuilding_"$DATASET" \
-			-wd /shared/workspace/projects/covid/logs \
-			-pe smp 16 \
-			-S /bin/bash \
-	    	$PIPELINEDIR/pipeline/treebuild.sh
-	done
+    if [[ "$TREE_BUILD" == true ]]; then
+	    for DATASET in stringent loose_stringent passQC; do
+		    qsub \
+				$QSUBPARAMS \
+				-v ORGANIZATION=$ORGANIZATION \
+				-v TIMESTAMP=$TIMESTAMP \
+				-v DATASET=$DATASET \
+				-v WORKSPACE=/scratch/treebuilding/$TIMESTAMP/$DATASET \
+				-v VERSION_INFO="$VERSION_INFO" \
+				-N treebuilding_"$DATASET" \
+				-wd /shared/workspace/projects/covid/logs \
+				-pe smp 16 \
+				-S /bin/bash \
+		    	$PIPELINEDIR/pipeline/treebuild.sh
+		done
+	fi
 
 done
