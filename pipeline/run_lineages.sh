@@ -62,6 +62,7 @@ do
 				-v ORGANIZATION=$ORGANIZATION \
 				-v TIMESTAMP=$TIMESTAMP \
 				-v DATASET=$DATASET \
+				-v ISTEST=$ISTEST \
 				-v WORKSPACE=/scratch/treebuilding/$TIMESTAMP/$DATASET \
 				-v VERSION_INFO="$VERSION_INFO" \
 				-N treebuilding_"$DATASET" \
