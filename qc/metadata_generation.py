@@ -12,6 +12,7 @@ VARIANT_VAL = "variant"
 VARIANT_AND_EP_VAL = "variant_and_epidemiology"
 CONSENSUS_S3 = "consensus_s3"
 IS_HIST_OR_REF = "is_hist_or_ref"
+INDEX_COL_NAME = "Unnamed: 0"
 
 BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
                    "New sequences ready for release", "Released?",
@@ -216,6 +217,9 @@ def merge_metadata(arg_list):
 
     qc_and_lineage_df = pd.read_csv(qc_and_lineage_fp)  # , dtype=str)
     metadata_df = pd.read_csv(metadata_fp, dtype=str)
+    # if the input metadata file has an unnamed first (index) column, drop it
+    if metadata_df.columns[0] == INDEX_COL_NAME:
+        metadata_df.pop(INDEX_COL_NAME)
 
     full_df = generate_full_metadata(qc_and_lineage_df, metadata_df)
     full_df.to_csv(out_full_fp, index=False)
@@ -249,9 +253,12 @@ def merge_metadata(arg_list):
     var_and_ep_empress_df.to_csv(out_empress_var_and_ep_fp,
                                  sep='\t', index=False)
 
-    # the output fastas are NOT cumulative
-    winnow_fasta(full_fasta_fp, base_empress_df,
-                 out_loose_fasta_fp, out_stringent_fasta_fp)
+    if full_fasta_fp is not None:
+        # the output fastas are NOT cumulative
+        winnow_fasta(full_fasta_fp, base_empress_df,
+                     out_loose_fasta_fp, out_stringent_fasta_fp)
+    else:
+        print("Input fasta parameter is None so no fastas produced")
 
 
 if __name__ == '__main__':
