@@ -14,7 +14,10 @@ mkdir -p $WORKSPACE
 
 echo "$VERSION_INFO" >> $WORKSPACE/"$TIMESTAMP"_"$DATASET"_refs_hist.version.log
 
-if [[ "$ISTEST" == false ]]; then
+if [[ "$ISTEST" == true ]]; then
+  S3DOWNLOAD=$S3TEST
+  S3UPLOAD=$S3TEST
+else
   if [[ "$ORGANIZATION" == ucsd ]]; then
     S3DOWNLOAD=$S3UCSD
     S3UPLOAD=$S3UCSD
@@ -22,10 +25,10 @@ if [[ "$ISTEST" == false ]]; then
     S3DOWNLOAD=$S3HELIX
     S3UPLOAD=$S3HELIX
   fi
-else
-  S3DOWNLOAD=$S3TEST
-  S3UPLOAD=$S3TEST
 fi
+
+echo "ORGANIZATION is $ORGANIZATION"
+echo "S3DOWNLOAD is $S3DOWNLOAD"
 
 aws s3 cp $S3DOWNLOAD/phylogeny/$TIMESTAMP/"$DATASET"/"$TIMESTAMP"_"$DATASET"_refs_hist.fas $WORKSPACE/
 aws s3 cp $S3DOWNLOAD/phylogeny/$TIMESTAMP/"$DATASET"/"$TIMESTAMP"_"$DATASET"_refs_hist_empress_metadata.tsv $WORKSPACE/
