@@ -48,7 +48,7 @@ buildTree () {
 	# tree building 
 	source $ANACONDADIR/activate qiime2-2020.11
 
-	empress tree-plot --tree $WORKSPACE/"$TIMESTAMP"_"$DATASET"_refs_hist.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/"$TIMESTAMP"_"$DATASET"_refs_hist_empress_metadata.tsv --output-dir $WORKSPACE/tree-viz
+	empress tree-plot --tree $WORKSPACE/"$TIMESTAMP"_"$DATASET"_refs_hist.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/"$TIMESTAMP"_"$DATASET"_refs_hist_empress_metadata.tsv --output-dir $WORKSPACE/"$TIMESTAMP"_"$DATASET"_tree-viz
     echo -e "empress tree-plot exit code: $?" >> $WORKSPACE/"$TIMESTAMP"_"$DATASET"_refs_hist-phylogeny.exit.log
 }
 
