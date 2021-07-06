@@ -119,7 +119,7 @@ echo -e "$SAMPLEID\tcoverage exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 11: Diversity scores
 { time ( pi_from_pileup $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt | tail -1 | cut -f3 > $WORKSPACE/"$SAMPLEID".pi.txt
-cat $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.variants.tsv | cut -f11 | grep -v "^ALT_FREQ" | numlist -gte0.05 | numlist -lte0.95 | wc -l > $WORKSPACE/"$SAMPLEID".numlist.txt ) ; } > $WORKSPACE/"$SAMPLEID".log.11.diversity.log 2>&1
+cat $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.variants.tsv | awk '$11 != "ALT_FREQ" && $11 >= 0.05 && $11 <= 0.95' | grep -v "ALT_FREQ" | cut -f2,4 | sort | uniq | wc -l > $WORKSPACE/"$SAMPLEID".numlist.txt ) ; } > $WORKSPACE/"$SAMPLEID".log.11.diversity.log 2>&1
 echo -e "$SAMPLEID\tdiversity scores exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 #QC
