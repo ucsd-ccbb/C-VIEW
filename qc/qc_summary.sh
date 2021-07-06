@@ -60,9 +60,15 @@ runQC () {
     cat $WORKSPACE/*/*coverage.tsv | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-coverage.tsv
     echo -e "coverage cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
+  # Concatenate n metric files
+    echo "Concatenating n metric files"
+    echo -e "sequenced_pool_component_id\tn_metric" > $WORKSPACE/"$SEQ_RUN"-n-metric.tsv
+    cat $WORKSPACE/*/*n-metric.tsv | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-n-metric.tsv
+    echo -e "n metric cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
+
 	# Make summary table
 	echo "Making run summary table."
-	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-temp-summary.csv
+	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/"$SEQ_RUN"-temp-summary.csv $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-pi-metric.tsv $WORKSPACE/"$SEQ_RUN"-n-metric.tsv
     echo -e "seq_run_summary.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 	python $PIPELINEDIR/qc/integrate_bjorn_coverage.py $WORKSPACE/"$SEQ_RUN"-temp-summary.csv $WORKSPACE/"$SEQ_RUN"-coverage.tsv $WORKSPACE/"$SEQ_RUN"-summary.csv
     echo -e "integrate_bjorn_coverage.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log

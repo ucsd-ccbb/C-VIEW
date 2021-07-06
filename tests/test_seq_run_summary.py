@@ -11,11 +11,16 @@ class SeqRunSummaryTest(FileTestCase):
                          f"multiqc_general_stats.txt"
         input_acceptance_fp = f"{self.dummy_qc_dir}/" \
                               f"2021-02-08-ARTIC-acceptance.tsv"
+        input_pi_metric_fp = f"{self.dummy_qc_dir}/" \
+                              f"2021-02-08-ARTIC-pi-metric.tsv"
+        input_n_metric_fp = f"{self.dummy_qc_dir}/" \
+                              f"2021-02-08-ARTIC-n-metric.tsv"
         expected_results_fp = f"{self.dummy_qc_dir}/" \
                               f"2021-02-08-ARTIC-summary.csv"
         output_fp = f"{self.test_temp_dir}/temp_seq_run_summary.csv"
-        arg_list = ["seq_run_summary.py", input_stats_fp,
-                    input_acceptance_fp, output_fp]
+        arg_list = ["seq_run_summary.py", output_fp, input_stats_fp,
+                    input_acceptance_fp, input_pi_metric_fp,
+                    input_n_metric_fp]
 
         passes = False
         try:
