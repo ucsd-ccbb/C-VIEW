@@ -77,14 +77,11 @@ make install
 
 # ------- Pangolin -------
 cd $SOFTWAREDIR
-wget https://github.com/cov-lineages/pangolin/archive/master.zip
-unzip master.zip
-rm master.zip
-cd pangolin-master
+git clone https://github.com/cov-lineages/pangolin.git
+cd $SOFTWAREDIR/pangolin
 conda env create -f environment.yml
-source $ANACONDADIR/bin/activate pangolin
-python setup.py install
-
+conda activate pangolin
+pip install .
 cd ~
 source $ANACONDADIR/bin/activate base
 

@@ -49,6 +49,7 @@ buildTree () {
 
 	empress tree-plot --tree $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist_empress_metadata.tsv --output-dir $WORKSPACE/"$PROCESSINGID"_"$DATASET"_tree-viz
     echo -e "empress tree-plot exit code: $?" >> $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-phylogeny.exit.log
+  mv $WORKSPACE/tree-viz/empress.html $WORKSPACE/tree-viz/"$PROCESSINGID"_"$DATASET"_empress.html
 }
 
 { time ( buildTree ) ; } > $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-treebuild.log 2>&1

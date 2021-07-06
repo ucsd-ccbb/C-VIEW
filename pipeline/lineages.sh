@@ -81,7 +81,7 @@ runPangolin () {
   cat $WORKSPACE/"$PROCESSINGID"_passQC.fas $WORKSPACE/"$PROCESSINGID"_refs_hist.fas >> $WORKSPACE/passQC/"$PROCESSINGID"_passQC_refs_hist.fas
 
 	# pangolin
-	source $ANACONDADIR/activate pangolin
+	source $ANACONDADIR/activate pangolin2
 	pangolin --update
 	pangolin -t $THREADS --outfile $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/passQC/"$PROCESSINGID"_passQC_refs_hist.fas
   echo -e "pangolin exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
