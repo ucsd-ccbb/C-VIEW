@@ -36,8 +36,10 @@ scheduler = sge
 compute_root_volume_size = 500
 ```
 
-Note that, after creating a new cluster, the `aws cli` software must be configured on the head node with credentials
- for accessing the necessary AWS S3 resources.
+If creating the cluster with AWS ParallelCluster, do not use a version later than 2.10.4; later versions do not support 
+creation of ubuntu 16.04 nodes, which is what the pipeline runs on. Also, note that, after creating a new cluster, 
+the `aws cli` software must be configured on the head node with credentials for accessing the 
+necessary AWS S3 resources.
 
 
 ## Running the pipeline
