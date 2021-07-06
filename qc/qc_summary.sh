@@ -60,6 +60,13 @@ runQC () {
     cat $WORKSPACE/*/*coverage.tsv | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-coverage.tsv
     echo -e "coverage cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
+  # Concatenate pi metric files
+    echo "Concatenating pi metric files"
+    echo -e "sequenced_pool_component_id\tpi_metric" > $WORKSPACE/"$SEQ_RUN"-pi-metric.tsv
+    cat $WORKSPACE/*/*pi-metric.tsv | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-pi-metric.tsv
+    echo -e "pi metric cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
+
+
   # Concatenate n metric files
     echo "Concatenating n metric files"
     echo -e "sequenced_pool_component_id\tn_metric" > $WORKSPACE/"$SEQ_RUN"-n-metric.tsv
