@@ -101,6 +101,18 @@ do
         exit 1
       fi
     fi
+
+    if [ "$VARIANTS" == true ]; then
+      if [ "$SAMPLE" == NA ]; then
+        echo "Error: TIMESTAMP is supported for VARIANTS only if SAMPLE is not NA"
+        exit 1
+      fi
+    fi
+  else
+    if [ "$QC" == true ]; then
+      echo "Error: TIMESTAMP must be provided if QC is true and VARIANTS is false"
+      exit 1
+    fi
   fi
 
   # prevent currently-unsupported use of seq_run
