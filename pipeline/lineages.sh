@@ -48,12 +48,12 @@ fi
 
 echo $S3UPLOAD >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
 echo $S3INSPECT >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
-echo "${DOWNLOAD_BUCKETS[@]}" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
+# echo "${DOWNLOAD_BUCKETS[@]}" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
 
 # Actually do the downloads
 for CURR_BUCKET in "${DOWNLOAD_BUCKETS[@]}"
 do
-    echo $CURR_BUCKET >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
+    # echo $CURR_BUCKET >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
     aws s3 cp $CURR_BUCKET/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet --exclude "$EXCLUDEMASK" --include "$INCLUDEMASK"
     aws s3 cp $CURR_BUCKET/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
 done
