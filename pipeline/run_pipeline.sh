@@ -116,9 +116,11 @@ do
   fi
 
   # prevent currently-unsupported use of seq_run
-  if [ "$SEQ_RUN" == all ] && [ "$VARIANTS" == false ] && [ "$QC" == false ]; then
-    echo "Error: a specific SEQ_RUN must be provided for VARIANTS and/or QC step"
-    exit 1
+  if [ "$SEQ_RUN" == all ]; then
+    if [ "$VARIANTS" != false ] || [ "$QC" != false ]; then
+      echo "Error: a specific SEQ_RUN must be provided for VARIANTS and/or QC step"
+      exit 1
+    fi
   fi
 
   # prevent currently-unsupported use of ISTEST
