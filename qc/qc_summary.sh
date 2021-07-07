@@ -25,6 +25,8 @@ runQC () {
 		--include "*.sorted.stats*" \
 		--include "*.acceptance.tsv" \
 		--include "*coverage.tsv" \
+		--include "*pi-metric.tsv" \
+		--include "*n-metric.tsv" \
 		--include "*_subsampled_mapping_stats.tsv" \
 		--include "*error.log"
 
