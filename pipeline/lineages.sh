@@ -25,6 +25,9 @@ if [[ "$SEQ_RUN" != "NA" ]]; then
   INCLUDEMASK="$SEQ_RUN""$INCLUDEMASK"
 fi
 
+echo $EXCLUDEMASK >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
+echo $INCLUDEMASK >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
+
 DOWNLOAD_BUCKETS=()
 if [[ "$ISTEST" == false ]]; then
   # if this is a real run, always download helix data
@@ -43,9 +46,14 @@ else
   S3INSPECT=$S3TEST
 fi
 
+echo $S3UPLOAD >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
+echo $S3INSPECT >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
+echo "${DOWNLOAD_BUCKETS[@]}" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
+
 # Actually do the downloads
 for CURR_BUCKET in "${DOWNLOAD_BUCKETS[@]}"
 do
+    echo $CURR_BUCKET >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
     aws s3 cp $CURR_BUCKET/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet --exclude "$EXCLUDEMASK" --include "$INCLUDEMASK"
     aws s3 cp $CURR_BUCKET/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
 done
