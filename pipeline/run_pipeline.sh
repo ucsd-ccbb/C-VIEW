@@ -134,7 +134,7 @@ do
 	  FASTQS_PATH=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq
 
 	  # if we are processing just one sample
-	  if [[ "$SAMPLE" == NA ]]; then
+	  if [[ "$SAMPLE" != NA ]]; then
 	    SAMPLE_LIST=($SAMPLE)
 	  else
 	    # set up to find all the relevant fastqs
