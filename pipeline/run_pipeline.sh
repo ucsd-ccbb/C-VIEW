@@ -210,7 +210,7 @@ do
 				-v TIMESTAMP=$TIMESTAMP \
 				-v VERSION_INFO="$VERSION_INFO" \
 				-v READ_CAP=$READ_CAP \
-				-N vars_"$SAMPLE"_"$SEQ_RUN"_"$TIMESTAMP" \
+				-N vars_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
 				-wd /shared/workspace/projects/covid/logs \
 				-pe smp 2 \
 				-S /bin/bash \
@@ -220,7 +220,7 @@ do
 
 	if [[ "$QC" == true ]]; then
     qsub \
-      -hold_jid 'vars_*_'$SEQ_RUN'_'$TIMESTAMP \
+      -hold_jid 'vars_'$SEQ_RUN'_'$TIMESTAMP'_*' \
       -v SEQ_RUN=$SEQ_RUN \
       -v S3DOWNLOAD=$S3DOWNLOAD \
       -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
