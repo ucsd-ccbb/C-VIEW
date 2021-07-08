@@ -53,7 +53,12 @@ runLineages () {
 
   # find the most recently created file on the inspect bucket
   # that matches the inspect metadata file naming convention and download it
-  INSPECT_METADATA_FNAME=$(aws s3 ls $S3INSPECT/ --recursive |  grep $INSPECT_METADATA_PATTERN| sort | tail -n 1 | awk '{print $NF}')
+  # Note that this is NOT recursive: it is looking in the top directory only;
+  # this is because (a) that's where it has always been put and (b) doing recursive
+  # screws up when running in test mode where the download and inspect buckets
+  # are the same--it picks the copy of the metadata in whatever the latest
+  # phylogeny run is :|
+  INSPECT_METADATA_FNAME=$(aws s3 ls $S3INSPECT/ |  grep $INSPECT_METADATA_PATTERN| sort | tail -n 1 | awk '{print $NF}')
   # echo $S3INSPECT/$INSPECT_METADATA_FNAME >> $WORKSPACE/"$PROCESSINGID"-lineages.debug.log
   aws s3 cp "$S3INSPECT"/"$INSPECT_METADATA_FNAME" $WORKSPACE/$INSPECT_METADATA_FNAME
 
@@ -122,7 +127,7 @@ runLineages () {
 }
 
 { time ( runLineages ) ; } > $WORKSPACE/"$PROCESSINGID"-lineages.log 2>&1
-aws s3 cp $WORKSPACE/"$PROCESSINGID"-lineages.log $S3UPLOAD/lineages/$PROCESSINGID/\
+aws s3 cp $WORKSPACE/"$PROCESSINGID"-lineages.log $S3UPLOAD/phylogeny/$PROCESSINGID/\
 
 grep -v "exit code: 0" $WORKSPACE/"$PROCESSINGID"-lineages.exit.log | head -n 1 >> $WORKSPACE/"$PROCESSINGID"-lineages.error.log
 aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$PROCESSINGID/ --recursive --quiet
