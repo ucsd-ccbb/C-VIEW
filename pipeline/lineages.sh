@@ -38,7 +38,7 @@ else
   # for test run, only download test data
   DOWNLOAD_BUCKETS+=($S3TEST)
   S3UPLOAD=$S3TEST
-  # S3INSPECT=$S3TEST
+  S3INSPECT=$S3TEST
 fi
 
 runLineages () {
@@ -54,8 +54,7 @@ runLineages () {
   # find the most recently created file on the inspect bucket
   # that matches the inspect metadata file naming convention and download it
   INSPECT_METADATA_FNAME=$(aws s3 ls $S3INSPECT/ --recursive |  grep $INSPECT_METADATA_PATTERN| sort | tail -n 1 | awk '{print $NF}')
-  echo $S3INSPECT/$INSPECT_METADATA_FNAME >> $WORKSPACE/"$PROCESSINGID"-lineages.debug.log
-
+  # echo $S3INSPECT/$INSPECT_METADATA_FNAME >> $WORKSPACE/"$PROCESSINGID"-lineages.debug.log
   aws s3 cp "$S3INSPECT"/"$INSPECT_METADATA_FNAME" $WORKSPACE/$INSPECT_METADATA_FNAME
 
 	# start with the reference sequence
