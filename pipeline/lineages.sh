@@ -25,8 +25,8 @@ if [[ "$SEQ_RUN" != "NA" ]]; then
   INCLUDEMASK="$SEQ_RUN""$INCLUDEMASK"
 fi
 
-# echo $EXCLUDEMASK >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
-# echo $INCLUDEMASK >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
+echo $EXCLUDEMASK >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
+echo $INCLUDEMASK >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
 
 DOWNLOAD_BUCKETS=()
 if [[ "$ISTEST" == false ]]; then
@@ -46,9 +46,9 @@ else
   S3INSPECT=$S3TEST
 fi
 
-# echo $S3UPLOAD >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
-# echo $S3INSPECT >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
-# echo "${DOWNLOAD_BUCKETS[@]}" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
+ echo $S3UPLOAD >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
+ echo $S3INSPECT >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
+ # echo "${DOWNLOAD_BUCKETS[@]}" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
 
 # Actually do the downloads
 for CURR_BUCKET in "${DOWNLOAD_BUCKETS[@]}"
