@@ -25,8 +25,8 @@ if [[ "$SEQ_RUN" != "NA" ]]; then
   INCLUDEMASK="$SEQ_RUN""$INCLUDEMASK"
 fi
 
-echo $EXCLUDEMASK >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
-echo $INCLUDEMASK >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
+echo "$EXCLUDEMASK" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
+echo "$INCLUDEMASK" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
 
 DOWNLOAD_BUCKETS=()
 if [[ "$ISTEST" == false ]]; then
@@ -53,7 +53,7 @@ fi
 # Actually do the downloads
 for CURR_BUCKET in "${DOWNLOAD_BUCKETS[@]}"
 do
-    # echo $CURR_BUCKET >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
+    echo $CURR_BUCKET >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
     aws s3 cp $CURR_BUCKET/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet --exclude "$EXCLUDEMASK" --include "$INCLUDEMASK"
     aws s3 cp $CURR_BUCKET/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
 done
