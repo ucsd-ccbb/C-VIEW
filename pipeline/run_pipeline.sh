@@ -109,7 +109,7 @@ do
       fi
     fi
   else
-    if [ "$QC" == true ]; then
+    if [ "$VARIANTS" != true ] && [ "$QC" == true ]; then
       echo "Error: TIMESTAMP must be provided if QC is true and VARIANTS is false"
       exit 1
     fi
