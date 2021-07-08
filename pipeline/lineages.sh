@@ -15,55 +15,47 @@ mkdir -p $WORKSPACE/passQC
 mkdir -p $WORKSPACE/loose_stringent
 mkdir -p $WORKSPACE/stringent
 
-echo "$VERSION_INFO" >> $WORKSPACE/"$PROCESSINGID".version.log
+runLineages () {
+  echo "$VERSION_INFO" >> $WORKSPACE/"$PROCESSINGID".version.log
 
-# Based on inputs, decide what to download from where
-EXCLUDEMASK=""
-INCLUDEMASK="*.*"
-if [[ "$SEQ_RUN" != all ]]; then
-  EXCLUDEMASK="*"
-  INCLUDEMASK="$SEQ_RUN""$INCLUDEMASK"
-fi
-
-echo "$EXCLUDEMASK" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
-echo "$INCLUDEMASK" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
-
-DOWNLOAD_BUCKETS=()
-if [[ "$ISTEST" == false ]]; then
-  # if this is a real run, always download helix data
-  DOWNLOAD_BUCKETS+=($S3HELIX)
-  if [[ "$ORGANIZATION" == ucsd ]]; then
-    # if we're allowed, also download ucsd
-    DOWNLOAD_BUCKETS+=($S3UCSD)
-    S3UPLOAD=$S3UCSD
-  else
-    S3UPLOAD=$S3HELIX
+  # Based on inputs, decide what to download from where
+  EXCLUDEMASK=""
+  INCLUDEMASK="*.*"
+  if [[ "$SEQ_RUN" != all ]]; then
+    EXCLUDEMASK="*"
+    INCLUDEMASK="$SEQ_RUN""$INCLUDEMASK"
   fi
-else
-  # for test run, only download test data
-  DOWNLOAD_BUCKETS+=($S3TEST)
-  S3UPLOAD=$S3TEST
-  S3INSPECT=$S3TEST
-fi
 
- # echo $S3UPLOAD >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
- # echo $S3INSPECT >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
- # echo "${DOWNLOAD_BUCKETS[@]}" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
+  DOWNLOAD_BUCKETS=()
+  if [[ "$ISTEST" == false ]]; then
+    # if this is a real run, always download helix data
+    DOWNLOAD_BUCKETS+=($S3HELIX)
+    if [[ "$ORGANIZATION" == ucsd ]]; then
+      # if we're allowed, also download ucsd
+      DOWNLOAD_BUCKETS+=($S3UCSD)
+      S3UPLOAD=$S3UCSD
+    else
+      S3UPLOAD=$S3HELIX
+    fi
+  else
+    # for test run, only download test data
+    DOWNLOAD_BUCKETS+=($S3TEST)
+    S3UPLOAD=$S3TEST
+    S3INSPECT=$S3TEST
+  fi
 
-# Actually do the downloads
-for CURR_BUCKET in "${DOWNLOAD_BUCKETS[@]}"
-do
-    echo $CURR_BUCKET >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
-    aws s3 cp $CURR_BUCKET/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet --exclude "$EXCLUDEMASK" --include "$INCLUDEMASK"
-    aws s3 cp $CURR_BUCKET/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
-done
+  # Actually do the downloads
+  for CURR_BUCKET in "${DOWNLOAD_BUCKETS[@]}"
+  do
+      echo $CURR_BUCKET >> $WORKSPACE/"$PROCESSINGID"-lineages.debug.log
+      aws s3 cp $CURR_BUCKET/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet --exclude "$EXCLUDEMASK" --include "$INCLUDEMASK"
+      aws s3 cp $CURR_BUCKET/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
+  done
 
-# find the most recently created file on the inspect bucket
-# that matches the inspect metadata file naming convention and download it
-INSPECT_METADATA_FNAME=$(aws s3 ls s3://ucsd-inspect/ --recursive |  grep $INSPECT_METADATA_PATTERN| sort | tail -n 1 | awk '{print $NF}')
-aws s3 cp $S3INSPECT/$INSPECT_METADATA_FNAME $WORKSPACE/$INSPECT_METADATA_FNAME
-
-runPangolin () {
+  # find the most recently created file on the inspect bucket
+  # that matches the inspect metadata file naming convention and download it
+  INSPECT_METADATA_FNAME=$(aws s3 ls s3://ucsd-inspect/ --recursive |  grep $INSPECT_METADATA_PATTERN| sort | tail -n 1 | awk '{print $NF}')
+  aws s3 cp $S3INSPECT/$INSPECT_METADATA_FNAME $WORKSPACE/$INSPECT_METADATA_FNAME
 
 	# start with the reference sequence
 	cat $PIPELINEDIR/reference_files/NC_045512.2.fas > $WORKSPACE/"$PROCESSINGID"_refs_hist.fas
@@ -92,11 +84,11 @@ runPangolin () {
 	source $ANACONDADIR/activate pangolin2
 	pangolin --update
 	pangolin -t $THREADS --outfile $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/passQC/"$PROCESSINGID"_passQC_refs_hist.fas
-  echo -e "pangolin exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
+  echo -e "pangolin exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
   # produce merged_qc_and_lineages.csv
   python $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE/added_fa_names.txt $WORKSPACE "-summary.csv" $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv
-  echo -e "lineages_summary.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
+  echo -e "lineages_summary.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
   # merge with inspect metadata to produce full summary, bjorn summary, empress metadata, and winnowed fastas
   python $PIPELINEDIR/qc/metadata_generation.py \
@@ -105,7 +97,7 @@ runPangolin () {
     $WORKSPACE/"$PROCESSINGID".full_summary.csv \
     $WORKSPACE/"$PROCESSINGID".bjorn_summary.csv
 
-  echo -e "metadata_generation.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
+  echo -e "metadata_generation.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
   # generate empress metadata and winnowed fastas
   python $PIPELINEDIR/qc/tree_prep.py \
@@ -118,7 +110,7 @@ runPangolin () {
     $WORKSPACE/loose_stringent/"$PROCESSINGID"_loose_stringent_refs_hist_empress_metadata.tsv \
     $WORKSPACE/stringent/"$PROCESSINGID"_stringent_refs_hist_empress_metadata.tsv
 
-  echo -e "tree_prep.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
+  echo -e "tree_prep.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
   # add the refs_hist.fas to the stringent_only.fas
   cat $WORKSPACE/"$PROCESSINGID"_refs_hist.fas $WORKSPACE/stringent/"$PROCESSINGID"_stringent_only.fas >> $WORKSPACE/stringent/"$PROCESSINGID"_stringent_refs_hist.fas
@@ -129,8 +121,8 @@ runPangolin () {
   aws s3 cp $WORKSPACE/"$PROCESSINGID".full_summary.csv $S3INSPECT/"$PROCESSINGID".full_summary.csv
 }
 
-{ time ( runPangolin ) ; } > $WORKSPACE/"$PROCESSINGID"-pangolin.log 2>&1
-aws s3 cp $WORKSPACE/"$PROCESSINGID"-pangolin.log $S3UPLOAD/phylogeny/$PROCESSINGID/\
+{ time ( runLineages ) ; } > $WORKSPACE/"$PROCESSINGID"-lineages.log 2>&1
+aws s3 cp $WORKSPACE/"$PROCESSINGID"-lineages.log $S3UPLOAD/lineages/$PROCESSINGID/\
 
-grep -v "exit code: 0" $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log | head -n 1 >> $WORKSPACE/"$PROCESSINGID"-phylogeny.error.log
+grep -v "exit code: 0" $WORKSPACE/"$PROCESSINGID"-lineages.exit.log | head -n 1 >> $WORKSPACE/"$PROCESSINGID"-lineages.error.log
 aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$PROCESSINGID/ --recursive --quiet
