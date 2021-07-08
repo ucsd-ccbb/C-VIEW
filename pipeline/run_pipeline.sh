@@ -11,13 +11,13 @@ source $ANACONDADIR/activate covid1.2
 VERSION_INFO=$(bash $PIPELINEDIR/pipeline/show_version.sh)
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
-INPUT_FIELDS="VARIANTS,QC,LINEAGE,TREE_BUILD,ORGANIZATION,SEQ_RUN,MERGE_LANES,PRIMER_SET,FQ,READ_CAP,SAMPLE,TIMESTAMP,ISTEST"
-sed 1d $INPUT | while IFS=',' read VARIANTS QC LINEAGE TREE_BUILD ORGANIZATION SEQ_RUN MERGE_LANES PRIMER_SET FQ READ_CAP SAMPLE TIMESTAMP ISTEST
+INPUT_FIELDS="FUNCTION,ORGANIZATION,SEQ_RUN,MERGE_LANES,PRIMER_SET,FQ,READ_CAP,SAMPLE,TIMESTAMP,ISTEST"
+sed 1d $INPUT | while IFS=',' read FUNCTION ORGANIZATION SEQ_RUN MERGE_LANES PRIMER_SET FQ READ_CAP SAMPLE TIMESTAMP ISTEST
 
 # for each row in the input file
 do
   # set per-row variables
-  INPUT_VALS="$VARIANTS,$QC,$LINEAGE,$TREE_BUILD,$ORGANIZATION,$SEQ_RUN,$MERGE_LANES,$PRIMER_SET,$FQ,$READ_CAP,$SAMPLE,$TIMESTAMP,$ISTEST"
+  INPUT_VALS="$FUNCTION,$ORGANIZATION,$SEQ_RUN,$MERGE_LANES,$PRIMER_SET,$FQ,$READ_CAP,$SAMPLE,$TIMESTAMP,$ISTEST"
   QSUBSAMPLEPARAMS=''
   QSUBLINEAGEPARAMS=''
 
@@ -25,52 +25,31 @@ do
 	echo $INPUT_FIELDS
 	echo $INPUT_VALS
 
+  VARIANTS=false
+  QC=false
+  LINEAGE=false
+  TREE_BUILD=false
+
+	declare -A FIELD_IGNORED
+	FIELD_IGNORED[$SEQ_RUN]=true
+	FIELD_IGNORED[$MERGE_LANES]=true
+	FIELD_IGNORED[$PRIMER_SET]=true
+	FIELD_IGNORED[$FQ]=true
+	FIELD_IGNORED[$READ_CAP]=true
+	FIELD_IGNORED[$SAMPLE]=true
+	FIELD_IGNORED[$TIMESTAMP]=true
+
   # validate the inputs
   # --------------------
-	if [[ ! "$VARIANTS" =~ ^(true|false)$ ]]; then
-	  echo "Error: VARIANTS must be one of true or false"
-	  exit 1
+
+  if [ "$FUNCTION" != pipeline ] &&  [ "$FUNCTION" != variants ] &&  [ "$FUNCTION" != sample ] &&  [ "$FUNCTION" != qc ] &&  [ "$FUNCTION" != lineages ] &&  [ "$FUNCTION" != phylogeny ] &&  [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ]; then
+		echo "Error: Parameter FUNCTION must be one of pipeline, variants, sample, qc, lineages, phylogeny, cummulative_lineages, or cumulative_phylogeny"
+		exit 1
 	fi
 
-	if [[ ! "$QC" =~ ^(true|false)$ ]]; then
-	  echo "Error: QC must be one of true or false"
-	  exit 1
-	fi
-
-	if [[ ! "$LINEAGE" =~ ^(true|false)$ ]]; then
-	  echo "Error: LINEAGE must be one of true or false"
-	  exit 1
-	fi
-
-	if [[ ! "$TREE_BUILD" =~ ^(true|false)$ ]]; then
-	  echo "Error: TREE_BUILD must be one of true or false"
-	  exit 1
-	fi
-
-	if [[ ! "$ORGANIZATION" =~ ^(ucsd|helix)$ ]]; then
+  if [[ ! "$ORGANIZATION" =~ ^(ucsd|helix)$ ]]; then
 		echo "Error: Parameter ORGANIZATION must be one of ucsd or helix"
 		exit 1
-	fi
-
-	if [[ ! "$MERGE_LANES" =~ ^(true|false)$ ]]; then
-	  echo "Error: MERGE_LANES must be one of true or false"
-	  exit 1
-	fi
-
-	if [[ ! "$PRIMER_SET" =~ ^(artic|swift_v2)$ ]]; then
-		echo "Error: Parameter PRIMER_SET must be one of artic or swift_v2"
-		exit 1
-	fi
-
-	if [[ ! "$FQ" =~ ^(se|pe)$ ]]; then
-	  echo "Error: FQ must be one of se or pe"
-	  exit 1
-	fi
-
-	re='^[0-9]+$'
-	if [[ ! $READ_CAP =~ ^($re|all)$ ]] ; then
-	   echo "Error: READ_CAP must be an integer or 'all'"
-	   #exit 1
 	fi
 
 	if [[ ! "$ISTEST" =~ ^(true|false)$ ]]; then
@@ -78,51 +57,70 @@ do
 	  exit 1
 	fi
 
-  # prevent currently-unsupported uses of SAMPLE
-	if [[ "$SAMPLE" != NA ]]; then
-	  if [[ "$VARIANTS" != true ]]; then
-      echo "Error: SAMPLE is supported only if VARIANTS is true"
+  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ]; then
+    VARIANTS=true
+
+    if [[ ! "$MERGE_LANES" =~ ^(true|false)$ ]]; then
+      echo "Error: MERGE_LANES must be one of true or false"
       exit 1
-    else
-      if [ "$QC" == true ] || [ "$LINEAGE" == true ] || [ "$TREE_BUILD" == true ]; then
-        echo "Error: SAMPLE is supported only if non-VARIANTS steps are false"
-        exit 1
-      fi
     fi
+	  FIELD_IGNORED[$MERGE_LANES]=false
+
+    if [[ ! "$PRIMER_SET" =~ ^(artic|swift_v2)$ ]]; then
+      echo "Error: Parameter PRIMER_SET must be one of artic or swift_v2"
+      exit 1
+    fi
+    FIELD_IGNORED[$PRIMER_SET]=false
+
+    re='^[0-9]+$'
+    if [[ ! $READ_CAP =~ ^($re|all)$ ]] ; then
+       echo "Error: READ_CAP must be an integer or 'all'"
+       #exit 1
+    fi
+    FIELD_IGNORED[$READ_CAP]=false
   fi
 
-  # prevent currently-unsupported uses of TIMESTAMP
-	if [[ "$TIMESTAMP" != NA ]]; then
-	  if [ "$VARIANTS" != true ] && [ "$QC" != true ]; then
-      echo "Error: TIMESTAMP is supported only if VARIANTS and/or QC is true"
-      exit 1
-    else
-      if [ "$LINEAGE" == true ] || [ "$TREE_BUILD" == true ]; then
-        echo "Error: TIMESTAMP is supported only if LINEAGE and TREE_BUILD steps are false"
-        exit 1
-      fi
-    fi
-
-    if [ "$VARIANTS" == true ]; then
-      if [ "$SAMPLE" == NA ]; then
-        echo "Error: TIMESTAMP is supported for VARIANTS only if SAMPLE is not NA"
-        exit 1
-      fi
-    fi
-  else
-    if [ "$VARIANTS" != true ] && [ "$QC" == true ]; then
-      echo "Error: TIMESTAMP must be provided if QC is true and VARIANTS is false"
+  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
+    if [[ ! "$FQ" =~ ^(se|pe)$ ]]; then
+      echo "Error: FQ must be one of se or pe"
       exit 1
     fi
+	  FIELD_IGNORED[$FQ]=false
   fi
 
-  # prevent currently-unsupported use of seq_run
-  if [ "$SEQ_RUN" == all ]; then
-    if [ "$VARIANTS" != false ] || [ "$QC" != false ]; then
-      echo "Error: a specific SEQ_RUN must be provided for VARIANTS and/or QC step"
-      exit 1
-    fi
+  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == qc ]; then
+    QC=true
   fi
+
+  if [ "$FUNCTION" == lineages ] || [ "$FUNCTION" == phylogeny ] || [ "$FUNCTION" == cumulative_lineages ] || [ "$FUNCTION" == cumulative_phylogeny ]; then
+    LINEAGE=true
+  fi
+
+  if [ "$FUNCTION" == phylogeny ] || [ "$FUNCTION" == cumulative_phylogeny ]; then
+    TREE_BUILD=true
+  fi
+
+  if [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
+    FIELD_IGNORED[$TIMESTAMP]=false
+  fi
+
+  if [ "$FUNCTION" == sample ]; then
+    FIELD_IGNORED[$SAMPLE]=false
+  fi
+
+  if [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ] ; then
+    FIELD_IGNORED[$SEQ_RUN]=false
+  fi
+
+  echo "For input FUNCTION $FUNCTION, the following inputs will be *ignored*: "
+  for i in "${!FIELD_IGNORED[@]}"; do
+     if [ "${FIELD_IGNORED[$i]}" == true ]; then
+       echo "$i=${FIELD_IGNORED[$i]}"
+     fi
+  done
+
+  # TODO: remove debugging exit
+  exit 0
   # --------------------
   # end validating inputs
 
