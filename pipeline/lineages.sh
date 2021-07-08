@@ -47,7 +47,6 @@ runLineages () {
   # Actually do the downloads
   for CURR_BUCKET in "${DOWNLOAD_BUCKETS[@]}"
   do
-      echo $CURR_BUCKET >> $WORKSPACE/"$PROCESSINGID"-lineages.debug.log
       aws s3 cp $CURR_BUCKET/phylogeny/cumulative_data/consensus/ $WORKSPACE/  --recursive --quiet --exclude "$EXCLUDEMASK" --include "$INCLUDEMASK"
       aws s3 cp $CURR_BUCKET/phylogeny/cumulative_data/historic/ $WORKSPACE/ --recursive --quiet
   done
@@ -55,7 +54,9 @@ runLineages () {
   # find the most recently created file on the inspect bucket
   # that matches the inspect metadata file naming convention and download it
   INSPECT_METADATA_FNAME=$(aws s3 ls s3://ucsd-inspect/ --recursive |  grep $INSPECT_METADATA_PATTERN| sort | tail -n 1 | awk '{print $NF}')
-  aws s3 cp $S3INSPECT/$INSPECT_METADATA_FNAME $WORKSPACE/$INSPECT_METADATA_FNAME
+  echo $S3INSPECT/$INSPECT_METADATA_FNAME >> $WORKSPACE/"$PROCESSINGID"-lineages.debug.log
+
+  aws s3 cp "$S3INSPECT"/"$INSPECT_METADATA_FNAME" $WORKSPACE/$INSPECT_METADATA_FNAME
 
 	# start with the reference sequence
 	cat $PIPELINEDIR/reference_files/NC_045512.2.fas > $WORKSPACE/"$PROCESSINGID"_refs_hist.fas
