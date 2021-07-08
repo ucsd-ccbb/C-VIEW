@@ -15,34 +15,34 @@ mkdir -p $WORKSPACE/passQC
 mkdir -p $WORKSPACE/loose_stringent
 mkdir -p $WORKSPACE/stringent
 
+# Based on inputs, decide what to download from where
+EXCLUDEMASK=""
+INCLUDEMASK="*.*"
+if [[ "$SEQ_RUN" != all ]]; then
+  EXCLUDEMASK="*"
+  INCLUDEMASK="$SEQ_RUN""$INCLUDEMASK"
+fi
+
+DOWNLOAD_BUCKETS=()
+if [[ "$ISTEST" == false ]]; then
+  # if this is a real run, always download helix data
+  DOWNLOAD_BUCKETS+=($S3HELIX)
+  if [[ "$ORGANIZATION" == ucsd ]]; then
+    # if we're allowed, also download ucsd
+    DOWNLOAD_BUCKETS+=($S3UCSD)
+    S3UPLOAD=$S3UCSD
+  else
+    S3UPLOAD=$S3HELIX
+  fi
+else
+  # for test run, only download test data
+  DOWNLOAD_BUCKETS+=($S3TEST)
+  S3UPLOAD=$S3TEST
+  S3INSPECT=$S3TEST
+fi
+
 runLineages () {
   echo "$VERSION_INFO" >> $WORKSPACE/"$PROCESSINGID".version.log
-
-  # Based on inputs, decide what to download from where
-  EXCLUDEMASK=""
-  INCLUDEMASK="*.*"
-  if [[ "$SEQ_RUN" != all ]]; then
-    EXCLUDEMASK="*"
-    INCLUDEMASK="$SEQ_RUN""$INCLUDEMASK"
-  fi
-
-  DOWNLOAD_BUCKETS=()
-  if [[ "$ISTEST" == false ]]; then
-    # if this is a real run, always download helix data
-    DOWNLOAD_BUCKETS+=($S3HELIX)
-    if [[ "$ORGANIZATION" == ucsd ]]; then
-      # if we're allowed, also download ucsd
-      DOWNLOAD_BUCKETS+=($S3UCSD)
-      S3UPLOAD=$S3UCSD
-    else
-      S3UPLOAD=$S3HELIX
-    fi
-  else
-    # for test run, only download test data
-    DOWNLOAD_BUCKETS+=($S3TEST)
-    S3UPLOAD=$S3TEST
-    S3INSPECT=$S3TEST
-  fi
 
   # Actually do the downloads
   for CURR_BUCKET in "${DOWNLOAD_BUCKETS[@]}"
