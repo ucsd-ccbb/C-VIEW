@@ -4,6 +4,7 @@ INPUT=$1 # Sample Sheet with header
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
+S3TEST=s3://ucsd-rtl-test
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate covid1.2
 
@@ -122,21 +123,19 @@ do
       exit 1
     fi
   fi
-
-  # prevent currently-unsupported use of ISTEST
-  if [ "$ISTEST" == true ] && [ "$VARIANTS" == true ]; then
-    echo "Error: ISTEST is supported only if VARIANTS is false"
-    exit 1
-  fi
   # --------------------
   # end validating inputs
 
 	# identify where to get data from
-	if [[ "$ORGANIZATION" == ucsd ]]; then
-		S3DOWNLOAD=$S3UCSD
-	elif [[ "$ORGANIZATION" == helix ]]; then
-		S3DOWNLOAD=$S3HELIX
-	fi
+	if [[ "$ISTEST" == false ]]; then
+	  if [[ "$ORGANIZATION" == ucsd ]]; then
+      S3DOWNLOAD=$S3UCSD
+    elif [[ "$ORGANIZATION" == helix ]]; then
+      S3DOWNLOAD=$S3HELIX
+    fi
+  else
+    S3DOWNLOAD=$S3TEST
+  fi
 
 	# set timestamp if not already specified
 	if [[ $TIMESTAMP == NA ]]; then

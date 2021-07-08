@@ -2,7 +2,7 @@
 
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 QCRESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_summary_files
-S3TEST=s3://ucsd-rtl-test
+# S3TEST=s3://ucsd-rtl-test
 
 # Activate conda env covid1.2
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
@@ -120,11 +120,12 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".version.log $QCRESULTS/
 
 	# cumulative data folder
-	if [[ "$ISTEST" == false ]]; then
-	  S3CUMULATIVE=$S3DOWNLOAD
-	else
-	  S3CUMULATIVE=$S3TEST
-	fi
+	S3CUMULATIVE=$S3DOWNLOAD
+	# if [[ "$ISTEST" == false ]]; then
+	#  S3CUMULATIVE=$S3DOWNLOAD
+	# else
+	#   S3CUMULATIVE=$S3TEST
+	# fi
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
