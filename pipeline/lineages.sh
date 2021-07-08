@@ -20,7 +20,7 @@ echo "$VERSION_INFO" >> $WORKSPACE/"$PROCESSINGID".version.log
 # Based on inputs, decide what to download from where
 EXCLUDEMASK=""
 INCLUDEMASK="*.*"
-if [[ "$SEQ_RUN" != "NA" ]]; then
+if [[ "$SEQ_RUN" != all ]]; then
   EXCLUDEMASK="*"
   INCLUDEMASK="$SEQ_RUN""$INCLUDEMASK"
 fi
@@ -46,8 +46,8 @@ else
   S3INSPECT=$S3TEST
 fi
 
- echo $S3UPLOAD >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
- echo $S3INSPECT >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
+ # echo $S3UPLOAD >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
+ # echo $S3INSPECT >> $WORKSPACE/"$PROCESSINGID"-phylogeny.debug.log
  # echo "${DOWNLOAD_BUCKETS[@]}" >> $WORKSPACE/"$PROCESSINGID"-phylogeny.exit.log
 
 # Actually do the downloads
