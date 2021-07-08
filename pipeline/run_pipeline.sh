@@ -180,13 +180,13 @@ do
            -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
            -v S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq \
            -wd /shared/workspace/projects/covid/logs \
-           -N merge_fq_lanes_"$SEQ_RUN" \
+           -N merge_"$SEQ_RUN" \
            -pe smp 16 \
            -S /bin/bash \
            $PIPELINEDIR/pipeline/merge_lanes.sh
 
         R1_FASTQS=$(printf '%s\n' "${FINAL_R1_FASTQS[@]}")
-        QSUBSAMPLEPARAMS=' -hold_jid merge_fq_lanes_'$SEQ_RUN''
+        QSUBSAMPLEPARAMS=' -hold_jid merge_'$SEQ_RUN''
       fi # end if we are merging lanes
 
 	    SAMPLE_LIST=$(echo "$R1_FASTQS" | awk -F $DELIMITER '{print $1}' | sort | uniq)
@@ -210,7 +210,7 @@ do
 				-v TIMESTAMP=$TIMESTAMP \
 				-v VERSION_INFO="$VERSION_INFO" \
 				-v READ_CAP=$READ_CAP \
-				-N Covid19_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
+				-N vars_"$SAMPLE"_"$SEQ_RUN"_"$TIMESTAMP" \
 				-wd /shared/workspace/projects/covid/logs \
 				-pe smp 2 \
 				-S /bin/bash \
@@ -220,7 +220,7 @@ do
 
 	if [[ "$QC" == true ]]; then
     qsub \
-      -hold_jid 'Covid19_'$SEQ_RUN'_'$TIMESTAMP'_*' \
+      -hold_jid 'vars_*_'$SEQ_RUN'_'$TIMESTAMP \
       -v SEQ_RUN=$SEQ_RUN \
       -v S3DOWNLOAD=$S3DOWNLOAD \
       -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
@@ -228,7 +228,7 @@ do
       -v TIMESTAMP=$TIMESTAMP \
       -v ISTEST=$ISTEST \
       -v VERSION_INFO="$VERSION_INFO" \
-      -N QC_summary_"$SEQ_RUN" \
+      -N qc_"$SEQ_RUN" \
       -wd /shared/workspace/projects/covid/logs \
       -pe smp 32 \
       -S /bin/bash \
@@ -242,20 +242,20 @@ do
 
 	if [[ "$LINEAGE" == true ]]; then
 	    qsub \
-      -hold_jid 'QC_summary_'$SEQ_RUN'' \
+      -hold_jid 'qc_'$SEQ_RUN'' \
       -v ORGANIZATION=$ORGANIZATION \
 			-v PROCESSINGID=$PROCESSINGID \
 			-v SEQ_RUN=$SEQ_RUN \
 			-v ISTEST=$ISTEST \
 			-v WORKSPACE=/scratch/phylogeny/$PROCESSINGID \
 			-v VERSION_INFO="$VERSION_INFO" \
-			-N lineage \
+			-N lin_"$PROCESSINGID" \
 			-wd /shared/workspace/projects/covid/logs \
 			-pe smp 16 \
 			-S /bin/bash \
 	    	$PIPELINEDIR/pipeline/lineages.sh
 
-		QSUBLINEAGEPARAMS=' -hold_jid lineage'
+		QSUBLINEAGEPARAMS=' -hold_jid lin_'$PROCESSINGID
 	fi # end if we are calling lineages
 
   if [[ "$TREE_BUILD" == true ]]; then
@@ -268,7 +268,7 @@ do
         -v ISTEST=$ISTEST \
         -v WORKSPACE=/scratch/treebuilding/$PROCESSINGID/$DATASET \
         -v VERSION_INFO="$VERSION_INFO" \
-        -N treebuilding_"$DATASET" \
+        -N tree_"$DATASET"_"$PROCESSINGID" \
         -wd /shared/workspace/projects/covid/logs \
         -pe smp 16 \
         -S /bin/bash \
