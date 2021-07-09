@@ -105,6 +105,8 @@ do
 
   if [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
     unset FIELD_IGNORED[TIMESTAMP]
+  else
+	  TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
   fi
 
   if [ "$FUNCTION" == sample ]; then
@@ -138,11 +140,6 @@ do
   else
     S3DOWNLOAD=$S3TEST
   fi
-
-	# set timestamp if not already specified
-	if [[ $TIMESTAMP == NA ]]; then
-	  TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
-	fi
 
 	# if we are doing per-sample processing
 	if [[ "$VARIANTS" == true ]]; then
