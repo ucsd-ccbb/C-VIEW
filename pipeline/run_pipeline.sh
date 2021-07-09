@@ -113,6 +113,8 @@ do
 
   if [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ] ; then
     unset FIELD_IGNORED[SEQ_RUN]
+  else
+    SEQ_RUN=all
   fi
 
   if [ "${#FIELD_IGNORED[@]}" -gt 0 ]; then
