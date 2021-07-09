@@ -22,6 +22,7 @@ do
   QSUBLINEAGEPARAMS=''
 
 	# echo the inputs to the screen
+	echo " "
 	echo $INPUT_FIELDS
 	echo $INPUT_VALS
 
@@ -101,7 +102,7 @@ do
   fi
 
   if [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
-    FIELD_IGNORED[$TIMESTAMP]=false
+    unset FIELD_IGNORED[TIMESTAMP]
   fi
 
   if [ "$FUNCTION" == sample ]; then
