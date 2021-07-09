@@ -113,11 +113,13 @@ do
     unset FIELD_IGNORED[SEQ_RUN]
   fi
 
-  echo " "
-  echo "For input FUNCTION '$FUNCTION', the following inputs will be *ignored*: "
-  for i in "${!FIELD_IGNORED[@]}"; do
-    echo "$i=${FIELD_IGNORED[$i]}"
-  done
+  if [ "${#FIELD_IGNORED[@]}" -gt 0 ]; then
+    echo " "
+    echo "For input FUNCTION '$FUNCTION', the following inputs will be *ignored*: "
+    for i in "${!FIELD_IGNORED[@]}"; do
+      echo "$i=${FIELD_IGNORED[$i]}"
+    done
+  fi
   echo " "
 
   # TODO: remove debugging exit
