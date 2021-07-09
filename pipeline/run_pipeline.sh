@@ -31,13 +31,13 @@ do
   TREE_BUILD=false
 
 	declare -A FIELD_IGNORED
-	FIELD_IGNORED[$SEQ_RUN]=true
-	FIELD_IGNORED[$MERGE_LANES]=true
-	FIELD_IGNORED[$PRIMER_SET]=true
-	FIELD_IGNORED[$FQ]=true
-	FIELD_IGNORED[$READ_CAP]=true
-	FIELD_IGNORED[$SAMPLE]=true
-	FIELD_IGNORED[$TIMESTAMP]=true
+	FIELD_IGNORED[SEQ_RUN]=$SEQ_RUN
+	FIELD_IGNORED[MERGE_LANES]=$MERGE_LANES
+	FIELD_IGNORED[PRIMER_SET]=$PRIMER_SET
+	FIELD_IGNORED[FQ]=$FQ
+	FIELD_IGNORED[READ_CAP]=$READ_CAP
+	FIELD_IGNORED[SAMPLE]=$SAMPLE
+	FIELD_IGNORED[TIMESTAMP]=$TIMESTAMP
 
   # validate the inputs
   # --------------------
@@ -64,20 +64,20 @@ do
       echo "Error: MERGE_LANES must be one of true or false"
       exit 1
     fi
-	  FIELD_IGNORED[$MERGE_LANES]=false
+	  unset FIELD_IGNORED[MERGE_LANES]
 
     if [[ ! "$PRIMER_SET" =~ ^(artic|swift_v2)$ ]]; then
       echo "Error: Parameter PRIMER_SET must be one of artic or swift_v2"
       exit 1
     fi
-    FIELD_IGNORED[$PRIMER_SET]=false
+    unset FIELD_IGNORED[PRIMER_SET]
 
     re='^[0-9]+$'
     if [[ ! $READ_CAP =~ ^($re|all)$ ]] ; then
        echo "Error: READ_CAP must be an integer or 'all'"
        #exit 1
     fi
-    FIELD_IGNORED[$READ_CAP]=false
+    unset FIELD_IGNORED[READ_CAP]
   fi
 
   if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
@@ -85,7 +85,7 @@ do
       echo "Error: FQ must be one of se or pe"
       exit 1
     fi
-	  FIELD_IGNORED[$FQ]=false
+	  unset FIELD_IGNORED[FQ]
   fi
 
   if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == qc ]; then
@@ -105,18 +105,16 @@ do
   fi
 
   if [ "$FUNCTION" == sample ]; then
-    FIELD_IGNORED[$SAMPLE]=false
+    unset FIELD_IGNORED[SAMPLE]
   fi
 
   if [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ] ; then
-    FIELD_IGNORED[$SEQ_RUN]=false
+    unset FIELD_IGNORED[SEQ_RUN]
   fi
 
   echo "For input FUNCTION $FUNCTION, the following inputs will be *ignored*: "
   for i in "${!FIELD_IGNORED[@]}"; do
-     if [ "${FIELD_IGNORED[$i]}" == true ]; then
-       echo "$i=${FIELD_IGNORED[$i]}"
-     fi
+    echo "$i=${FIELD_IGNORED[$i]}"
   done
 
   # TODO: remove debugging exit
