@@ -198,6 +198,11 @@ do
       exit 1
     fi
 
+    echo $(printf '%s\n' "${SAMPLE_LIST[@]}")
+
+    # TODO: remove debugging exit
+    exit 0
+
 		# Run VARIANTS step on each sample
 		for SAMPLE in $SAMPLE_LIST; do
 			qsub $QSUBSAMPLEPARAMS \
