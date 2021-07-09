@@ -111,6 +111,8 @@ do
 
   if [ "$FUNCTION" == sample ]; then
     unset FIELD_IGNORED[SAMPLE]
+  else
+    SAMPLE=NA
   fi
 
   if [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ] ; then
