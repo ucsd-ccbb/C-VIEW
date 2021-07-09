@@ -26,6 +26,8 @@ do
 	echo $INPUT_FIELDS
 	echo $INPUT_VALS
 
+  # initialize variables that will be reset to run-specific
+  # values based on the inputs
   VARIANTS=false
   QC=false
   LINEAGE=false
@@ -121,9 +123,6 @@ do
     done
   fi
   echo " "
-
-  # TODO: remove debugging exit
-  continue
   # --------------------
   # end validating inputs
 
