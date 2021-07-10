@@ -280,7 +280,7 @@ do
   # if we did variant or qc processing, write a file of the
   # settings used into the results directory for this seq_run/timestamp
   if [ "$VARIANTS" == true ] || [ "$QC" == true ]; then
-    SETTINGS_FNAME="$SEQ_RUN"-"$TIMESTAMP".csv
+    SETTINGS_FNAME="$SEQ_RUN"-"$TIMESTAMP"-"$FUNCTION"-$(date +'%Y-%m-%d_%H-%M-%S').csv
     echo $INPUT_FIELDS > $SETTINGS_FNAME
     echo $INPUT_VALS >> $SETTINGS_FNAME
     aws s3 cp $SETTINGS_FNAME $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
