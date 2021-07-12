@@ -2,7 +2,7 @@
 
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 QCRESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_summary_files
-S3TEST=s3://ucsd-rtl-test
+# S3TEST=s3://ucsd-rtl-test
 
 # Activate conda env covid1.2
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
@@ -25,6 +25,8 @@ runQC () {
 		--include "*.sorted.stats*" \
 		--include "*.acceptance.tsv" \
 		--include "*coverage.tsv" \
+		--include "*pi-metric.tsv" \
+		--include "*n-metric.tsv" \
 		--include "*_subsampled_mapping_stats.tsv" \
 		--include "*error.log"
 
@@ -60,9 +62,22 @@ runQC () {
     cat $WORKSPACE/*/*coverage.tsv | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-coverage.tsv
     echo -e "coverage cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
+  # Concatenate pi metric files
+    echo "Concatenating pi metric files"
+    echo -e "sequenced_pool_component_id\tpi_metric" > $WORKSPACE/"$SEQ_RUN"-pi-metric.tsv
+    cat $WORKSPACE/*/*pi-metric.tsv | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-pi-metric.tsv
+    echo -e "pi metric cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
+
+
+  # Concatenate n metric files
+    echo "Concatenating n metric files"
+    echo -e "sequenced_pool_component_id\tn_metric" > $WORKSPACE/"$SEQ_RUN"-n-metric.tsv
+    cat $WORKSPACE/*/*n-metric.tsv | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-n-metric.tsv
+    echo -e "n metric cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
+
 	# Make summary table
 	echo "Making run summary table."
-	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-temp-summary.csv
+	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/"$SEQ_RUN"-temp-summary.csv $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-pi-metric.tsv $WORKSPACE/"$SEQ_RUN"-n-metric.tsv
     echo -e "seq_run_summary.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 	python $PIPELINEDIR/qc/integrate_bjorn_coverage.py $WORKSPACE/"$SEQ_RUN"-temp-summary.csv $WORKSPACE/"$SEQ_RUN"-coverage.tsv $WORKSPACE/"$SEQ_RUN"-summary.csv
     echo -e "integrate_bjorn_coverage.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
@@ -105,11 +120,12 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".version.log $QCRESULTS/
 
 	# cumulative data folder
-	if [[ "$ISTEST" == false ]]; then
-	  S3CUMULATIVE=$S3DOWNLOAD
-	else
-	  S3CUMULATIVE=$S3TEST
-	fi
+	S3CUMULATIVE=$S3DOWNLOAD
+	# if [[ "$ISTEST" == false ]]; then
+	#  S3CUMULATIVE=$S3DOWNLOAD
+	# else
+	#   S3CUMULATIVE=$S3TEST
+	# fi
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $S3CUMULATIVE/phylogeny/cumulative_data/consensus/

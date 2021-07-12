@@ -40,6 +40,11 @@ cd $SOFTWAREDIR/SD-COVID-Sequencing/samhead
 make
 cd ~
 
+# ------- pi metrics -----------
+wget "https://raw.githubusercontent.com/Niema-Docker/pi_from_pileup/main/pi_from_pileup.cpp"
+g++ -O3 --std=c++11 -o /shared/workspace/software/pi_from_pileup pi_from_pileup.cpp
+rm pi_from_pileup.cpp
+
 # ------- covid1.1 env from pre-release README on github -------
 conda create --name covid1.1
 source $ANACONDADIR/bin/activate covid1.1
@@ -77,14 +82,11 @@ make install
 
 # ------- Pangolin -------
 cd $SOFTWAREDIR
-wget https://github.com/cov-lineages/pangolin/archive/master.zip
-unzip master.zip
-rm master.zip
-cd pangolin-master
+git clone https://github.com/cov-lineages/pangolin.git
+cd $SOFTWAREDIR/pangolin
 conda env create -f environment.yml
-source $ANACONDADIR/bin/activate pangolin
-python setup.py install
-
+conda activate pangolin
+pip install .
 cd ~
 source $ANACONDADIR/bin/activate base
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PATH=/shared/workspace/software/ivar/bin:/shared/workspace/software/q30:/shared/workspace/software/SD-COVID-Sequencing/samhead/:$PATH
+PATH=/shared/workspace/software:/shared/workspace/software/ivar/bin:/shared/workspace/software/q30:/shared/workspace/software/SD-COVID-Sequencing/samhead/:$PATH
 
 # Activate conda env covid1.2
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
@@ -116,6 +116,12 @@ echo -e "$SAMPLEID\tacceptance.py exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.
 { time ( samtools depth -r NC_045512.2:266-29674 -d 0 -a $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam | \
   awk -v b="$SAMPLEID.trimmed.sorted.bam" 'BEGIN{MIN=10000000000;MAX=0;NUC=0;COV=0;DEPTH=0;NUCZERO=0;}{if(MIN > $3){MIN=$3;};if(MAX < $3){MAX=$3;};if($3==0){NUCZERO+=1};if($3 >= 10){COV+=1;}NUC+=1;DEPTH+=$3;}END{if(NUC>0){print b"\t"(COV/NUC)*100"\t"DEPTH/NUC"\t"MIN"\t"MAX"\t"NUCZERO}else{print b"\t"0"\t"0"\t"MIN"\t"MAX"\t"NUCZERO}}' ) ; } >> $WORKSPACE/"$SAMPLEID".coverage.tsv 2> $WORKSPACE/"$SAMPLEID".log.10.coverage.log
 echo -e "$SAMPLEID\tcoverage exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
+
+# Step 11: Heterogeneity scores
+{ time ( echo -e "$SAMPLEID\t"$(pi_from_pileup $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt | tail -1 | cut -f3) > $WORKSPACE/"$SAMPLEID".pi-metric.tsv
+echo -e "$SAMPLEID\tpi metric exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
+echo -e "$SAMPLEID\t"$(cat $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.variants.tsv | awk '$11 != "ALT_FREQ" && $11 >= 0.05 && $11 <= 0.95' | grep -v "ALT_FREQ" | cut -f2,4 | sort | uniq | wc -l) > $WORKSPACE/"$SAMPLEID".n-metric.tsv ) ; } > $WORKSPACE/"$SAMPLEID".log.11.diversity.log 2>&1
+echo -e "$SAMPLEID\tn metric exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 #QC
 grep -v "exit code: 0" $WORKSPACE/"$SAMPLEID".exit.log | head -n 1 > $WORKSPACE/"$SAMPLEID".error.log

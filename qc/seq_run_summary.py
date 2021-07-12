@@ -2,19 +2,31 @@ from sys import argv
 import pandas as pd
 
 MULTIQC_SEQ_POOL_COMP_ID = "Sample"
-ACCEPTANCE_SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
+METRIC_SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
 
 
 # Makes a combined table from:
 # 1. sequencing run's multiqc_general_stats.txt file
 # 2. sequencing run's <seq_run>-acceptance.tsv file
 def merge_multiqc_and_acceptance(arg_list):
-    multiqc_stats_fp = arg_list[1]
-    sum_acceptance_fp = arg_list[2]
-    output_fp = arg_list[3]
+    output_fp = arg_list[1]
+    multiqc_stats_fp = arg_list[2]
+    per_sample_metric_fps = arg_list[3:]
+
+    combined_df = None
+    for curr_per_sample_metric_fp in per_sample_metric_fps:
+        curr_metric_df = pd.read_csv(curr_per_sample_metric_fp,
+                                     sep="\t", dtype=str)
+
+        if combined_df is None:
+            combined_df = curr_metric_df.copy()
+        else:
+            # *outer* merge all fields in metric df into summary df
+            combined_df = combined_df.merge(curr_metric_df,
+                                            on=METRIC_SEQ_POOL_COMP_ID,
+                                            how="outer")
 
     multiqc_df = pd.read_csv(multiqc_stats_fp, sep="\t", dtype=str)
-    accept_df = pd.read_csv(sum_acceptance_fp, sep="\t", dtype=str)
 
     # remove unwanted leading strings from the multiqc column names
     unwanted_strs = ["QualiMap_mqc-generalstats-qualimap-",
@@ -25,11 +37,13 @@ def merge_multiqc_and_acceptance(arg_list):
     # remove unwanted column
     multiqc_df = multiqc_df.drop("general_error_rate", axis=1)
 
-    # *outer* merge all fields in acceptance df into multiqc df
-    combined = multiqc_df.merge(accept_df, left_on=MULTIQC_SEQ_POOL_COMP_ID,
-                                right_on=ACCEPTANCE_SEQ_POOL_COMP_ID,
-                                how="outer")
-    combined.to_csv(output_fp, index=False)
+    # *outer* merge all fields in combined metric df into qc df
+    output_df = multiqc_df.merge(combined_df,
+                                 left_on=MULTIQC_SEQ_POOL_COMP_ID,
+                                 right_on=METRIC_SEQ_POOL_COMP_ID,
+                                 how="outer")
+
+    output_df.to_csv(output_fp, index=False)
 
 
 if __name__ == '__main__':

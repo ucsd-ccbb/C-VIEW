@@ -32,7 +32,7 @@ def merge_summaries(run_summaries_fp, run_summary_suffix):
     matching_fps = glob.glob(summaries_pattern)
     matching_dfs = []
     for fp in matching_fps:
-        curr_df = pd.read_csv(fp, dtype=str)
+        curr_df = pd.read_csv(fp)  # , dtype=str)
         matching_dfs.append(curr_df)
     merged_summaries_df = pd.concat(matching_dfs)
     return merged_summaries_df
@@ -75,6 +75,45 @@ def expand_with_added_fa_names(merged_summaries_df, added_fa_names_fp):
     return expanded_df
 
 
+def add_final_qc_filters_inplace(qc_and_lineage_w_search_ids_df):
+    qc_and_lineage_w_search_ids_df.loc[:, "mapped_reads_lt_50k"] = \
+        ((qc_and_lineage_w_search_ids_df["mapped_reads"] < 50000) |
+         qc_and_lineage_w_search_ids_df["mapped_reads"].isna())
+
+    qc_and_lineage_w_search_ids_df.loc[:, "uncapped_reads_lt_100k"] = \
+        ((qc_and_lineage_w_search_ids_df["Uncapped_Reads"] < 50000) |
+         qc_and_lineage_w_search_ids_df["Uncapped_Reads"].isna())
+
+    qc_and_lineage_w_search_ids_df.loc[:, "sub_map_pct_aligned_lt_50"] = \
+        ((qc_and_lineage_w_search_ids_df["Sub_Map_Pct_Aligned"] < 50) |
+         qc_and_lineage_w_search_ids_df["Sub_Map_Pct_Aligned"].isna())
+
+    qc_and_lineage_w_search_ids_df.loc[:, "p25_ins_size_lt_140"] = \
+        ((qc_and_lineage_w_search_ids_df["P25_Ins_size"] < 140) |
+         qc_and_lineage_w_search_ids_df["P25_Ins_size"].isna())
+
+    qc_and_lineage_w_search_ids_df.loc[:, "percent_q30_lt_90"] = \
+        ((qc_and_lineage_w_search_ids_df["Pct_Q30"] < 90) |
+         qc_and_lineage_w_search_ids_df["Pct_Q30"].isna())
+
+    qc_and_lineage_w_search_ids_df.loc[:, "coverage_gte_10_reads_lt_95"] = \
+        ((qc_and_lineage_w_search_ids_df["coverage_gte_10_reads"] < 0.95) |
+         qc_and_lineage_w_search_ids_df["coverage_gte_10_reads"].isna())
+
+    qc_and_lineage_w_search_ids_df.loc[:, "mean_coverage_lt_500"] = \
+        ((qc_and_lineage_w_search_ids_df["mean_coverage"] < 500) |
+         qc_and_lineage_w_search_ids_df["mean_coverage"].isna())
+
+    qc_and_lineage_w_search_ids_df.loc[:, "any_fail"] = \
+        (qc_and_lineage_w_search_ids_df["mapped_reads_lt_50k"] |
+         qc_and_lineage_w_search_ids_df["uncapped_reads_lt_100k"] |
+         qc_and_lineage_w_search_ids_df["sub_map_pct_aligned_lt_50"] |
+         qc_and_lineage_w_search_ids_df["p25_ins_size_lt_140"] |
+         qc_and_lineage_w_search_ids_df["percent_q30_lt_90"] |
+         qc_and_lineage_w_search_ids_df["coverage_gte_10_reads_lt_95"] |
+         qc_and_lineage_w_search_ids_df["mean_coverage_lt_500"])
+
+
 def create_lineages_summary(arg_list):
     added_fa_names_fp = arg_list[1]
     run_summaries_fp = arg_list[2]
@@ -105,6 +144,9 @@ def create_lineages_summary(arg_list):
     output_df[USABLE_NAME] = NOTHING_VAL
     output_df.loc[gte_70_and_passes_pangolin, USABLE_NAME] = VARIANT_VAL
     output_df.loc[gt_95_and_passes_pangolin, USABLE_NAME] = VARIANT_AND_EP_VAL
+
+    # add additional qc filter columns
+    add_final_qc_filters_inplace(output_df)
 
     # sort to ensure deterministic output order
     output_df.sort_values(by=[SEARCH_ID, SEQ_POOL_COMP_ID], inplace=True)
