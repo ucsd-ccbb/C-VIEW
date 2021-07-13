@@ -14,6 +14,7 @@ VARIANT_VAL = "variant"
 VARIANT_AND_EP_VAL = "variant_and_epidemiology"
 IS_HIST_OR_REF = "is_hist_or_ref"
 
+
 # recreate un-reversable pangolin name munge;
 # code pulled and very slightly modded from
 # https://github.com/cov-lineages/pangolin/blob/
