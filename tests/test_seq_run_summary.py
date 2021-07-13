@@ -12,9 +12,9 @@ class SeqRunSummaryTest(FileTestCase):
         input_acceptance_fp = f"{self.dummy_qc_dir}/" \
                               f"2021-02-08-ARTIC-acceptance.tsv"
         input_pi_metric_fp = f"{self.dummy_qc_dir}/" \
-                              f"2021-02-08-ARTIC-pi-metric.tsv"
+                             f"2021-02-08-ARTIC-pi-metric.tsv"
         input_n_metric_fp = f"{self.dummy_qc_dir}/" \
-                              f"2021-02-08-ARTIC-n-metric.tsv"
+                            f"2021-02-08-ARTIC-n-metric.tsv"
         expected_results_fp = f"{self.dummy_qc_dir}/" \
                               f"2021-02-08-ARTIC-summary.csv"
         output_fp = f"{self.test_temp_dir}/temp_seq_run_summary.csv"

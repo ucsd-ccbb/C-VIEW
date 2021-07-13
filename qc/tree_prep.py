@@ -44,8 +44,8 @@ def winnow_fasta(fasta_fp, base_empress_df, out_loose_fp, out_stringent_fp):
                                          f"consensus sequence name "
                                          f"'{seq.header}' found")
                     else:
-                        seq_usable_for = seq_metadata_df.loc[:,
-                                         USABLE_NAME].iat[0]
+                        seq_usable_for = seq_metadata_df.loc[
+                                         :, USABLE_NAME].iat[0]
                         fasta_str = seq.formatted_fasta() + '\n'
                         if seq_usable_for == VARIANT_VAL:
                             loose_file.write(fasta_str)
@@ -89,7 +89,9 @@ def prep_files_for_tree_building(arg_list):
     # these are cumulative: the var_empress_df
     # contains all records with a "usable_for" value of "variant" OR
     # "variant_and_epidemiology"--OR the reference and historical records
-    is_hist_or_ref = base_empress_df[IS_HIST_OR_REF] == True
+    # NB: Do NOT let PEP make you change this from == True to is True--
+    # "is True" won't work!
+    is_hist_or_ref = base_empress_df[IS_HIST_OR_REF] == True  # noqa E712
     var_empress_mask = (usable_is_variant | usable_is_var_and_ep |
                         is_hist_or_ref)
     var_empress_df = base_empress_df[var_empress_mask].copy()

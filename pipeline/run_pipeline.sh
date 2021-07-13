@@ -32,6 +32,7 @@ do
   QC=false
   LINEAGE=false
   TREE_BUILD=false
+  PHYLO_SEQ_RUN=$SEQ_RUN
 
 	declare -A FIELD_IGNORED
 	FIELD_IGNORED[SEQ_RUN]=$SEQ_RUN
@@ -45,8 +46,8 @@ do
   # validate the inputs
   # --------------------
 
-  if [ "$FUNCTION" != pipeline ] &&  [ "$FUNCTION" != variants ] &&  [ "$FUNCTION" != sample ] &&  [ "$FUNCTION" != qc ] &&  [ "$FUNCTION" != lineages ] &&  [ "$FUNCTION" != phylogeny ] &&  [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ]; then
-		echo "Error: Parameter FUNCTION must be one of pipeline, variants, sample, qc, lineages, phylogeny, cummulative_lineages, or cumulative_phylogeny"
+  if [ "$FUNCTION" != pipeline ] && [ "$FUNCTION" != cumulative_pipeline ] && [ "$FUNCTION" != variants ] &&  [ "$FUNCTION" != sample ] &&  [ "$FUNCTION" != qc ] &&  [ "$FUNCTION" != lineages ] &&  [ "$FUNCTION" != phylogeny ] &&  [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ]; then
+		echo "Error: Parameter FUNCTION must be one of pipeline, cumulative_pipeline, variants, sample, qc, lineages, phylogeny, cummulative_lineages, or cumulative_phylogeny"
 		exit 1
 	fi
 
@@ -60,7 +61,7 @@ do
 	  exit 1
 	fi
 
-  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ]; then
+  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ]; then
     VARIANTS=true
 
     if [[ ! "$MERGE_LANES" =~ ^(true|false)$ ]]; then
@@ -83,7 +84,7 @@ do
     unset FIELD_IGNORED[READ_CAP]
   fi
 
-  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
+  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
     if [[ ! "$FQ" =~ ^(se|pe)$ ]]; then
       echo "Error: FQ must be one of se or pe"
       exit 1
@@ -91,16 +92,20 @@ do
 	  unset FIELD_IGNORED[FQ]
   fi
 
-  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == qc ]; then
+  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == qc ]; then
     QC=true
   fi
 
-  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == lineages ] || [ "$FUNCTION" == phylogeny ] || [ "$FUNCTION" == cumulative_lineages ] || [ "$FUNCTION" == cumulative_phylogeny ]; then
+  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == lineages ] || [ "$FUNCTION" == phylogeny ] || [ "$FUNCTION" == cumulative_lineages ] || [ "$FUNCTION" == cumulative_phylogeny ]; then
     LINEAGE=true
   fi
 
-  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == phylogeny ] || [ "$FUNCTION" == cumulative_phylogeny ]; then
+  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == phylogeny ] || [ "$FUNCTION" == cumulative_phylogeny ]; then
     TREE_BUILD=true
+  fi
+
+  if [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == cumulative_lineages ] || [ "$FUNCTION" == cumulative_phylogeny ] ; then
+    PHYLO_SEQ_RUN=all
   fi
 
   if [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
@@ -239,14 +244,14 @@ do
   # lineage and tree output is stored to a different location than
   # the outputs of the earlier steps, so it needs a slightly different
   # identifier for its process
-  PROCESSINGID="$TIMESTAMP"-"$SEQ_RUN"
+  PROCESSINGID="$TIMESTAMP"-"$PHYLO_SEQ_RUN"
 
 	if [[ "$LINEAGE" == true ]]; then
 	    qsub \
       -hold_jid 'q_'$SEQ_RUN'' \
       -v ORGANIZATION=$ORGANIZATION \
 			-v PROCESSINGID=$PROCESSINGID \
-			-v SEQ_RUN=$SEQ_RUN \
+			-v SEQ_RUN=$PHYLO_SEQ_RUN \
 			-v ISTEST=$ISTEST \
 			-v WORKSPACE=/scratch/phylogeny/$PROCESSINGID \
 			-v VERSION_INFO="$VERSION_INFO" \
