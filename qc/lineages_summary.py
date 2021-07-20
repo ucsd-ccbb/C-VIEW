@@ -13,6 +13,7 @@ NOTHING_VAL = "nothing"
 VARIANT_VAL = "variant"
 VARIANT_AND_EP_VAL = "variant_and_epidemiology"
 IS_HIST_OR_REF = "is_hist_or_ref"
+OVERALL_FAIL_KEY = "overall_fail"
 
 
 # recreate un-reversable pangolin name munge;
@@ -113,6 +114,12 @@ def add_final_qc_filters_inplace(qc_and_lineage_w_search_ids_df):
          qc_and_lineage_w_search_ids_df["percent_q30_lt_90"] |
          qc_and_lineage_w_search_ids_df["coverage_gte_10_reads_lt_95"] |
          qc_and_lineage_w_search_ids_df["mean_coverage_lt_500"])
+
+    # some older records may not *have* an n metric;
+    # these should NOT be overall fails
+    qc_and_lineage_w_search_ids_df.loc[:, OVERALL_FAIL_KEY] = \
+        (qc_and_lineage_w_search_ids_df["any_fail"] |
+         (qc_and_lineage_w_search_ids_df["n_metric"] > 19))
 
 
 def create_lineages_summary(arg_list):

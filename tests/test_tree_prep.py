@@ -7,7 +7,8 @@ from qc.tree_prep import prep_files_for_tree_building
 class TreePrepTest(FileTestCase):
     def test_tree_prep(self):
         input_qc_and_lineages_fp = f"{self.dummy_dir}/" \
-                                      f"dummy_qc_and_lineages_w_bjorn.csv"
+                                      f"dummy_qc_and_lineages_w_bjorn_" \
+                                      f"for_tree_prep.csv"
         input_metadata_fp = f"{self.dummy_dir}/dummy_inspect_metadata.csv"
         in_fas_fp = f"{self.dummy_dir}/dummy.fas"
 
