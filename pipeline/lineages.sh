@@ -95,7 +95,7 @@ runLineages () {
   python $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE/added_fa_names.txt $WORKSPACE "-summary.csv" $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv
   echo -e "lineages_summary.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
-  # merge with inspect metadata to produce full summary, bjorn summary, empress metadata, and winnowed fastas
+  # merge with inspect metadata to produce full summary and bjorn summary
   python $PIPELINEDIR/qc/metadata_generation.py \
     $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv \
     $WORKSPACE/$INSPECT_METADATA_FNAME \
@@ -104,7 +104,15 @@ runLineages () {
 
   echo -e "metadata_generation.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
-  # generate empress metadata and winnowed fastas
+  # generate customized summary file slices for RTL constituents
+  python $PIPELINEDIR/qc/custom_reports_generation.py \
+    $WORKSPACE/"$PROCESSINGID".full_summary.csv \
+    $WORKSPACE/"$PROCESSINGID"_summary-report
+
+  echo -e "custom_reports_generation.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
+
+  # generate empress metadata and winnowed fastas in preparation for
+  # (possible) tree building
   python $PIPELINEDIR/qc/tree_prep.py \
     $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv \
     $WORKSPACE/$INSPECT_METADATA_FNAME \
