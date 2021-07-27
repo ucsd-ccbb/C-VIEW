@@ -6,6 +6,7 @@ ANACONDADIR=/shared/workspace/software/anaconda3/bin
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
 S3TEST=s3://ucsd-rtl-test
+S3INSPECT=s3://ucsd-inspect
 
 THREADS=8
 rm -rf $WORKSPACE
@@ -16,6 +17,7 @@ echo "$VERSION_INFO" >> $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist.version.
 if [[ "$ISTEST" == true ]]; then
   S3DOWNLOAD=$S3TEST
   S3UPLOAD=$S3TEST
+  S3INSPECT=$S3TEST
 else
   if [[ "$ORGANIZATION" == ucsd ]]; then
     S3DOWNLOAD=$S3UCSD
@@ -58,3 +60,4 @@ aws s3 cp $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-treebuild.log $S3UPLOA
 
 grep -v "exit code: 0" $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-phylogeny.exit.log | head -n 1 >> $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-phylogeny.error.log
 aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$PROCESSINGID/$DATASET/ --recursive --quiet
+aws s3 cp $WORKSPACE/ $S3INSPECT/empress_tree_data/$PROCESSINGID/$DATASET/ --recursive --quiet
