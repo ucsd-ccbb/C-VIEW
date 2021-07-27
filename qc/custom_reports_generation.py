@@ -92,17 +92,19 @@ def make_bespoke_outputs(arg_list):
     # next
 
     # handle special case: rtl-relevant sources, split by wastewater or not
-    wastewater_mask = \
-        special_df[SPECIMEN_TYPE_KEY] == WASTEWATER_SPECIMEN_TYPE_VAL
-    special_wastewater_df = special_df[wastewater_mask].copy()
-    sorted_special_sources = sorted(special_sources)
-    output_partial_df(special_wastewater_df, out_fp_prefix,
-                      *sorted_special_sources, WASTEWATER_SPECIMEN_TYPE_VAL)
+    if special_df is not None:
+        wastewater_mask = \
+            special_df[SPECIMEN_TYPE_KEY] == WASTEWATER_SPECIMEN_TYPE_VAL
+        special_wastewater_df = special_df[wastewater_mask].copy()
+        sorted_special_sources = sorted(special_sources)
+        output_partial_df(special_wastewater_df, out_fp_prefix,
+                          *sorted_special_sources,
+                          WASTEWATER_SPECIMEN_TYPE_VAL)
 
-    special_not_wastewater_df = special_df[~wastewater_mask].copy()
-    output_partial_df(special_not_wastewater_df, out_fp_prefix,
-                      *sorted_special_sources,
-                      "not-" + WASTEWATER_SPECIMEN_TYPE_VAL)
+        special_not_wastewater_df = special_df[~wastewater_mask].copy()
+        output_partial_df(special_not_wastewater_df, out_fp_prefix,
+                          *sorted_special_sources,
+                          "not-" + WASTEWATER_SPECIMEN_TYPE_VAL)
 
 
 if __name__ == '__main__':
