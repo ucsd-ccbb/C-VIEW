@@ -31,6 +31,8 @@ KEY_ORDER = [SEARCH_ID_KEY, INSPECT_SAMPLE_ID_KEY, EXCITE_BARCODE_KEY,
              MAPPED_READS_KEY, SUB_MAP_PCT_ALIGN_KEY]
 RENAME_DICT = {PANGO_STATUS_KEY: RENAMED_STATUS_KEY,
                UNCAPPED_READS_KEY: RENAMED_UNCAPPED_READS_KEY}
+SORT_ORDER = [SAMPLE_COLLECTION_KEY, SCORPIO_CALL_KEY,
+              PANGO_LINEAGE_KEY, SEQ_POOL_COMP_ID]
 
 
 def output_partial_df(curr_df, out_fp_prefix, *args):
@@ -60,9 +62,7 @@ def make_bespoke_outputs(arg_list):
     sequenced_df = full_df[~not_sequenced_mask].copy()
 
     # sort for end user convenience and to ensure deterministic output order
-    sequenced_df.sort_values(by=[SAMPLE_COLLECTION_KEY, SCORPIO_CALL_KEY,
-                                 PANGO_LINEAGE_KEY, SEQ_POOL_COMP_ID],
-                             inplace=True)
+    sequenced_df.sort_values(by=SORT_ORDER, inplace=True)
 
     # output everything left
     all_output_fp = f"{out_fp_prefix}_{ALL_VAL}.csv"
@@ -93,6 +93,9 @@ def make_bespoke_outputs(arg_list):
 
     # handle special case: rtl-relevant sources, split by wastewater or not
     if special_df is not None:
+        # sort same as above (need own sort bc is mix of indiv-sorted dfs)
+        special_df.sort_values(by=SORT_ORDER, inplace=True)
+
         wastewater_mask = \
             special_df[SPECIMEN_TYPE_KEY] == WASTEWATER_SPECIMEN_TYPE_VAL
         special_wastewater_df = special_df[wastewater_mask].copy()
