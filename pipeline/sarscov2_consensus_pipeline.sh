@@ -123,7 +123,10 @@ echo -e "$SAMPLEID\tpi metric exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 echo -e "$SAMPLEID\t"$(cat $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.variants.tsv | awk '$11 != "ALT_FREQ" && $11 >= 0.05 && $11 <= 0.95' | grep -v "ALT_FREQ" | cut -f2,4 | sort | uniq | wc -l) > $WORKSPACE/"$SAMPLEID".n-metric.tsv ) ; } > $WORKSPACE/"$SAMPLEID".log.11.diversity.log 2>&1
 echo -e "$SAMPLEID\tn metric exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
-#QC
-grep -v "exit code: 0" $WORKSPACE/"$SAMPLEID".exit.log | head -n 1 > $WORKSPACE/"$SAMPLEID".error.log
+# Collect failure exit codes to error.log
+# Note that the 255 exit code from qualimap is ignored: it is raised when the
+# bam file has zero reads in it, which is a real case that is handled gracefully
+# by the rest of the pipeline and is therefore not cause for failing a run
+grep -v 'exit code: 0\|qualimap exit code: 255' $WORKSPACE/"$SAMPLEID".exit.log | head -n 1 > $WORKSPACE/"$SAMPLEID".error.log
 
 aws s3 cp $WORKSPACE/ $RESULTS/ --recursive --include "*" --exclude "*fastq.gz"
