@@ -194,7 +194,6 @@ do
         qsub -v SEQ_RUN=$SEQ_RUN \
            -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
            -v S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq \
-           -v PRIMER_BED_FNAME=$PRIMER_BED_FNAME \
            -wd /shared/workspace/projects/covid/logs \
            -N m_"$SEQ_RUN" \
            -pe smp 16 \
@@ -220,7 +219,7 @@ do
 				-v SEQ_RUN="$SEQ_RUN" \
 				-v SAMPLE=$SAMPLE \
 				-v S3DOWNLOAD=$S3DOWNLOAD \
-				-v PRIMER_SET=$PRIMER_SET \
+        -v PRIMER_BED_FNAME=$PRIMER_BED_FNAME \
 				-v MERGE_LANES=$MERGE_LANES \
 				-v FQ=$FQ \
 				-v TIMESTAMP=$TIMESTAMP \
