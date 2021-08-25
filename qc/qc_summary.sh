@@ -2,7 +2,6 @@
 
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 QCRESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_summary_files
-# S3TEST=s3://ucsd-rtl-test
 
 # Activate conda env covid1.2
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
@@ -68,7 +67,6 @@ runQC () {
     cat $WORKSPACE/*/*pi-metric.tsv | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-pi-metric.tsv
     echo -e "pi metric cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
-
   # Concatenate n metric files
     echo "Concatenating n metric files"
     echo -e "sequenced_pool_component_id\tn_metric" > $WORKSPACE/"$SEQ_RUN"-n-metric.tsv
@@ -121,11 +119,6 @@ runQC () {
 
 	# cumulative data folder
 	S3CUMULATIVE=$S3DOWNLOAD
-	# if [[ "$ISTEST" == false ]]; then
-	#  S3CUMULATIVE=$S3DOWNLOAD
-	# else
-	#   S3CUMULATIVE=$S3TEST
-	# fi
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $S3CUMULATIVE/phylogeny/cumulative_data/consensus/

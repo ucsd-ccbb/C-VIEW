@@ -36,15 +36,7 @@ if [[ ! -f "$REF_FAS" ]]; then
     cp $PIPELINEDIR/reference_files/NC_045512.2.gff3 $REF_GFF
 fi
 
-# Determine which primer bed file to use and ensure it is downloaded
-if [[ "$PRIMER_SET" == artic ]]; then
-	PRIMER_BED_FNAME="nCoV-2019.primer.bed"
-fi
-
-if [[ "$PRIMER_SET" == swift_v2 ]]; then
-	PRIMER_BED_FNAME="sarscov2_v2_primers.bed"
-fi
-
+# ensure that primer file is downloaded
 SCRATCH_PRIMER_FP=/scratch/reference/$PRIMER_BED_FNAME
 if [[ ! -f "$SCRATCH_PRIMER_FP" ]]; then
   cp $PIPELINEDIR/reference_files/$PRIMER_BED_FNAME $SCRATCH_PRIMER_FP

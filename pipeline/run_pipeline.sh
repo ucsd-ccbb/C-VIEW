@@ -70,10 +70,19 @@ do
     fi
 	  unset FIELD_IGNORED[MERGE_LANES]
 
-    if [[ ! "$PRIMER_SET" =~ ^(artic|swift_v2)$ ]]; then
-      echo "Error: Parameter PRIMER_SET must be one of artic or swift_v2"
+    if [[ ! "$PRIMER_SET" =~ ^(artic|swift_v2|mini_artic)$ ]]; then
+      echo "Error: Parameter PRIMER_SET must be one of artic, swift_v2, or mini_artic"
       exit 1
     fi
+
+    if [[ "$PRIMER_SET" == artic ]]; then
+      PRIMER_BED_FNAME="nCoV-2019.primer.bed"
+    elif [[ "$PRIMER_SET" == swift_v2 ]]; then
+      PRIMER_BED_FNAME="sarscov2_v2_primers.bed"
+    elif [[ "$PRIMER_SET" == mini_artic ]]; then
+      PRIMER_BED_FNAME="SARS2_short_primers_V3_no_adapter_sequences_mini_artic.bed"
+    fi
+
     unset FIELD_IGNORED[PRIMER_SET]
 
     re='^[0-9]+$'
@@ -185,6 +194,7 @@ do
         qsub -v SEQ_RUN=$SEQ_RUN \
            -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
            -v S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq \
+           -v PRIMER_BED_FNAME=$PRIMER_BED_FNAME \
            -wd /shared/workspace/projects/covid/logs \
            -N m_"$SEQ_RUN" \
            -pe smp 16 \
