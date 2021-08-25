@@ -36,15 +36,11 @@ if [[ ! -f "$REF_FAS" ]]; then
     cp $PIPELINEDIR/reference_files/NC_045512.2.gff3 $REF_GFF
 fi
 
-echo -e "PRIMER_BED_FNAME: $PRIMER_BED_FNAME" >> $WORKSPACE/"$SAMPLEID".exit.log
-
 # ensure that primer file is downloaded
 SCRATCH_PRIMER_FP=/scratch/reference/$PRIMER_BED_FNAME
 if [[ ! -f "$SCRATCH_PRIMER_FP" ]]; then
   cp $PIPELINEDIR/reference_files/$PRIMER_BED_FNAME $SCRATCH_PRIMER_FP
 fi
-
-echo -e "SCRATCH_PRIMER_FP: $SCRATCH_PRIMER_FP" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 if [[ "$MERGE_LANES" == true ]]; then
   S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/"$SEQ_RUN"_lane_merged_fastq
