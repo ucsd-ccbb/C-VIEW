@@ -29,9 +29,19 @@ runQC () {
 		--include "*_subsampled_mapping_stats.tsv" \
 		--include "*error.log"
 
-	# Zip files
-	mv $WORKSPACE/*/*.variants.tsv $WORKSPACE/*/*.consensus.fa $WORKSPACE/*/*.depth.txt $WORKSPACE/*/*.acceptance.tsv $WORKSPACE
-	cd $WORKSPACE && zip -9 "$SEQ_RUN"-variants.zip *.variants.tsv && zip -9 "$SEQ_RUN"-consensus.zip *.consensus.fa && zip -9 "$SEQ_RUN"-depth.zip *.depth.txt
+	# Exit codes
+	echo "Gathering per-sample exit codes."
+	cat $WORKSPACE/*/*error.log > $WORKSPACE/"$SEQ_RUN".error.log
+	grep -v "exit code: 0" $WORKSPACE/"$SEQ_RUN"-qc.exit.log | head -n 1 >> $WORKSPACE/"$SEQ_RUN".error.log
+
+  # if the error log is NOT empty
+  # create a complete_w_failure.txt sentinel file holding these errors
+  # upload that to the output dir
+  # exit
+
+	## Zip files
+	# mv $WORKSPACE/*/*.variants.tsv $WORKSPACE/*/*.consensus.fa $WORKSPACE/*/*.depth.txt $WORKSPACE/*/*.acceptance.tsv $WORKSPACE
+	# cd $WORKSPACE && zip -9 "$SEQ_RUN"-variants.zip *.variants.tsv && zip -9 "$SEQ_RUN"-consensus.zip *.consensus.fa && zip -9 "$SEQ_RUN"-depth.zip *.depth.txt
 
 	# summary figures and stats
 	# echo "Generating a violin plot of mapping depth across all samples and line plots of mapping depth per sample."
@@ -103,16 +113,16 @@ runQC () {
 	aws s3 cp $WORKSPACE/multiqc_data/ $QCRESULTS/"$SEQ_RUN"_multiqc_data/ --recursive --quiet
 	aws s3 cp $WORKSPACE/multiqc_report.html $QCRESULTS/"$SEQ_RUN"_multiqc_report.html
 	aws s3 cp $WORKSPACE/qc/ $QCRESULTS/ --recursive --quiet
-    aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-coverage.tsv $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".error.log $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-variants.zip $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-consensus.zip $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-depth.zip $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".version.log $QCRESULTS/
+#    aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $QCRESULTS/
+#	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $QCRESULTS/
+#	aws s3 cp $WORKSPACE/"$SEQ_RUN"-coverage.tsv $QCRESULTS/
+#	aws s3 cp $WORKSPACE/"$SEQ_RUN".error.log $QCRESULTS/
+#	aws s3 cp $WORKSPACE/"$SEQ_RUN"-variants.zip $QCRESULTS/
+#	aws s3 cp $WORKSPACE/"$SEQ_RUN"-consensus.zip $QCRESULTS/
+#	aws s3 cp $WORKSPACE/"$SEQ_RUN"-depth.zip $QCRESULTS/
+#	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $QCRESULTS/
+#	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $QCRESULTS/
+#	aws s3 cp $WORKSPACE/"$SEQ_RUN".version.log $QCRESULTS/
 
 	# cumulative data folder
 	S3CUMULATIVE=$S3DOWNLOAD
@@ -123,5 +133,6 @@ runQC () {
 
 { time ( runQC ) ; } > $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log 2>&1
 
+aws s3 cp $WORKSPACE/ $QCRESULTS/ # --include "*" --exclude "*fastq.gz"
 aws s3 cp $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log $QCRESULTS/
 
