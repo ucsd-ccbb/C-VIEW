@@ -133,6 +133,7 @@ runQC () {
 
 { time ( runQC ) ; } > $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log 2>&1
 
-aws s3 cp $WORKSPACE/ $QCRESULTS/ # --include "*" --exclude "*fastq.gz"
+# copy only top-level results
+aws s3 cp $WORKSPACE $QCRESULTS/ --recursive --include "*.*" --exclude "*/*.*"
 aws s3 cp $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log $QCRESULTS/
 
