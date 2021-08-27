@@ -70,13 +70,13 @@ echo -e "$SAMPLEID\tminimap2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 { time ( ivar trim -x 5 -e -i $WORKSPACE/"$SAMPLEID".sorted.bam -b $SCRATCH_PRIMER_FP -p $WORKSPACE/"$SAMPLEID".trimmed ) ; } > $WORKSPACE/"$SAMPLEID".log.2.trim.log 2>&1
 echo -e "$SAMPLEID\tivar trim exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
-# Step 2a: Count number of trimmed bam reads
-{ time ( echo -e "$SAMPLEID\t"$(samtools view -c -F 260 $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) > $WORKSPACE/"$SAMPLEID".trimmed_bam_read_count.tsv) ; } >> $WORKSPACE/"$SAMPLEID".log.2.trim.log 2>&1
-echo -e "$SAMPLEID\ttrimmed bam read count exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
-
 # Step 3: Sort Trimmed BAM
 { time ( samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam $WORKSPACE/"$SAMPLEID".trimmed.bam && samtools index $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam && rm $WORKSPACE/"$SAMPLEID".trimmed.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log
 echo -e "$SAMPLEID\tsamtools sort exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
+
+# Step 3a: Count number of trimmed bam reads
+{ time ( echo -e "$SAMPLEID\t"$(samtools view -c -F 260 $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) > $WORKSPACE/"$SAMPLEID".trimmed_bam_read_count.tsv) ; } >> $WORKSPACE/"$SAMPLEID".log.2.trim.log 2>&1
+echo -e "$SAMPLEID\ttrimmed bam read count exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 4: Generate Pile-Up
 { time ( samtools mpileup -B -A -aa -d 0 -Q 0 --reference $REF_FAS $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt 2> $WORKSPACE/"$SAMPLEID".log.4.pileup.log
