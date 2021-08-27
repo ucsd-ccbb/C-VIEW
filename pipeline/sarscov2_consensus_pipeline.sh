@@ -64,10 +64,14 @@ fi
 
 # Step 1: Map Reads + Sort
 # C/C++ Unsigned long max = 4294967295
+
+# TODO: push read-cap default up to run_pipeline.sh
 if [[ "$READ_CAP" == all ]]; then
-  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz | samtools view -h | samhead 4294967295 successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
+  #| samtools view -h | samhead 4294967295 successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam
+  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz > $WORKSPACE/"$SAMPLEID"_minimap_out  ) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
 else
-  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz | samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
+  #| samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam
+  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz > $WORKSPACE/"$SAMPLEID"_minimap_out ) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
 fi
 echo -e "$SAMPLEID\tminimap2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
