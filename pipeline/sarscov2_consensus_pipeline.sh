@@ -109,9 +109,10 @@ echo -e "$SAMPLEID\tacceptance.py exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.
 echo -e "$SAMPLEID\tcoverage exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 11: Heterogeneity scores
-{ time ( echo -e "$SAMPLEID\t"$(pi_from_pileup $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt | tail -1 | cut -f3) > $WORKSPACE/"$SAMPLEID".pi-metric.tsv) ; } > $WORKSPACE/"$SAMPLEID".log.11.diversity.log 2>&1
+{ time ( echo -e "$SAMPLEID\t"$(pi_from_pileup $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt | tail -1 | cut -f3) > $WORKSPACE/"$SAMPLEID".pi-metric.tsv
 echo -e "$SAMPLEID\tpi metric exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
-echo -e "$SAMPLEID\t"$(cat $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.variants.tsv | awk '$11 != "ALT_FREQ" && $11 >= 0.05 && $11 <= 0.95' | grep -v "ALT_FREQ" | cut -f2,4 | sort | uniq | wc -l) >> $WORKSPACE/"$SAMPLEID".n-metric.tsv ) ; } > $WORKSPACE/"$SAMPLEID".log.11.diversity.log 2>&1
+echo -e "$SAMPLEID\t"$(cat $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.variants.tsv | awk '$11 != "ALT_FREQ" && $11 >= 0.05 && $11 <= 0.95' | grep -v "ALT_FREQ" | cut -f2,4 | sort | uniq | wc -l) >> $WORKSPACE/"$SAMPLEID".n-metric.tsv ) ;
+} > $WORKSPACE/"$SAMPLEID".log.11.diversity.log 2>&1
 echo -e "$SAMPLEID\tn metric exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Collect failure exit codes to error.log
