@@ -63,21 +63,16 @@ if [[ "$FQ" == pe ]]; then
 fi
 
 # Step 1: Map Reads + Sort
-# C/C++ Unsigned long max = 4294967295
-
-# TODO: push read-cap default up to run_pipeline.sh
-if [[ "$READ_CAP" == all ]]; then
-  #| samtools view -h | samhead 4294967295 successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam
-  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz > $WORKSPACE/"$SAMPLEID"_minimap_out  ) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
-else
-  #| samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam
-  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz > $WORKSPACE/"$SAMPLEID"_minimap_out ) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
-fi
+{ time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz | samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
 echo -e "$SAMPLEID\tminimap2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 2: Trim Sorted BAM
 { time ( ivar trim -x 5 -e -i $WORKSPACE/"$SAMPLEID".sorted.bam -b $SCRATCH_PRIMER_FP -p $WORKSPACE/"$SAMPLEID".trimmed ) ; } > $WORKSPACE/"$SAMPLEID".log.2.trim.log 2>&1
 echo -e "$SAMPLEID\tivar trim exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
+
+# Step 2a: Count number of trimmed bam reads
+{ time ( echo -e "$SAMPLEID\t"$(samtools view -c -F 260 $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) > $WORKSPACE/"$SAMPLEID".trimmed_bam_read_count.tsv) ; } >> $WORKSPACE/"$SAMPLEID".log.2.trim.log 2>&1
+echo -e "$SAMPLEID\ttrimmed bam read count exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 3: Sort Trimmed BAM
 { time ( samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam $WORKSPACE/"$SAMPLEID".trimmed.bam && samtools index $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam && rm $WORKSPACE/"$SAMPLEID".trimmed.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log
@@ -114,9 +109,9 @@ echo -e "$SAMPLEID\tacceptance.py exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.
 echo -e "$SAMPLEID\tcoverage exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 11: Heterogeneity scores
-{ time ( echo -e "$SAMPLEID\t"$(pi_from_pileup $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt | tail -1 | cut -f3) > $WORKSPACE/"$SAMPLEID".pi-metric.tsv
+{ time ( echo -e "$SAMPLEID\t"$(pi_from_pileup $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt | tail -1 | cut -f3) > $WORKSPACE/"$SAMPLEID".pi-metric.tsv) ; } > $WORKSPACE/"$SAMPLEID".log.11.diversity.log 2>&1
 echo -e "$SAMPLEID\tpi metric exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
-echo -e "$SAMPLEID\t"$(cat $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.variants.tsv | awk '$11 != "ALT_FREQ" && $11 >= 0.05 && $11 <= 0.95' | grep -v "ALT_FREQ" | cut -f2,4 | sort | uniq | wc -l) > $WORKSPACE/"$SAMPLEID".n-metric.tsv ) ; } > $WORKSPACE/"$SAMPLEID".log.11.diversity.log 2>&1
+echo -e "$SAMPLEID\t"$(cat $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.variants.tsv | awk '$11 != "ALT_FREQ" && $11 >= 0.05 && $11 <= 0.95' | grep -v "ALT_FREQ" | cut -f2,4 | sort | uniq | wc -l) >> $WORKSPACE/"$SAMPLEID".n-metric.tsv ) ; } > $WORKSPACE/"$SAMPLEID".log.11.diversity.log 2>&1
 echo -e "$SAMPLEID\tn metric exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Collect failure exit codes to error.log

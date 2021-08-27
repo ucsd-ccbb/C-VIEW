@@ -91,6 +91,11 @@ do
        #exit 1
     fi
     unset FIELD_IGNORED[READ_CAP]
+
+    if [[ $READ_CAP == all ]] ; then
+      # C/C++ Unsigned long max = 4294967295
+      READ_CAP=4294967295
+    fi
   fi
 
   if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
@@ -274,7 +279,9 @@ do
 	fi # end if we are calling lineages
 
   if [[ "$TREE_BUILD" == true ]]; then
-    for DATASET in stringent loose_stringent passQC; do
+    # TODO: this is a temporary fix to build only stringent trees
+    #  In the future, we will want to make this more tunable
+    for DATASET in stringent; do # loose_stringent passQC; do
       qsub \
         $QSUBLINEAGEPARAMS \
         -v ORGANIZATION=$ORGANIZATION \
