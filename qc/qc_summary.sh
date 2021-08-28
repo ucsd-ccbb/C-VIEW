@@ -24,8 +24,11 @@ runQC () {
 		--include "*.sorted.stats*" \
 		--include "*.acceptance.tsv" \
 		--include "*coverage.tsv" \
+		# TODO: would be nice if these three metrics were defined in just one place in this script rather than 3
 		--include "*pi-metric.tsv" \
 		--include "*n-metric.tsv" \
+		--include "*trimmed_bam_read_count.tsv"
+		# end TODO
 		--include "*_subsampled_mapping_stats.tsv" \
 		--include "*error.log"
 
