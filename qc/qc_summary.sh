@@ -31,9 +31,6 @@ runQC () {
 		--include "*error.log"
 		# TODO: would be nice if the three per-sample metrics were defined in just one place in this script rather than 3
 
-  # TODO: remove debugging
-  ls $WORKSPACE >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
-
 	# Exit codes
 	echo "Gathering per-sample exit codes."
 	cat $WORKSPACE/*/*error.log > $WORKSPACE/"$SEQ_RUN".error.log
@@ -45,7 +42,8 @@ runQC () {
 
 	## Zip files
 	# mv $WORKSPACE/*/*.variants.tsv $WORKSPACE/*/*.consensus.fa $WORKSPACE/*/*.depth.txt $WORKSPACE/*/*.acceptance.tsv $WORKSPACE
-	# cd $WORKSPACE && zip -9 "$SEQ_RUN"-variants.zip *.variants.tsv && zip -9 "$SEQ_RUN"-consensus.zip *.consensus.fa && zip -9 "$SEQ_RUN"-depth.zip *.depth.txt
+	mv $WORKSPACE/*/*.consensus.fa $WORKSPACE/*/*.acceptance.tsv $WORKSPACE
+	cd $WORKSPACE # && zip -9 "$SEQ_RUN"-variants.zip *.variants.tsv && zip -9 "$SEQ_RUN"-consensus.zip *.consensus.fa && zip -9 "$SEQ_RUN"-depth.zip *.depth.txt
 
 	# summary figures and stats
 	# echo "Generating a violin plot of mapping depth across all samples and line plots of mapping depth per sample."
@@ -65,12 +63,9 @@ runQC () {
 	python $PIPELINEDIR/qc/custom_gen_stats_multiqc.py $WORKSPACE/qc/qualimapReport_paths.txt $WORKSPACE/qc/q30_reads_paths.txt $WORKSPACE/qc/subsampled_mapping_stats_paths.txt $FQ $WORKSPACE/multiqc_custom_gen_stats.yaml
   echo -e "custom_gen_stats_multiqc.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
-
 	cat $PIPELINEDIR/qc/covid_custom_config.yaml $WORKSPACE/multiqc_custom_gen_stats.yaml > $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml
 	multiqc --config $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml --module qualimap --module custom_content $WORKSPACE
     echo -e "multiqc exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
-  # TODO: remove debugging
-  ls $WORKSPACE >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
     # Concatenate coverage files
     echo "Concatenating coverage files"
@@ -141,6 +136,6 @@ runQC () {
 { time ( runQC ) ; } > $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log 2>&1
 
 # copy only top-level results
-aws s3 cp $WORKSPACE $QCRESULTS/ --recursive --include "*.*" --exclude "*/*.*"
+aws s3 cp $WORKSPACE $QCRESULTS/ --recursive --include "*.*" --exclude "*/*.*" --exclude "*.consensus.fa" --exclude "*.acceptance.tsv"
 aws s3 cp $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log $QCRESULTS/
 
