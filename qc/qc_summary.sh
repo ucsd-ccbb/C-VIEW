@@ -31,11 +31,12 @@ runQC () {
 		--include "*error.log"
 		# TODO: would be nice if the three per-sample metrics were defined in just one place in this script rather than 3
 
+  # TODO: remove debugging
+  ls $WORKSPACE >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
 	# Exit codes
 	echo "Gathering per-sample exit codes."
 	cat $WORKSPACE/*/*error.log > $WORKSPACE/"$SEQ_RUN".error.log
-	grep -v "exit code: 0" $WORKSPACE/"$SEQ_RUN"-qc.exit.log | head -n 1 >> $WORKSPACE/"$SEQ_RUN".error.log
 
   # if the error log is NOT empty
   # create a complete_w_failure.txt sentinel file holding these errors
@@ -64,9 +65,12 @@ runQC () {
 	python $PIPELINEDIR/qc/custom_gen_stats_multiqc.py $WORKSPACE/qc/qualimapReport_paths.txt $WORKSPACE/qc/q30_reads_paths.txt $WORKSPACE/qc/subsampled_mapping_stats_paths.txt $FQ $WORKSPACE/multiqc_custom_gen_stats.yaml
   echo -e "custom_gen_stats_multiqc.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
+
 	cat $PIPELINEDIR/qc/covid_custom_config.yaml $WORKSPACE/multiqc_custom_gen_stats.yaml > $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml
 	multiqc --config $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml --module qualimap --module custom_content $WORKSPACE
     echo -e "multiqc exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
+  # TODO: remove debugging
+  ls $WORKSPACE >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
     # Concatenate coverage files
     echo "Concatenating coverage files"
