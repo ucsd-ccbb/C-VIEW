@@ -41,9 +41,10 @@ runQC () {
   # exit
 
 	## Zip files
-	# mv $WORKSPACE/*/*.variants.tsv $WORKSPACE/*/*.consensus.fa $WORKSPACE/*/*.depth.txt $WORKSPACE/*/*.acceptance.tsv $WORKSPACE
+	mv $WORKSPACE/*/*.depth.txt $WORKSPACE
 	mv $WORKSPACE/*/*.consensus.fa $WORKSPACE/*/*.acceptance.tsv $WORKSPACE
 	cd $WORKSPACE # && zip -9 "$SEQ_RUN"-variants.zip *.variants.tsv && zip -9 "$SEQ_RUN"-consensus.zip *.consensus.fa && zip -9 "$SEQ_RUN"-depth.zip *.depth.txt
+  zip -9 "$SEQ_RUN"-depth.zip *.depth.txt
 
 	# summary figures and stats
 	# echo "Generating a violin plot of mapping depth across all samples and line plots of mapping depth per sample."
@@ -136,6 +137,6 @@ runQC () {
 { time ( runQC ) ; } > $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log 2>&1
 
 # copy only top-level results
-aws s3 cp $WORKSPACE $QCRESULTS/ --recursive --include "*.*" --exclude "*/*.*" --exclude "*.consensus.fa" --exclude "*.acceptance.tsv"
+aws s3 cp $WORKSPACE $QCRESULTS/ --recursive --include "*.*" --exclude "*/*.*" --exclude "*.consensus.fa" --exclude "*.acceptance.tsv" --exclude "*.depth.txt"
 aws s3 cp $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log $QCRESULTS/
 
