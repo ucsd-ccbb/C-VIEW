@@ -4,6 +4,9 @@ from sys import argv
 
 SEARCH_ID_KEY = "search_id"
 SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
+SOURCE = "source"
+SEQ_RUN = "seq_run"
+OVERALL_FAIL = "overall_fail"
 INDEX_COL_NAME = "Unnamed: 0"
 OVERALL_FAIL_KEY = "overall_fail"
 
@@ -20,7 +23,8 @@ BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
                    "Submitting lab", "Address.1",
                    "Sample ID given by the submitting laboratory", "Authors",
                    "Comment", "Comment Icon", "Released",
-                   "Sequenced Pool Component Id"]
+                   "Sequenced Pool Component Id", "Source", "Sequencing Run",
+                   "Overall Fail"]
 
 
 def filter_metadata_for_bjorn(full_df):
@@ -34,11 +38,13 @@ def filter_metadata_for_bjorn(full_df):
     has_positive_age = ~full_df["subject_age"].isna() & full_df[
         "subject_age"] > 0
     has_demographics = has_gender & has_positive_age
-    is_human_wo_demographics = is_human & ~has_demographics
+    is_scripps_sequencing = full_df[SOURCE] == "Scripps-Sequencing"
+    is_human_wo_demographics_not_scripps = is_human & ~has_demographics \
+                                           & ~is_scripps_sequencing
 
     is_excluded = (has_no_search_id | has_no_specimen_type |
                    has_no_consensus_seq | is_control |
-                   is_human_wo_demographics)
+                   is_human_wo_demographics_not_scripps)
     filtered_df = full_df[~is_excluded].copy()
     return filtered_df
 
@@ -99,6 +105,9 @@ def generate_bjorn_df(filtered_df):
     output_df.loc[:, "comment_icon"] = ""
     output_df.loc[:, "released_2"] = ""
     output_df.loc[:, SEQ_POOL_COMP_ID] = filtered_df[SEQ_POOL_COMP_ID]
+    output_df.loc[:, SOURCE] = filtered_df[SOURCE]
+    output_df.loc[:, SEQ_RUN] = filtered_df[SEQ_RUN]
+    output_df.loc[:, OVERALL_FAIL] = filtered_df[OVERALL_FAIL]
 
     return output_df
 
