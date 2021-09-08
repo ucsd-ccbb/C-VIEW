@@ -2,7 +2,6 @@
 
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 QCRESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_summary_files
-# S3TEST=s3://ucsd-rtl-test
 
 # Activate conda env covid1.2
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
@@ -25,14 +24,22 @@ runQC () {
 		--include "*.sorted.stats*" \
 		--include "*.acceptance.tsv" \
 		--include "*coverage.tsv" \
-		--include "*pi-metric.tsv" \
-		--include "*n-metric.tsv" \
+		--include "*pi_metric.tsv" \
+		--include "*n_metric.tsv" \
+		--include "*trimmed_bam_read_count.tsv" \
 		--include "*_subsampled_mapping_stats.tsv" \
 		--include "*error.log"
+		# TODO: would be nice if the three per-sample metrics were defined in just one place in this script rather than 3
 
-	# Zip files
-	mv $WORKSPACE/*/*.variants.tsv $WORKSPACE/*/*.consensus.fa $WORKSPACE/*/*.depth.txt $WORKSPACE/*/*.acceptance.tsv $WORKSPACE
-	cd $WORKSPACE && zip -9 "$SEQ_RUN"-variants.zip *.variants.tsv && zip -9 "$SEQ_RUN"-consensus.zip *.consensus.fa && zip -9 "$SEQ_RUN"-depth.zip *.depth.txt
+	# Exit codes
+	echo "Gathering per-sample exit codes."
+	cat $WORKSPACE/*/*error.log > $WORKSPACE/"$SEQ_RUN".error.log
+
+	## Zip files
+	mv $WORKSPACE/*/*.depth.txt $WORKSPACE
+	mv $WORKSPACE/*/*.consensus.fa $WORKSPACE/*/*.acceptance.tsv $WORKSPACE
+	cd $WORKSPACE
+  zip -9 "$SEQ_RUN"-depth.zip *.depth.txt
 
 	# summary figures and stats
 	# echo "Generating a violin plot of mapping depth across all samples and line plots of mapping depth per sample."
@@ -62,22 +69,18 @@ runQC () {
     cat $WORKSPACE/*/*coverage.tsv | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-coverage.tsv
     echo -e "coverage cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
-  # Concatenate pi metric files
-    echo "Concatenating pi metric files"
-    echo -e "sequenced_pool_component_id\tpi_metric" > $WORKSPACE/"$SEQ_RUN"-pi-metric.tsv
-    cat $WORKSPACE/*/*pi-metric.tsv | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-pi-metric.tsv
-    echo -e "pi metric cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
-
-
-  # Concatenate n metric files
-    echo "Concatenating n metric files"
-    echo -e "sequenced_pool_component_id\tn_metric" > $WORKSPACE/"$SEQ_RUN"-n-metric.tsv
-    cat $WORKSPACE/*/*n-metric.tsv | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-n-metric.tsv
-    echo -e "n metric cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
+  # Concatenate per-sample files for per-sample metrics
+  for PER_SAMPLE_METRIC in trimmed_bam_read_count n_metric pi_metric ; do
+    echo "Concatenating $PER_SAMPLE_METRIC files"
+    echo -e "sequenced_pool_component_id\t$PER_SAMPLE_METRIC" > $WORKSPACE/"$SEQ_RUN"-"$PER_SAMPLE_METRIC".tsv
+    cat $WORKSPACE/*/*"$PER_SAMPLE_METRIC".tsv | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-"$PER_SAMPLE_METRIC".tsv
+    echo -e "$PER_SAMPLE_METRIC cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
+  done
 
 	# Make summary table
 	echo "Making run summary table."
-	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/"$SEQ_RUN"-temp-summary.csv $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-pi-metric.tsv $WORKSPACE/"$SEQ_RUN"-n-metric.tsv
+	# TODO: would be nice to use the same list of per-sample metrics here as above to avoid having to remember to add new ones in two places
+	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/"$SEQ_RUN"-temp-summary.csv $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-trimmed_bam_read_count.tsv $WORKSPACE/"$SEQ_RUN"-pi_metric.tsv $WORKSPACE/"$SEQ_RUN"-n_metric.tsv
     echo -e "seq_run_summary.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 	python $PIPELINEDIR/qc/integrate_bjorn_coverage.py $WORKSPACE/"$SEQ_RUN"-temp-summary.csv $WORKSPACE/"$SEQ_RUN"-coverage.tsv $WORKSPACE/"$SEQ_RUN"-summary.csv
     echo -e "integrate_bjorn_coverage.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
@@ -91,41 +94,20 @@ runQC () {
     echo -e "subset_csv.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
     cat $PASSING_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-passQC.fas
 
-  # CURRDIR=$(pwd)
-  # cd $PIPELINEDIR
-  # bash $PIPELINEDIR/show_version.sh >> $WORKSPACE/"$SEQ_RUN".version.log
-  # echo -e "show_version.sh exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
-  # cd $CURRDIR
-
 	# Exit codes
 	echo "Gathering per-sample exit codes."
 	cat $WORKSPACE/*/*error.log > $WORKSPACE/"$SEQ_RUN".error.log
 	grep -v "exit code: 0" $WORKSPACE/"$SEQ_RUN"-qc.exit.log | head -n 1 >> $WORKSPACE/"$SEQ_RUN".error.log
 
 	# Upload Results
-	echo "Uploading QC and summary results."
+	echo "Uploading multiqc and qc-subfolder results."
 	# summary files folder
 	aws s3 cp $WORKSPACE/multiqc_data/ $QCRESULTS/"$SEQ_RUN"_multiqc_data/ --recursive --quiet
 	aws s3 cp $WORKSPACE/multiqc_report.html $QCRESULTS/"$SEQ_RUN"_multiqc_report.html
 	aws s3 cp $WORKSPACE/qc/ $QCRESULTS/ --recursive --quiet
-    aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-coverage.tsv $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".error.log $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-variants.zip $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-consensus.zip $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-depth.zip $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $QCRESULTS/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".version.log $QCRESULTS/
 
 	# cumulative data folder
 	S3CUMULATIVE=$S3DOWNLOAD
-	# if [[ "$ISTEST" == false ]]; then
-	#  S3CUMULATIVE=$S3DOWNLOAD
-	# else
-	#   S3CUMULATIVE=$S3TEST
-	# fi
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
@@ -133,5 +115,7 @@ runQC () {
 
 { time ( runQC ) ; } > $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log 2>&1
 
+# upload only top-level results here
+aws s3 cp $WORKSPACE $QCRESULTS/ --recursive --include "*.*" --exclude "*/*.*" --exclude "*.consensus.fa" --exclude "*.acceptance.tsv" --exclude "*.depth.txt"
 aws s3 cp $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log $QCRESULTS/
 

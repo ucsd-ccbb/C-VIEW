@@ -36,15 +36,7 @@ if [[ ! -f "$REF_FAS" ]]; then
     cp $PIPELINEDIR/reference_files/NC_045512.2.gff3 $REF_GFF
 fi
 
-# Determine which primer bed file to use and ensure it is downloaded
-if [[ "$PRIMER_SET" == artic ]]; then
-	PRIMER_BED_FNAME="nCoV-2019.primer.bed"
-fi
-
-if [[ "$PRIMER_SET" == swift_v2 ]]; then
-	PRIMER_BED_FNAME="sarscov2_v2_primers.bed"
-fi
-
+# ensure that primer file is downloaded
 SCRATCH_PRIMER_FP=/scratch/reference/$PRIMER_BED_FNAME
 if [[ ! -f "$SCRATCH_PRIMER_FP" ]]; then
   cp $PIPELINEDIR/reference_files/$PRIMER_BED_FNAME $SCRATCH_PRIMER_FP
@@ -71,12 +63,7 @@ if [[ "$FQ" == pe ]]; then
 fi
 
 # Step 1: Map Reads + Sort
-# C/C++ Unsigned long max = 4294967295
-if [[ "$READ_CAP" == all ]]; then
-  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz | samtools view -h | samhead 4294967295 successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
-else
-  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz | samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam ) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
-fi
+{ time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz | samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
 echo -e "$SAMPLEID\tminimap2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 2: Trim Sorted BAM
@@ -86,6 +73,10 @@ echo -e "$SAMPLEID\tivar trim exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 # Step 3: Sort Trimmed BAM
 { time ( samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam $WORKSPACE/"$SAMPLEID".trimmed.bam && samtools index $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam && rm $WORKSPACE/"$SAMPLEID".trimmed.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log
 echo -e "$SAMPLEID\tsamtools sort exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
+
+# Step 3a: Count number of trimmed bam reads
+{ time ( echo -e "$SAMPLEID\t"$(samtools view -c -F 260 $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) > $WORKSPACE/"$SAMPLEID".trimmed_bam_read_count.tsv) ; } >> $WORKSPACE/"$SAMPLEID".log.2.trim.log 2>&1
+echo -e "$SAMPLEID\ttrimmed bam read count exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 4: Generate Pile-Up
 { time ( samtools mpileup -B -A -aa -d 0 -Q 0 --reference $REF_FAS $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt 2> $WORKSPACE/"$SAMPLEID".log.4.pileup.log
@@ -118,12 +109,16 @@ echo -e "$SAMPLEID\tacceptance.py exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.
 echo -e "$SAMPLEID\tcoverage exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 11: Heterogeneity scores
-{ time ( echo -e "$SAMPLEID\t"$(pi_from_pileup $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt | tail -1 | cut -f3) > $WORKSPACE/"$SAMPLEID".pi-metric.tsv
+{ time ( echo -e "$SAMPLEID\t"$(pi_from_pileup $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt | tail -1 | cut -f3) > $WORKSPACE/"$SAMPLEID".pi_metric.tsv
 echo -e "$SAMPLEID\tpi metric exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
-echo -e "$SAMPLEID\t"$(cat $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.variants.tsv | awk '$11 != "ALT_FREQ" && $11 >= 0.05 && $11 <= 0.95' | grep -v "ALT_FREQ" | cut -f2,4 | sort | uniq | wc -l) > $WORKSPACE/"$SAMPLEID".n-metric.tsv ) ; } > $WORKSPACE/"$SAMPLEID".log.11.diversity.log 2>&1
+echo -e "$SAMPLEID\t"$(cat $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.variants.tsv | awk '$11 != "ALT_FREQ" && $11 >= 0.05 && $11 <= 0.95' | grep -v "ALT_FREQ" | cut -f2,4 | sort | uniq | wc -l) >> $WORKSPACE/"$SAMPLEID".n_metric.tsv ) ;
+} > $WORKSPACE/"$SAMPLEID".log.11.diversity.log 2>&1
 echo -e "$SAMPLEID\tn metric exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
-#QC
-grep -v "exit code: 0" $WORKSPACE/"$SAMPLEID".exit.log | head -n 1 > $WORKSPACE/"$SAMPLEID".error.log
+# Collect failure exit codes to error.log
+# Note that the 255 exit code from qualimap is ignored: it is raised when the
+# bam file has zero reads in it, which is a real case that is handled gracefully
+# by the rest of the pipeline and is therefore not cause for failing a run
+grep -v 'exit code: 0\|qualimap exit code: 255' $WORKSPACE/"$SAMPLEID".exit.log | head -n 1 > $WORKSPACE/"$SAMPLEID".error.log
 
 aws s3 cp $WORKSPACE/ $RESULTS/ --recursive --include "*" --exclude "*fastq.gz"

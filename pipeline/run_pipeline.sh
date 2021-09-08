@@ -70,10 +70,19 @@ do
     fi
 	  unset FIELD_IGNORED[MERGE_LANES]
 
-    if [[ ! "$PRIMER_SET" =~ ^(artic|swift_v2)$ ]]; then
-      echo "Error: Parameter PRIMER_SET must be one of artic or swift_v2"
+    if [[ ! "$PRIMER_SET" =~ ^(artic|swift_v2|mini_artic)$ ]]; then
+      echo "Error: Parameter PRIMER_SET must be one of artic, swift_v2, or mini_artic"
       exit 1
     fi
+
+    if [[ "$PRIMER_SET" == artic ]]; then
+      PRIMER_BED_FNAME="nCoV-2019.primer.bed"
+    elif [[ "$PRIMER_SET" == swift_v2 ]]; then
+      PRIMER_BED_FNAME="sarscov2_v2_primers.bed"
+    elif [[ "$PRIMER_SET" == mini_artic ]]; then
+      PRIMER_BED_FNAME="SARS2_short_primers_V3_no_adapter_sequences_mini_artic.bed"
+    fi
+
     unset FIELD_IGNORED[PRIMER_SET]
 
     re='^[0-9]+$'
@@ -82,6 +91,11 @@ do
        #exit 1
     fi
     unset FIELD_IGNORED[READ_CAP]
+
+    if [[ $READ_CAP == all ]] ; then
+      # C/C++ Unsigned long max = 4294967295
+      READ_CAP=4294967295
+    fi
   fi
 
   if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
@@ -210,7 +224,7 @@ do
 				-v SEQ_RUN="$SEQ_RUN" \
 				-v SAMPLE=$SAMPLE \
 				-v S3DOWNLOAD=$S3DOWNLOAD \
-				-v PRIMER_SET=$PRIMER_SET \
+        -v PRIMER_BED_FNAME=$PRIMER_BED_FNAME \
 				-v MERGE_LANES=$MERGE_LANES \
 				-v FQ=$FQ \
 				-v TIMESTAMP=$TIMESTAMP \
@@ -265,7 +279,9 @@ do
 	fi # end if we are calling lineages
 
   if [[ "$TREE_BUILD" == true ]]; then
-    for DATASET in stringent loose_stringent passQC; do
+    # TODO: this is a temporary fix to build only stringent trees
+    #  In the future, we will want to make this more tunable
+    for DATASET in stringent; do # loose_stringent passQC; do
       qsub \
         $QSUBLINEAGEPARAMS \
         -v ORGANIZATION=$ORGANIZATION \
