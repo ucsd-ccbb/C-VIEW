@@ -10,7 +10,6 @@ SOURCE = "source"
 SEQ_RUN = "seq_run"
 OVERALL_FAIL = "overall_fail"
 INDEX_COL_NAME = "Unnamed: 0"
-OVERALL_FAIL_KEY = "overall_fail"
 
 BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
                    "New sequences ready for release", "Released?",
@@ -64,7 +63,7 @@ def generate_bjorn_df(filtered_df):
     output_df.loc[:, 'sample_id'] = filtered_df['sample_id']
     output_df.loc[:, 'search_id'] = filtered_df['search_id']
 
-    release_mask = filtered_df[OVERALL_FAIL_KEY] == False  # noqa 712
+    release_mask = filtered_df[OVERALL_FAIL] == False  # noqa 712
     output_df.loc[:, "ready_for_release"] = "No"
     output_df.loc[release_mask, "ready_for_release"] = "Yes"
 
