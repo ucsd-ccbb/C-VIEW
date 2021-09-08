@@ -35,15 +35,10 @@ runQC () {
 	echo "Gathering per-sample exit codes."
 	cat $WORKSPACE/*/*error.log > $WORKSPACE/"$SEQ_RUN".error.log
 
-  # if the error log is NOT empty
-  # create a complete_w_failure.txt sentinel file holding these errors
-  # upload that to the output dir
-  # exit
-
 	## Zip files
 	mv $WORKSPACE/*/*.depth.txt $WORKSPACE
 	mv $WORKSPACE/*/*.consensus.fa $WORKSPACE/*/*.acceptance.tsv $WORKSPACE
-	cd $WORKSPACE # && zip -9 "$SEQ_RUN"-variants.zip *.variants.tsv && zip -9 "$SEQ_RUN"-consensus.zip *.consensus.fa && zip -9 "$SEQ_RUN"-depth.zip *.depth.txt
+	cd $WORKSPACE
   zip -9 "$SEQ_RUN"-depth.zip *.depth.txt
 
 	# summary figures and stats
@@ -99,33 +94,17 @@ runQC () {
     echo -e "subset_csv.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
     cat $PASSING_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-passQC.fas
 
-  # CURRDIR=$(pwd)
-  # cd $PIPELINEDIR
-  # bash $PIPELINEDIR/show_version.sh >> $WORKSPACE/"$SEQ_RUN".version.log
-  # echo -e "show_version.sh exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
-  # cd $CURRDIR
-
 	# Exit codes
 	echo "Gathering per-sample exit codes."
 	cat $WORKSPACE/*/*error.log > $WORKSPACE/"$SEQ_RUN".error.log
 	grep -v "exit code: 0" $WORKSPACE/"$SEQ_RUN"-qc.exit.log | head -n 1 >> $WORKSPACE/"$SEQ_RUN".error.log
 
 	# Upload Results
-	echo "Uploading QC and summary results."
+	echo "Uploading multiqc and qc-subfolder results."
 	# summary files folder
 	aws s3 cp $WORKSPACE/multiqc_data/ $QCRESULTS/"$SEQ_RUN"_multiqc_data/ --recursive --quiet
 	aws s3 cp $WORKSPACE/multiqc_report.html $QCRESULTS/"$SEQ_RUN"_multiqc_report.html
 	aws s3 cp $WORKSPACE/qc/ $QCRESULTS/ --recursive --quiet
-#    aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $QCRESULTS/
-#	aws s3 cp $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $QCRESULTS/
-#	aws s3 cp $WORKSPACE/"$SEQ_RUN"-coverage.tsv $QCRESULTS/
-#	aws s3 cp $WORKSPACE/"$SEQ_RUN".error.log $QCRESULTS/
-#	aws s3 cp $WORKSPACE/"$SEQ_RUN"-variants.zip $QCRESULTS/
-#	aws s3 cp $WORKSPACE/"$SEQ_RUN"-consensus.zip $QCRESULTS/
-#	aws s3 cp $WORKSPACE/"$SEQ_RUN"-depth.zip $QCRESULTS/
-#	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $QCRESULTS/
-#	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $QCRESULTS/
-#	aws s3 cp $WORKSPACE/"$SEQ_RUN".version.log $QCRESULTS/
 
 	# cumulative data folder
 	S3CUMULATIVE=$S3DOWNLOAD
@@ -136,7 +115,7 @@ runQC () {
 
 { time ( runQC ) ; } > $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log 2>&1
 
-# copy only top-level results
+# upload only top-level results here
 aws s3 cp $WORKSPACE $QCRESULTS/ --recursive --include "*.*" --exclude "*/*.*" --exclude "*.consensus.fa" --exclude "*.acceptance.tsv" --exclude "*.depth.txt"
 aws s3 cp $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log $QCRESULTS/
 
