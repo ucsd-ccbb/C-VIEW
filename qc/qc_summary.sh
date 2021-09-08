@@ -24,8 +24,8 @@ runQC () {
 		--include "*.sorted.stats*" \
 		--include "*.acceptance.tsv" \
 		--include "*coverage.tsv" \
-		--include "*pi-metric.tsv" \
-		--include "*n-metric.tsv" \
+		--include "*pi_metric.tsv" \
+		--include "*n_metric.tsv" \
 		--include "*trimmed_bam_read_count.tsv" \
 		--include "*_subsampled_mapping_stats.tsv" \
 		--include "*error.log"
@@ -75,7 +75,7 @@ runQC () {
     echo -e "coverage cat exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
   # Concatenate per-sample files for per-sample metrics
-  for PER_SAMPLE_METRIC in trimmed_bam_read_count n-metric pi-metric ; do
+  for PER_SAMPLE_METRIC in trimmed_bam_read_count n_metric pi_metric ; do
     echo "Concatenating $PER_SAMPLE_METRIC files"
     echo -e "sequenced_pool_component_id\t$PER_SAMPLE_METRIC" > $WORKSPACE/"$SEQ_RUN"-"$PER_SAMPLE_METRIC".tsv
     cat $WORKSPACE/*/*"$PER_SAMPLE_METRIC".tsv | sort -n -k 2 >> $WORKSPACE/"$SEQ_RUN"-"$PER_SAMPLE_METRIC".tsv
@@ -85,7 +85,7 @@ runQC () {
 	# Make summary table
 	echo "Making run summary table."
 	# TODO: would be nice to use the same list of per-sample metrics here as above to avoid having to remember to add new ones in two places
-	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/"$SEQ_RUN"-temp-summary.csv $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-trimmed_bam_read_count.tsv $WORKSPACE/"$SEQ_RUN"-pi-metric.tsv $WORKSPACE/"$SEQ_RUN"-n-metric.tsv
+	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/"$SEQ_RUN"-temp-summary.csv $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-trimmed_bam_read_count.tsv $WORKSPACE/"$SEQ_RUN"-pi_metric.tsv $WORKSPACE/"$SEQ_RUN"-n_metric.tsv
     echo -e "seq_run_summary.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 	python $PIPELINEDIR/qc/integrate_bjorn_coverage.py $WORKSPACE/"$SEQ_RUN"-temp-summary.csv $WORKSPACE/"$SEQ_RUN"-coverage.tsv $WORKSPACE/"$SEQ_RUN"-summary.csv
     echo -e "integrate_bjorn_coverage.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
