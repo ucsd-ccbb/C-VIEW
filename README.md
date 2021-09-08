@@ -18,7 +18,7 @@ The pipeline uses the following external software programs:
 * [EMPress 1.1.0](https://github.com/biocore/empress/releases/tag/v1.1.0)
 * [q30 dev](https://github.com/artnasamran/q30)
 * [samhead dev](https://github.com/niemasd/SD-COVID-Sequencing/tree/main/samhead)
-* [pi_for_pileup](https://github.com/Niema-Docker/pi_from_pileup/)
+* [pi_from_pileup](https://github.com/Niema-Docker/pi_from_pileup/)
 * git 2.7.4 or higher
 
 Should one wish to set up the pipeline on a fresh AWS ubuntu instance, download the `install.sh` script from this repository, set the 
