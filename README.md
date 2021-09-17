@@ -1,4 +1,4 @@
-# SARS-CoV-2 variant identification
+# C-VIEW: COVID-19 VIral Epidemiology Workflow
 
 This software implements a high-throughput data processing pipeline to identify and charaterize SARS-CoV-2 variant sequences in specimens from COVID-19 positive hosts or environments.  It is based on https://github.com/niemasd/SD-COVID-Sequencing and built for use with Amazon Web Services (AWS) EC2 machine instances and S3 data storage.
 
