@@ -73,7 +73,15 @@ def generate_bjorn_df(filtered_df):
     output_df.loc[:, "released"] = ""
     output_df.loc[:, "submitter"] = ""
     output_df.loc[:, "fasta_fname"] = ""
-    output_df.loc[:, "virus_name"] = "hCoV-19/USA/" + output_df["search_id"] \
+
+    # Note: if any of the virus name input fields is non-existent, then the
+    # resulting virus name is non-existent, which seems reasonable.
+    # I believe this justifies hardcoding the "USA": this is appropriate iff
+    # the sample has a state code, and the string will not be generated if the
+    # sample does NOT have a state code.
+    output_df.loc[:, "virus_name"] = "hCoV-19/USA/" \
+                                     + filtered_df["state_code"] \
+                                     + "-" + filtered_df["search_id"] \
                                      + "/" \
                                      + filtered_df["sample_collection_year"]
     output_df.loc[:, "type"] = "betacoronavirus"
