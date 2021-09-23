@@ -10,6 +10,7 @@ BAM_S3 = "trimmed_bam_s3"
 SOURCE = "source"
 SEQ_RUN = "seq_run"
 OVERALL_FAIL = "overall_fail"
+SUBMIT_TO_GISAID = "submit_to_gisaid"
 INDEX_COL_NAME = "Unnamed: 0"
 
 BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
@@ -65,7 +66,12 @@ def generate_bjorn_df(filtered_df):
     output_df.loc[:, 'sample_id'] = filtered_df['sample_id']
     output_df.loc[:, 'search_id'] = filtered_df['search_id']
 
-    release_mask = filtered_df[OVERALL_FAIL] == False  # noqa 712
+    # The metadata reads in as strings (hence 'True') while the qc and lineage
+    # data reads in parsed (hence False, not 'False')
+    inspect_approval = filtered_df[SUBMIT_TO_GISAID] == 'True'  # noqa 712
+    no_overall_fail = filtered_df[OVERALL_FAIL] == False  # noqa 712
+
+    release_mask = inspect_approval & no_overall_fail
     output_df.loc[:, "ready_for_release"] = "No"
     output_df.loc[release_mask, "ready_for_release"] = "Yes"
 
@@ -124,6 +130,7 @@ def generate_bjorn_df(filtered_df):
     output_df.loc[:, SOURCE] = filtered_df[SOURCE]
     output_df.loc[:, SEQ_RUN] = filtered_df[SEQ_RUN]
     output_df.loc[:, OVERALL_FAIL] = filtered_df[OVERALL_FAIL]
+    output_df.loc[:, SUBMIT_TO_GISAID] = filtered_df[SUBMIT_TO_GISAID]
 
     return output_df
 
