@@ -6,6 +6,7 @@ SEARCH_ID_KEY = "search_id"
 SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
 VARIANT_S3 = "variants_s3"
 CONSENSUS_S3 = "consensus_s3"
+BAM_S3 = "trimmed_bam_s3"
 SOURCE = "source"
 SEQ_RUN = "seq_run"
 OVERALL_FAIL = "overall_fail"
@@ -25,8 +26,9 @@ BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
                    "Sample ID given by the submitting laboratory", "Authors",
                    "Comment", "Comment Icon", "Released",
                    "Sequenced Pool Component Id", "Variant File S3 URL",
-                   "Consensus File S3 URL", "Source", "Sequencing Run",
-                   "Overall Fail"]
+                   "Consensus File S3 URL", "BAM File S3 URL",
+                   "Source", "Sequencing Run", "Overall Fail",
+                   "Inspect Submit-to-GISAID"]
 
 
 def filter_metadata_for_bjorn(full_df):
@@ -110,6 +112,7 @@ def generate_bjorn_df(filtered_df):
     output_df.loc[:, SEQ_POOL_COMP_ID] = filtered_df[SEQ_POOL_COMP_ID]
     output_df.loc[:, VARIANT_S3] = filtered_df[VARIANT_S3]
     output_df.loc[:, CONSENSUS_S3] = filtered_df[CONSENSUS_S3]
+    output_df.loc[:, BAM_S3] = filtered_df[BAM_S3]
     output_df.loc[:, SOURCE] = filtered_df[SOURCE]
     output_df.loc[:, SEQ_RUN] = filtered_df[SEQ_RUN]
     output_df.loc[:, OVERALL_FAIL] = filtered_df[OVERALL_FAIL]
@@ -137,9 +140,14 @@ def merge_metadata(arg_list):
     full_df.to_csv(out_full_fp, index=False)
 
     filtered_df = filter_metadata_for_bjorn(full_df)
-    bjorn_metadata_df = generate_bjorn_df(filtered_df)
-    bjorn_metadata_df.columns = BJORN_COL_NAMES
-    bjorn_metadata_df.to_csv(out_bjorn_fp, index=False)
+    if len(filtered_df) > 0:
+        bjorn_metadata_df = generate_bjorn_df(filtered_df)
+        bjorn_metadata_df.columns = BJORN_COL_NAMES
+        bjorn_metadata_df.to_csv(out_bjorn_fp, index=False)
+    else:
+        # create a bjorn file that has only a header line
+        with open(out_bjorn_fp, 'w') as f:
+            f.write(",".join(BJORN_COL_NAMES))
 
 
 if __name__ == '__main__':
