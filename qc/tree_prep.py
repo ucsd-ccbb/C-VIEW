@@ -6,8 +6,8 @@ import fastaparser
 SEARCH_ID_KEY = "search_id"
 CONS_NAME = "consensus_seq_name"
 USABLE_NAME = "usable_for"
-VARIANT_VAL = "variant"
-VARIANT_AND_EP_VAL = "variant_and_epidemiology"
+STRINGENT_TEST_COL = "any_fail"
+STRINGENT_INCLUDE_VAL = False
 IS_HIST_OR_REF = "is_hist_or_ref"
 INDEX_COL_NAME = "Unnamed: 0"
 
@@ -26,43 +26,38 @@ def generate_base_empress_df(raw_empress_df):
     return empress_df
 
 
-def winnow_fasta(fasta_fp, base_empress_df, out_loose_fp, out_stringent_fp):
-    with open(out_loose_fp, 'w') as loose_file:
-        with open(out_stringent_fp, 'w') as stringent_file:
-            with open(fasta_fp) as fasta_file:
-                parser = fastaparser.Reader(fasta_file)
-                for seq in parser:
-                    # match header to consensus_seq_name column of metadata
-                    # and get the usable_for value for it
-                    seq_metadata_df = base_empress_df.loc[
-                        base_empress_df[CONS_NAME] == seq.id]
+def winnow_fasta(fasta_fp, base_empress_df, out_stringent_fp):
+    with open(out_stringent_fp, 'w') as stringent_file:
+        with open(fasta_fp) as fasta_file:
+            parser = fastaparser.Reader(fasta_file)
+            for seq in parser:
+                # match header to consensus_seq_name column of metadata
+                # and get the usable_for value for it
+                seq_metadata_df = base_empress_df.loc[
+                    base_empress_df[CONS_NAME] == seq.id]
 
-                    if len(seq_metadata_df) == 0:
-                        continue
-                    elif len(seq_metadata_df) > 1:
-                        raise ValueError(f"More than one metadata row with"
-                                         f"consensus sequence name "
-                                         f"'{seq.header}' found")
-                    else:
-                        seq_usable_for = seq_metadata_df.loc[
-                                         :, USABLE_NAME].iat[0]
-                        fasta_str = seq.formatted_fasta() + '\n'
-                        if seq_usable_for == VARIANT_VAL:
-                            loose_file.write(fasta_str)
-                        elif seq_usable_for == VARIANT_AND_EP_VAL:
-                            stringent_file.write(fasta_str)
-                        # ignore any other cases
+                if len(seq_metadata_df) == 0:
+                    continue
+                elif len(seq_metadata_df) > 1:
+                    raise ValueError(f"More than one metadata row with"
+                                     f"consensus sequence name "
+                                     f"'{seq.header}' found")
+                else:
+                    seq_stringent_test_val = \
+                        seq_metadata_df.loc[:, STRINGENT_TEST_COL].iat[0]
+                    fasta_str = seq.formatted_fasta() + '\n'
+                    if seq_stringent_test_val == STRINGENT_INCLUDE_VAL:
+                        stringent_file.write(fasta_str)
+                    # ignore any other cases
 
 
 def prep_files_for_tree_building(arg_list):
     qc_and_lineage_fp = arg_list[1]
     metadata_fp = arg_list[2]  # May be None
     full_fasta_fp = arg_list[3]
-    out_loose_fasta_fp = arg_list[4]
-    out_stringent_fasta_fp = arg_list[5]
-    out_empress_fp = arg_list[6]
-    out_empress_var_fp = arg_list[7]
-    out_empress_var_and_ep_fp = arg_list[8]
+    out_stringent_fasta_fp = arg_list[4]
+    out_empress_fp = arg_list[5]
+    out_stringent_empress_fp = arg_list[6]
 
     qc_and_lineage_df = pd.read_csv(qc_and_lineage_fp)  # , dtype=str)
 
@@ -83,27 +78,23 @@ def prep_files_for_tree_building(arg_list):
     # NB that empress metadata files must be tsv
     base_empress_df.to_csv(out_empress_fp, sep='\t', index=False)
 
-    usable_is_variant = base_empress_df[USABLE_NAME] == VARIANT_VAL
-    usable_is_var_and_ep = base_empress_df[USABLE_NAME] == VARIANT_AND_EP_VAL
+    stringent_mask = \
+        base_empress_df[STRINGENT_TEST_COL] == STRINGENT_INCLUDE_VAL
 
-    # these are cumulative: the var_empress_df
-    # contains all records with a "usable_for" value of "variant" OR
-    # "variant_and_epidemiology"--OR the reference and historical records
     # NB: Do NOT let PEP make you change this from == True to is True--
     # "is True" won't work!
     is_hist_or_ref = base_empress_df[IS_HIST_OR_REF] == True  # noqa E712
-    var_empress_mask = (usable_is_variant | usable_is_var_and_ep |
-                        is_hist_or_ref)
-    var_empress_df = base_empress_df[var_empress_mask].copy()
-    var_empress_df.to_csv(out_empress_var_fp, sep='\t', index=False)
 
-    var_and_ep_empress_df = var_empress_df.loc[~usable_is_variant].copy()
-    var_and_ep_empress_df.to_csv(out_empress_var_and_ep_fp,
-                                 sep='\t', index=False)
+    # Note: metadata file includes records for historical or reference seqs,
+    # while fasta file does NOT--those hist_or_ref fasta records are added
+    # in treebuild.sh
+    stringent_plus_hist_or_ref_mask = (stringent_mask | is_hist_or_ref)
+    stringent_plus_hist_or_ref_empress_df = base_empress_df[
+        stringent_plus_hist_or_ref_mask].copy()
+    stringent_plus_hist_or_ref_empress_df.to_csv(out_stringent_empress_fp,
+                                sep='\t', index=False)
 
-    # the output fastas are NOT cumulative
-    winnow_fasta(full_fasta_fp, base_empress_df,
-                 out_loose_fasta_fp, out_stringent_fasta_fp)
+    winnow_fasta(full_fasta_fp, base_empress_df, out_stringent_fasta_fp)
 
 
 if __name__ == '__main__':
