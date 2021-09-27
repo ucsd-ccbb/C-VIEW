@@ -6,9 +6,11 @@ SEARCH_ID_KEY = "search_id"
 SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
 VARIANT_S3 = "variants_s3"
 CONSENSUS_S3 = "consensus_s3"
+BAM_S3 = "trimmed_bam_s3"
 SOURCE = "source"
 SEQ_RUN = "seq_run"
 OVERALL_FAIL = "overall_fail"
+SUBMIT_TO_GISAID = "submit_to_gisaid"
 INDEX_COL_NAME = "Unnamed: 0"
 
 BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
@@ -25,8 +27,9 @@ BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
                    "Sample ID given by the submitting laboratory", "Authors",
                    "Comment", "Comment Icon", "Released",
                    "Sequenced Pool Component Id", "Variant File S3 URL",
-                   "Consensus File S3 URL", "Source", "Sequencing Run",
-                   "Overall Fail"]
+                   "Consensus File S3 URL", "BAM File S3 URL",
+                   "Source", "Sequencing Run", "Overall Fail",
+                   "Inspect Submit-to-GISAID"]
 
 
 def filter_metadata_for_bjorn(full_df):
@@ -63,7 +66,12 @@ def generate_bjorn_df(filtered_df):
     output_df.loc[:, 'sample_id'] = filtered_df['sample_id']
     output_df.loc[:, 'search_id'] = filtered_df['search_id']
 
-    release_mask = filtered_df[OVERALL_FAIL] == False  # noqa 712
+    # The metadata reads in as strings (hence 'True') while the qc and lineage
+    # data reads in parsed (hence False, not 'False')
+    inspect_approval = filtered_df[SUBMIT_TO_GISAID] == 'True'  # noqa 712
+    no_overall_fail = filtered_df[OVERALL_FAIL] == False  # noqa 712
+
+    release_mask = inspect_approval & no_overall_fail
     output_df.loc[:, "ready_for_release"] = "No"
     output_df.loc[release_mask, "ready_for_release"] = "Yes"
 
@@ -71,7 +79,15 @@ def generate_bjorn_df(filtered_df):
     output_df.loc[:, "released"] = ""
     output_df.loc[:, "submitter"] = ""
     output_df.loc[:, "fasta_fname"] = ""
-    output_df.loc[:, "virus_name"] = "hCoV-19/USA/" + output_df["search_id"] \
+
+    # Note: if any of the virus name input fields is non-existent, then the
+    # resulting virus name is non-existent, which seems reasonable.
+    # I believe this justifies hardcoding the "USA": this is appropriate iff
+    # the sample has a state code, and the string will not be generated if the
+    # sample does NOT have a state code.
+    output_df.loc[:, "virus_name"] = "hCoV-19/USA/" \
+                                     + filtered_df["state_code"] \
+                                     + "-" + filtered_df["search_id"] \
                                      + "/" \
                                      + filtered_df["sample_collection_year"]
     output_df.loc[:, "type"] = "betacoronavirus"
@@ -110,9 +126,11 @@ def generate_bjorn_df(filtered_df):
     output_df.loc[:, SEQ_POOL_COMP_ID] = filtered_df[SEQ_POOL_COMP_ID]
     output_df.loc[:, VARIANT_S3] = filtered_df[VARIANT_S3]
     output_df.loc[:, CONSENSUS_S3] = filtered_df[CONSENSUS_S3]
+    output_df.loc[:, BAM_S3] = filtered_df[BAM_S3]
     output_df.loc[:, SOURCE] = filtered_df[SOURCE]
     output_df.loc[:, SEQ_RUN] = filtered_df[SEQ_RUN]
     output_df.loc[:, OVERALL_FAIL] = filtered_df[OVERALL_FAIL]
+    output_df.loc[:, SUBMIT_TO_GISAID] = filtered_df[SUBMIT_TO_GISAID]
 
     return output_df
 
@@ -137,9 +155,14 @@ def merge_metadata(arg_list):
     full_df.to_csv(out_full_fp, index=False)
 
     filtered_df = filter_metadata_for_bjorn(full_df)
-    bjorn_metadata_df = generate_bjorn_df(filtered_df)
-    bjorn_metadata_df.columns = BJORN_COL_NAMES
-    bjorn_metadata_df.to_csv(out_bjorn_fp, index=False)
+    if len(filtered_df) > 0:
+        bjorn_metadata_df = generate_bjorn_df(filtered_df)
+        bjorn_metadata_df.columns = BJORN_COL_NAMES
+        bjorn_metadata_df.to_csv(out_bjorn_fp, index=False)
+    else:
+        # create a bjorn file that has only a header line
+        with open(out_bjorn_fp, 'w') as f:
+            f.write(",".join(BJORN_COL_NAMES))
 
 
 if __name__ == '__main__':
