@@ -12,7 +12,7 @@ THREADS=8
 rm -rf $WORKSPACE
 mkdir -p $WORKSPACE
 mkdir -p $WORKSPACE/passQC
-mkdir -p $WORKSPACE/loose_stringent
+# mkdir -p $WORKSPACE/loose_stringent
 mkdir -p $WORKSPACE/stringent
 
 # Based on inputs, decide what to download from where
@@ -86,10 +86,14 @@ runLineages () {
   cat $WORKSPACE/"$PROCESSINGID"_passQC.fas $WORKSPACE/"$PROCESSINGID"_refs_hist.fas >> $WORKSPACE/passQC/"$PROCESSINGID"_passQC_refs_hist.fas
 
 	# pangolin
-	source $ANACONDADIR/activate pangolin2
+	source $ANACONDADIR/activate pangolin
 	pangolin --update
 	pangolin -t $THREADS --outfile $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/passQC/"$PROCESSINGID"_passQC_refs_hist.fas
   echo -e "pangolin exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
+
+  # deactivate the pangolin environment and re-activate the main pipeline environment
+  source $ANACONDADIR/deactivate pangolin
+  source $ANACONDADIR/activate covid1.2
 
   # produce merged_qc_and_lineages.csv
   python $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE/added_fa_names.txt $WORKSPACE "-summary.csv" $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv
@@ -129,7 +133,7 @@ runLineages () {
   cat $WORKSPACE/"$PROCESSINGID"_refs_hist.fas $WORKSPACE/stringent/"$PROCESSINGID"_stringent_only.fas >> $WORKSPACE/stringent/"$PROCESSINGID"_stringent_refs_hist.fas
 
   # add the loose_only.fas to the stringent_refs_hist.fas
-  cat $WORKSPACE/stringent/"$PROCESSINGID"_stringent_refs_hist.fas $WORKSPACE/loose_stringent/"$PROCESSINGID"_loose_only.fas >> $WORKSPACE/loose_stringent/"$PROCESSINGID"_loose_stringent_refs_hist.fas
+  # cat $WORKSPACE/stringent/"$PROCESSINGID"_stringent_refs_hist.fas $WORKSPACE/loose_stringent/"$PROCESSINGID"_loose_only.fas >> $WORKSPACE/loose_stringent/"$PROCESSINGID"_loose_stringent_refs_hist.fas
 
   aws s3 cp $WORKSPACE/"$PROCESSINGID".full_summary.csv $S3INSPECT/"$PROCESSINGID".full_summary.csv
 }
