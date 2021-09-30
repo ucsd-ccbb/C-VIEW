@@ -121,10 +121,8 @@ runLineages () {
     $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv \
     $WORKSPACE/$INSPECT_METADATA_FNAME \
     $WORKSPACE/"$PROCESSINGID"_passQC.fas \
-    $WORKSPACE/loose_stringent/"$PROCESSINGID"_loose_only.fas \
     $WORKSPACE/stringent/"$PROCESSINGID"_stringent_only.fas \
     $WORKSPACE/passQC/"$PROCESSINGID"_passQC_refs_hist_empress_metadata.tsv \
-    $WORKSPACE/loose_stringent/"$PROCESSINGID"_loose_stringent_refs_hist_empress_metadata.tsv \
     $WORKSPACE/stringent/"$PROCESSINGID"_stringent_refs_hist_empress_metadata.tsv
 
   echo -e "tree_prep.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
