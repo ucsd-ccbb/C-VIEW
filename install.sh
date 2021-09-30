@@ -28,7 +28,7 @@ sudo apt-get install git
 mkdir -p $SOFTWAREDIR
 
 # ------- covid_sequencing_analysis_pipeline -------
-git clone https://github.com/ucsd-ccbb/covid_sequencing_analysis_pipeline.git $SOFTWAREDIR/covid_sequencing_analysis_pipeline
+git clone https://github.com/ucsd-ccbb/C-VIEW.git $SOFTWAREDIR/covid_sequencing_analysis_pipeline
 
 # ------- q30 -------
 git clone https://github.com/artnasamran/q30.git $SOFTWAREDIR/q30
@@ -45,9 +45,9 @@ wget "https://raw.githubusercontent.com/Niema-Docker/pi_from_pileup/main/pi_from
 g++ -O3 --std=c++11 -o /shared/workspace/software/pi_from_pileup pi_from_pileup.cpp
 rm pi_from_pileup.cpp
 
-# ------- covid1.1 env from pre-release README on github -------
-conda create --name covid1.1
-source $ANACONDADIR/bin/activate covid1.1
+# ------- covid1.2 env from pre-release README on github -------
+conda create --name covid1.2
+source $ANACONDADIR/bin/activate covid1.2
 conda install numpy
 conda install boto3
 #conda install -c bioconda fastqc
@@ -62,7 +62,7 @@ pip install seaborn
 pip install fastaparser
 
 # ------- iVar v.1.3.1 -------
-source $ANACONDADIR/bin/activate covid1.1
+source $ANACONDADIR/bin/activate covid1.2
 cd $SOFTWAREDIR
 wget https://github.com/andersen-lab/ivar/archive/master.zip -O ivar.zip
 unzip ivar.zip
@@ -70,13 +70,13 @@ mv ivar-master ivar
 rm ivar.zip
 
 # Path to HTSlib from conda (installed by samtools)
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ANACONDADIR/envs/covid1.1/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ANACONDADIR/envs/covid1.2/lib
 
 # Install iVar
 cd ivar
 ./autogen.sh
 # configure needs to point to location of htslib, LDFLAGS needs to point to location of environment libs
-./configure --with-hts=$ANACONDADIR/envs/covid1.1 LDFLAGS=-Wl,-R$ANACONDADIR/envs/covid1.1/lib --prefix=$SOFTWAREDIR/ivar
+./configure --with-hts=$ANACONDADIR/envs/covid1.2 LDFLAGS=-Wl,-R$ANACONDADIR/envs/covid1.2/lib --prefix=$SOFTWAREDIR/ivar
 make
 make install
 
