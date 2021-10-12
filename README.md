@@ -17,8 +17,8 @@ The pipeline uses the following external software programs:
 * [FastRoot 1.5](https://github.com/uym2/MinVar-Rooting/releases/tag/v1.5)
 * [EMPress 1.1.0](https://github.com/biocore/empress/releases/tag/v1.1.0)
 * [q30 dev](https://github.com/artnasamran/q30)
-* [samhead dev](https://github.com/niemasd/SD-COVID-Sequencing/tree/main/samhead)
-* [pi_from_pileup](https://github.com/Niema-Docker/pi_from_pileup/)
+* [samhead 1.0.0](https://github.com/niemasd/samhead/releases/tag/1.0.0)
+* [pi_from_pileup 1.0.3](https://github.com/Niema-Docker/pi_from_pileup/releases/tag/1.0.3)
 * git 2.7.4 or higher
 
 Should one wish to set up the pipeline on a fresh AWS ubuntu instance, download the `install.sh` script from this repository, set the 
