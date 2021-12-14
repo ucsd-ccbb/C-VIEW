@@ -41,7 +41,7 @@ def winnow_fasta(fasta_fp, base_empress_df, out_stringent_fp):
                 elif len(seq_metadata_df) > 1:
                     raise ValueError(f"More than one metadata row with"
                                      f"consensus sequence name "
-                                     f"'{seq.header}' found")
+                                     f"'{seq.id}' found")
                 else:
                     seq_stringent_test_val = \
                         seq_metadata_df.loc[:, STRINGENT_TEST_COL].iat[0]
@@ -91,8 +91,8 @@ def prep_files_for_tree_building(arg_list):
     stringent_plus_hist_or_ref_mask = (stringent_mask | is_hist_or_ref)
     stringent_plus_hist_or_ref_empress_df = base_empress_df[
         stringent_plus_hist_or_ref_mask].copy()
-    stringent_plus_hist_or_ref_empress_df.to_csv(out_stringent_empress_fp,
-                                sep='\t', index=False)
+    stringent_plus_hist_or_ref_empress_df.to_csv(
+        out_stringent_empress_fp, sep='\t', index=False)
 
     winnow_fasta(full_fasta_fp, base_empress_df, out_stringent_fasta_fp)
 
