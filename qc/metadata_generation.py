@@ -12,6 +12,7 @@ SEQ_RUN = "seq_run"
 OVERALL_FAIL = "overall_fail"
 SUBMIT_TO_GISAID = "submit_to_gisaid"
 INDEX_COL_NAME = "Unnamed: 0"
+SUBJ_AGE = "subject_age"
 
 BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
                    "New sequences ready for release", "Released?",
@@ -40,12 +41,15 @@ def filter_metadata_for_bjorn(full_df):
 
     is_human = full_df["subject_species"] == "Human"
     has_gender = full_df["subject_gender"].isin(["Male", "Female", "Unknown"])
-    has_positive_age = ~full_df["subject_age"].isna() & full_df[
-        "subject_age"] > 0
+    # NB: the age column is a mix of strings and NaNs; we have to convert it to
+    # a number type (temporarily) to do the ">0" comparison, and although all
+    # the real values are integers, NaN won't cast to an integer--only a float
+    has_positive_age = (~full_df[SUBJ_AGE].isna()) & \
+                       (full_df[SUBJ_AGE].astype(float) > 0)
     has_demographics = has_gender & has_positive_age
     is_scripps_sequencing = full_df[SOURCE] == "Scripps-Sequencing"
-    is_human_wo_demographics_not_scripps = is_human & ~has_demographics \
-                                           & ~is_scripps_sequencing
+    is_human_wo_demographics_not_scripps = \
+        is_human & ~has_demographics & ~is_scripps_sequencing
 
     is_excluded = (has_no_search_id | has_no_specimen_type |
                    has_no_consensus_seq | is_control |
