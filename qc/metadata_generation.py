@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy
 from datetime import datetime, timedelta, timezone
 from sys import argv
 
