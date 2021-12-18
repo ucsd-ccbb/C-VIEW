@@ -35,12 +35,7 @@ BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
                    "Inspect Submit-to-GISAID"]
 
 
-def filter_metadata_for_bjorn(full_df):
-    has_no_search_id = full_df[SEARCH_ID_KEY].isna()
-    has_no_specimen_type = full_df["specimen_type"].isna()
-    has_no_consensus_seq = full_df["consensus_seq_name"].isna()
-    is_control = full_df["specimen_type"] == "control"
-
+def _get_impossible_date_mask(full_df):
     # These limits are heuristic, but hopefully better than nothing.
     # Adding 1 to today's date to prevent throwing out anything because
     # of time zone differences ... could also let some bad dates through
@@ -50,11 +45,27 @@ def filter_metadata_for_bjorn(full_df):
     too_early_date = datetime(2020, 1, 1, tzinfo=tz_info)
     too_late_date = datetime.now(tz_info) + timedelta(days=1)
 
+    # NB: this is a hack--turn all nans to the current datetime so they DON'T
+    # get coerced to NaT (not a time). This is ok since we are doing this hack
+    # on a COPY of the collection dates and not the real things. After this
+    # nans-to-now replacement, anything that DOES get coerced to
+    # NaT is a really invalid date (e.g., 3032 throws an error when trying to
+    # cast to a date in pandas because it is outside the nanosecond range that
+    # pandas dates can store ... but you *can* force it to cast to NaT)
     collection_dates = full_df[COLLECTION_DATE].apply(lambda x: datetime.now() if pd.isnull(x) else x)
     collection_dates = pd.to_datetime(collection_dates, errors='coerce')
     has_impossible_date = (collection_dates < too_early_date) | \
                           (collection_dates > too_late_date) | \
                           (collection_dates.isna())
+    return has_impossible_date
+
+def filter_metadata_for_bjorn(full_df):
+    has_no_search_id = full_df[SEARCH_ID_KEY].isna()
+    has_no_specimen_type = full_df["specimen_type"].isna()
+    has_no_consensus_seq = full_df["consensus_seq_name"].isna()
+    is_control = full_df["specimen_type"] == "control"
+
+    has_impossible_date = _get_impossible_date_mask(full_df)
 
     is_human = full_df["subject_species"] == "Human"
     has_gender = full_df["subject_gender"].isin(["Male", "Female", "Unknown"])
