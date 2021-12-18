@@ -59,6 +59,7 @@ def _get_impossible_date_mask(full_df):
                           (collection_dates.isna())
     return has_impossible_date
 
+
 def filter_metadata_for_bjorn(full_df):
     has_no_search_id = full_df[SEARCH_ID_KEY].isna()
     has_no_specimen_type = full_df["specimen_type"].isna()
