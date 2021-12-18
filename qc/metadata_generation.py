@@ -1,6 +1,7 @@
 import pandas as pd
+import numpy
+from datetime import datetime, timedelta, timezone
 from sys import argv
-
 
 SEARCH_ID_KEY = "search_id"
 SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
@@ -13,6 +14,7 @@ OVERALL_FAIL = "overall_fail"
 SUBMIT_TO_GISAID = "submit_to_gisaid"
 INDEX_COL_NAME = "Unnamed: 0"
 SUBJ_AGE = "subject_age"
+COLLECTION_DATE = "sample_collection_datetime"
 
 BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
                    "New sequences ready for release", "Released?",
@@ -39,6 +41,21 @@ def filter_metadata_for_bjorn(full_df):
     has_no_consensus_seq = full_df["consensus_seq_name"].isna()
     is_control = full_df["specimen_type"] == "control"
 
+    # These limits are heuristic, but hopefully better than nothing.
+    # Adding 1 to today's date to prevent throwing out anything because
+    # of time zone differences ... could also let some bad dates through
+    # but decided to go conservative here.
+    # -8 hours = Pacific Standard Time (UTC−08:00)
+    tz_info = timezone(timedelta(hours=-8))
+    too_early_date = datetime(2020, 1, 1, tzinfo=tz_info)
+    too_late_date = datetime.now(tz_info) + timedelta(days=1)
+
+    collection_dates = full_df[COLLECTION_DATE].apply(lambda x: datetime.now() if pd.isnull(x) else x)
+    collection_dates = pd.to_datetime(collection_dates, errors='coerce')
+    has_impossible_date = (collection_dates < too_early_date) | \
+                          (collection_dates > too_late_date) | \
+                          (collection_dates.isna())
+
     is_human = full_df["subject_species"] == "Human"
     has_gender = full_df["subject_gender"].isin(["Male", "Female", "Unknown"])
     # NB: the age column is a mix of strings and NaNs; we have to convert it to
@@ -53,7 +70,8 @@ def filter_metadata_for_bjorn(full_df):
 
     is_excluded = (has_no_search_id | has_no_specimen_type |
                    has_no_consensus_seq | is_control |
-                   is_human_wo_demographics_not_scripps)
+                   is_human_wo_demographics_not_scripps |
+                   has_impossible_date)
     filtered_df = full_df[~is_excluded].copy()
     return filtered_df
 
