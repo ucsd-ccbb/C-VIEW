@@ -12,7 +12,6 @@ OVERALL_FAIL = "overall_fail"
 SUBMIT_TO_GISAID = "submit_to_gisaid"
 INDEX_COL_NAME = "Unnamed: 0"
 SUBJ_AGE = "subject_age"
-COLLECTION_DATE = "sample_collection_datetime"
 
 BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
                    "New sequences ready for release", "Released?",
