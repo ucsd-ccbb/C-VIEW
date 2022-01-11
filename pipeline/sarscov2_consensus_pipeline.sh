@@ -8,7 +8,7 @@ source $ANACONDADIR/activate covid1.2
 
 # Set variables
 THREADS=2
-PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
+PIPELINEDIR=/shared/workspace/software/cview
 REF_FAS="/scratch/reference/NC_045512.2.fas"
 REF_MMI="/scratch/reference/NC_045512.2.fas.mmi"
 REF_GFF="/scratch/reference/NC_045512.2.gff3"

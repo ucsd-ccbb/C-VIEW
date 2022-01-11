@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export PATH=$PATH:/shared/workspace/software/IQTree/iqtree-2.1.2-Linux/bin:/shared/workspace/software/viralMSA:/shared/workspace/software/MinVar-Rooting-master:/shared/workspace/software/anaconda3/envs/covid1.2/bin
-PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
+PIPELINEDIR=/shared/workspace/software/cview
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
