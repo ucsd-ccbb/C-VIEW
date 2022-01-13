@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PIPELINEDIR=/shared/workspace/software/cview
+PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
 QCRESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_summary_files
 
 # Activate conda env covid1.2
