@@ -222,9 +222,8 @@ do
 #        QSUBSAMPLEPARAMS=' -hold_jid m_'$SEQ_RUN''
 #      fi # end if we are merging lanes
 
-      # TODO: fill this in with real POC bam names ... make sure they
-      # ALREADY follow sample naming convention and end with .trimmed.sorted.bam
-      SAMPLE_LIST=(verycramped.txt "quite spacious.txt" "too much space.txt" "*ry nights.txt")
+      # TODO: fill this in with real POC sample names (no file extensions)
+      SAMPLE_LIST=(AssayDev_EXC_MW4_208844__E0002080__L07__SARS-CoV-2InsightResearchAssay_Lineage_7XUOM_7XUOM__001 AssayDev_EXC_MW4_350739__E0002080__M01__SARS-CoV-2InsightResearchAssay_Lineage_7XUOM_7XUOM__001 AssayDev_EXC_MW4_478321__E0002080__I06__SARS-CoV-2InsightResearchAssay_Lineage_7XUOM_7XUOM__001 AssayDev_EXC_MW4_478505__E0002080__H19__SARS-CoV-2InsightResearchAssay_Lineage_7XUOM_7XUOM__001 AssayDev_EXC_MW4_616272__E0002080__I13__SARS-CoV-2InsightResearchAssay_Lineage_7XUOM_7XUOM__001 AssayDev_EXC_MW4_631160__E0002080__C18__SARS-CoV-2InsightResearchAssay_Lineage_7XUOM_7XUOM__001 AssayDev_EXC_MW5_369577__E0002080__F04__SARS-CoV-2InsightResearchAssay_Lineage_7XUOM_7XUOM__001 AssayDev_EXC_MW5_461830__E0002080__L14__SARS-CoV-2InsightResearchAssay_Lineage_7XUOM_7XUOM__001 AssayDev_PLJAN0922__1__000__SARS-CoV-2InsightWastewaterResearchAssay_Lineage_7XUOM_7XUOM__001 AssayDev_PLJAN0922__2__000__SARS-CoV-2InsightWastewaterResearchAssay_Lineage_7XUOM_7XUOM__001 AssayDev_PLJAN1022__1__000__SARS-CoV-2InsightWastewaterResearchAssay_Lineage_7XUOM_7XUOM__001 AssayDev_PLJAN1022__2__000__SARS-CoV-2InsightWastewaterResearchAssay_Lineage_7XUOM_7XUOM__001 AssayDev_PLJAN322__1__000__SARS-CoV-2InsightWastewaterResearchAssay_Lineage_7XUOM_7XUOM__001 AssayDev_PLJAN322__2__000__SARS-CoV-2InsightWastewaterResearchAssay_Lineage_7XUOM_7XUOM__001 AssayDev_PLJAN522__1__000__SARS-CoV-2InsightWastewaterResearchAssay_Lineage_7XUOM_7XUOM__001 AssayDev_PLJAN522__2__000__SARS-CoV-2InsightWastewaterResearchAssay_Lineage_7XUOM_7XUOM__001)
 	    # SAMPLE_LIST=$(echo "$R1_FASTQS" | awk -F $DELIMITER '{print $1}' | sort | uniq)
 	  fi # end if we are handling all samples, not just one
 
