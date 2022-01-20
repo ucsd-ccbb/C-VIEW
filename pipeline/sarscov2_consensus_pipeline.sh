@@ -38,7 +38,7 @@ fi
 
 if [[ "$GENEXUS_BAM" == true ]]; then
     S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_bam
-    aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ --recursive --exclude "*" --include "$FASTQBASE.trimmed.sorted.bam"
+    aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ --recursive --exclude "*" --include "$SAMPLEID.trimmed.sorted.bam"
 else
   # ensure that primer file is downloaded
   SCRATCH_PRIMER_FP=/scratch/reference/$PRIMER_BED_FNAME
