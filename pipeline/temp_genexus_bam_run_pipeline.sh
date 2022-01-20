@@ -90,7 +90,7 @@ do
     re='^[0-9]+$'
     if [[ ! $READ_CAP =~ ^($re|all)$ ]] ; then
        echo "Error: READ_CAP must be an integer or 'all'"
-       #exit 1
+       exit 1
     fi
 
     # TODO: add check if this is NOT using bams (if it is, this field stays ignored)
@@ -224,7 +224,7 @@ do
 
       # TODO: fill this in with real POC sample names that include
       # sample number and lane info at the end (but no _R1_001 etc)
-      SAMPLE_LIST=("AssayDev_EXC_MW4_208844__E0002080__L07____S13_L001" "AssayDev_EXC_MW4_350739__E0002080__M01__genexus_test__S1_L001" "AssayDev_EXC_MW4_478321__E0002080__I06__genexus_test__S14_L001" "AssayDev_EXC_MW4_478505__E0002080__H19__genexus_test__S15_L001" "AssayDev_EXC_MW4_616272__E0002080__I13__genexus_test__S16_L001" "AssayDev_EXC_MW4_631160__E0002080__C18__genexus_test__S12_L001" "AssayDev_EXC_MW5_369577__E0002080__F04__genexus_test__S11_L001" "AssayDev_EXC_MW5_461830__E0002080__L14__genexus_test__S10_L001" "AssayDev_PLJAN0922__1__000__genexus_test__S5_L001" "AssayDev_PLJAN0922__2__000__genexus_test__S4_L001" "AssayDev_PLJAN1022__1__000__genexus_test__S3_L001" "AssayDev_PLJAN1022__2__000__genexus_test__S2_L001" "AssayDev_PLJAN322__1__000__genexus_test__S8_L001" "AssayDev_PLJAN322__2__000__genexus_test__S9_L001" "AssayDev_PLJAN522__1__000__genexus_test__S7_L001" "AssayDev_PLJAN522__2__000__genexus_test__S6_L001")
+      SAMPLE_LIST=("AssayDev_EXC_MW4_208844__E0002080__L07__genexus_test__S13_L001" "AssayDev_EXC_MW4_350739__E0002080__M01__genexus_test__S1_L001" "AssayDev_EXC_MW4_478321__E0002080__I06__genexus_test__S14_L001" "AssayDev_EXC_MW4_478505__E0002080__H19__genexus_test__S15_L001" "AssayDev_EXC_MW4_616272__E0002080__I13__genexus_test__S16_L001" "AssayDev_EXC_MW4_631160__E0002080__C18__genexus_test__S12_L001" "AssayDev_EXC_MW5_369577__E0002080__F04__genexus_test__S11_L001" "AssayDev_EXC_MW5_461830__E0002080__L14__genexus_test__S10_L001" "AssayDev_PLJAN0922__1__000__genexus_test__S5_L001" "AssayDev_PLJAN0922__2__000__genexus_test__S4_L001" "AssayDev_PLJAN1022__1__000__genexus_test__S3_L001" "AssayDev_PLJAN1022__2__000__genexus_test__S2_L001" "AssayDev_PLJAN322__1__000__genexus_test__S8_L001" "AssayDev_PLJAN322__2__000__genexus_test__S9_L001" "AssayDev_PLJAN522__1__000__genexus_test__S7_L001" "AssayDev_PLJAN522__2__000__genexus_test__S6_L001")
 	    # SAMPLE_LIST=$(echo "$R1_FASTQS" | awk -F $DELIMITER '{print $1}' | sort | uniq)
 	  fi # end if we are handling all samples, not just one
 
