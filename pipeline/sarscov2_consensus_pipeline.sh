@@ -37,6 +37,11 @@ if [[ ! -f "$REF_FAS" ]]; then
 fi
 
 if [[ "$GENEXUS_BAM" == true ]]; then
+    # Thermo rep said: "The reference file used for mapping is ... the same sequence as the original
+    # MN908947.3 SARS sequence, we named it as 2019-nCoV."
+    # (Note that 2019-nCoV.fas is the exact same sequence as NC_045512.2.fas ...)
+    cp $PIPELINEDIR/reference_files/2019-nCoV.fas $REF_FAS
+    cp $PIPELINEDIR/reference_files/2019-nCoV.gff3 $REF_GFF
     S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_bam
     aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ --recursive --exclude "*" --include "$SAMPLEID.trimmed.sorted.bam"
 else
