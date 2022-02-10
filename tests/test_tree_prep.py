@@ -9,7 +9,8 @@ class TreePrepTest(FileTestCase):
         input_qc_and_lineages_fp = f"{self.dummy_dir}/" \
                                       f"dummy_qc_and_lineages_w_bjorn_" \
                                       f"for_tree_prep.csv"
-        input_metadata_fp = f"{self.dummy_dir}/dummy_inspect_metadata.csv"
+        input_metadata_fp = f"{self.dummy_dir}/" \
+                            f"dummy_inspect_metadata_for_tree_prep.csv"
         in_fas_fp = f"{self.dummy_dir}/dummy.fas"
 
         expected_stringent_fas_fp = f"{self.dummy_dir}/" \

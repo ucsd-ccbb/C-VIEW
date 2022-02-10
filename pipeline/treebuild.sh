@@ -29,7 +29,7 @@ else
 fi
 
 aws s3 cp $S3DOWNLOAD/phylogeny/$PROCESSINGID/"$DATASET"/"$PROCESSINGID"_"$DATASET"_refs_hist.fas $WORKSPACE/
-aws s3 cp $S3DOWNLOAD/phylogeny/$PROCESSINGID/"$DATASET"/"$PROCESSINGID"_"$DATASET"_refs_hist_empress_metadata.tsv $WORKSPACE/
+#aws s3 cp $S3DOWNLOAD/phylogeny/$PROCESSINGID/"$DATASET"/"$PROCESSINGID"_"$DATASET"_refs_hist_empress_metadata.tsv $WORKSPACE/
 
 buildTree () {
 	# Must use biopy env due to numpy conflicts
@@ -40,18 +40,17 @@ buildTree () {
 	python $PIPELINEDIR/pipeline/trim_msa.py -i $WORKSPACE/viralmsa_out/"$PROCESSINGID"_"$DATASET"_refs_hist.fas.aln -s 100 -e 50 -o $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist.trimmed.aln
     echo -e "trim_msa.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-phylogeny.exit.log
 
-	iqtree2 -T $THREADS -m GTR+F+G4 --polytomy -blmin 1e-9 -s $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist.trimmed.aln
-    echo -e "iqtree2 exit code: $?" >> $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-phylogeny.exit.log
-
-	python /shared/workspace/software/MinVar-Rooting-master/FastRoot.py -i $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist.trimmed.aln.treefile -o $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist.trimmed.aln.rooted.treefile -m OG -g "hCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25"
-    echo -e "iFastRoot.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-phylogeny.exit.log
-
-	# tree building 
-	source $ANACONDADIR/activate qiime2-2020.11
-
-	empress tree-plot --tree $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist_empress_metadata.tsv --output-dir $WORKSPACE/"$PROCESSINGID"_"$DATASET"_tree-viz
-    echo -e "empress tree-plot exit code: $?" >> $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-phylogeny.exit.log
-  mv $WORKSPACE/"$PROCESSINGID"_"$DATASET"_tree-viz/empress.html $WORKSPACE/"$PROCESSINGID"_"$DATASET"_tree-viz/"$PROCESSINGID"_"$DATASET"_empress.html
+#	iqtree2 -T $THREADS -m GTR+F+G4 --polytomy -blmin 1e-9 -s $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist.trimmed.aln
+#    echo -e "iqtree2 exit code: $?" >> $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-phylogeny.exit.log
+#
+#	python /shared/workspace/software/MinVar-Rooting-master/FastRoot.py -i $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist.trimmed.aln.treefile -o $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist.trimmed.aln.rooted.treefile -m OG -g "hCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25"
+#    echo -e "iFastRoot.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-phylogeny.exit.log
+#
+#	source $ANACONDADIR/activate qiime2-2020.11
+#
+#	empress tree-plot --tree $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist.trimmed.aln.rooted.treefile --feature-metadata $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist_empress_metadata.tsv --output-dir $WORKSPACE/"$PROCESSINGID"_"$DATASET"_tree-viz
+#    echo -e "empress tree-plot exit code: $?" >> $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-phylogeny.exit.log
+#  mv $WORKSPACE/"$PROCESSINGID"_"$DATASET"_tree-viz/empress.html $WORKSPACE/"$PROCESSINGID"_"$DATASET"_tree-viz/"$PROCESSINGID"_"$DATASET"_empress.html
 }
 
 { time ( buildTree ) ; } > $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-treebuild.log 2>&1
@@ -60,4 +59,4 @@ aws s3 cp $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-treebuild.log $S3UPLOA
 
 grep -v "exit code: 0" $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-phylogeny.exit.log | head -n 1 >> $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-phylogeny.error.log
 aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$PROCESSINGID/$DATASET/ --recursive --quiet
-aws s3 cp $WORKSPACE/ $S3INSPECT/empress_tree_data/$PROCESSINGID/$DATASET/ --recursive --quiet
+#aws s3 cp $WORKSPACE/ $S3INSPECT/empress_tree_data/$PROCESSINGID/$DATASET/ --recursive --quiet
