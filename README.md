@@ -60,7 +60,7 @@ The fields are:
 |`read_cap`|a positive integer or all|Specifies the maximum number of mapped reads per sample that should be used in the per-sample variant-calling and consensus-sequence-building functionality.|
 |`sample`|a string such as "SEARCH-10003__D101802__I22__210608_A00953_0321_BH7L5LDSX2__S470_L002"|Specifies, for the sample to be processed, the part of the read one file name coming before `_R1_001.fastq.gz`.|
 |`timestamp`|a string such as "2021-07-09_22-44-27"|Specifies the timestamp associated with the particular processing run that should be used.|
-|`is_test`|true or false|Indicates whether the pipeline should execute the alignment-building functionality on all cumulative data available to this organization.|
+|`is_test`|true or false|Indicates whether data should be pulled from and written to the test S3 bucket (if true) or the production S3 bucket (if false)|
 
 The functions supported by the pipeline are:
 
