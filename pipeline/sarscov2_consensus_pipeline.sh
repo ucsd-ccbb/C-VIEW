@@ -104,6 +104,8 @@ if [[ "$INPUT_TYPE" == bam ]]; then
   # filter out bogus empty records in the genexus bam for other "chromosomes"--other reference sequences
   # that they align everything against
   { time ( samtools reheader <(samtools view -H $TBAM | grep -P "^@HD\t" && samtools view -H $TBAM | grep -P "^@SQ\tSN:$REF_NAME\t") $TBAM > $WORKSPACE/"$SAMPLEID.trimmed.sorted.bam") ; } 2> $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log
+  # Note >> here--adding to log made above, not making new one
+  { time ( samtools index $WORKSPACE/"$SAMPLEID.trimmed.sorted.bam") ; } 2>> $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log
   QUALIMAP_BAM=$WORKSPACE/"$SAMPLEID.trimmed.sorted.bam"
 fi # end if the input is a genexus pre-processed bam
 
