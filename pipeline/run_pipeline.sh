@@ -61,49 +61,60 @@ do
 	  exit 1
 	fi
 
-  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ]; then
-    VARIANTS=true
-
-    if [[ ! "$MERGE_LANES" =~ ^(true|false)$ ]]; then
-      echo "Error: MERGE_LANES must be one of true or false"
-      exit 1
-    fi
-	  unset FIELD_IGNORED[MERGE_LANES]
-
-    if [[ ! "$PRIMER_SET" =~ ^(artic|swift_v2|mini_artic)$ ]]; then
-      echo "Error: Parameter PRIMER_SET must be one of artic, swift_v2, or mini_artic"
-      exit 1
-    fi
-
-    if [[ "$PRIMER_SET" == artic ]]; then
-      PRIMER_BED_FNAME="nCoV-2019.primer.bed"
-    elif [[ "$PRIMER_SET" == swift_v2 ]]; then
-      PRIMER_BED_FNAME="sarscov2_v2_primers.bed"
-    elif [[ "$PRIMER_SET" == mini_artic ]]; then
-      PRIMER_BED_FNAME="SARS2_short_primers_V3_no_adapter_sequences_mini_artic.bed"
-    fi
-
-    unset FIELD_IGNORED[PRIMER_SET]
-
-    re='^[0-9]+$'
-    if [[ ! $READ_CAP =~ ^($re|all)$ ]] ; then
-       echo "Error: READ_CAP must be an integer or 'all'"
-       #exit 1
-    fi
-    unset FIELD_IGNORED[READ_CAP]
-
-    if [[ $READ_CAP == all ]] ; then
-      # C/C++ Unsigned long max = 4294967295
-      READ_CAP=4294967295
-    fi
-  fi
-
-  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
-    if [[ ! "$FQ" =~ ^(se|pe)$ ]]; then
-      echo "Error: FQ must be one of se or pe"
+	if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
+    if [[ ! "$FQ" =~ ^(se|pe|bam)$ ]]; then
+      echo "Error: FQ must be one of se, pe, or bam"
       exit 1
     fi
 	  unset FIELD_IGNORED[FQ]
+  fi
+
+  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ]; then
+    VARIANTS=true
+
+    if [[ "$FQ" =~ ^(se|pe)$ ]]; then
+      if [[ ! "$MERGE_LANES" =~ ^(true|false)$ ]]; then
+        echo "Error: MERGE_LANES must be one of true or false"
+        exit 1
+      fi
+      unset FIELD_IGNORED[MERGE_LANES]
+
+      if [[ ! "$PRIMER_SET" =~ ^(artic|swift_v2|mini_artic)$ ]]; then
+        echo "Error: Parameter PRIMER_SET must be one of artic, swift_v2, or mini_artic"
+        exit 1
+      fi
+
+      if [[ "$PRIMER_SET" == artic ]]; then
+        PRIMER_BED_FNAME="nCoV-2019.primer.bed"
+      elif [[ "$PRIMER_SET" == swift_v2 ]]; then
+        PRIMER_BED_FNAME="sarscov2_v2_primers.bed"
+      elif [[ "$PRIMER_SET" == mini_artic ]]; then
+        PRIMER_BED_FNAME="SARS2_short_primers_V3_no_adapter_sequences_mini_artic.bed"
+      fi
+
+      unset FIELD_IGNORED[PRIMER_SET]
+
+      re='^[0-9]+$'
+      if [[ ! $READ_CAP =~ ^($re|all)$ ]] ; then
+         echo "Error: READ_CAP must be an integer or 'all'"
+         exit 1
+      fi
+      unset FIELD_IGNORED[READ_CAP]
+
+      if [[ $READ_CAP == all ]] ; then
+        # C/C++ Unsigned long max = 4294967295
+        READ_CAP=4294967295
+      fi
+
+      INPUT_TYPE="fastq"
+      INPUT_SUFFIX=.fastq.gz
+      INPUT_DELIMITER=_R1_001.fastq.gz
+    else
+      MERGE_LANES=false
+      INPUT_TYPE="bam"
+      INPUT_SUFFIX=.trimmed.sorted.unfiltered.bam
+      INPUT_DELIMITER=$INPUT_SUFFIX
+    fi
   fi
 
   if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == qc ]; then
@@ -142,7 +153,7 @@ do
 
   if [ "${#FIELD_IGNORED[@]}" -gt 0 ]; then
     echo " "
-    echo "For input FUNCTION '$FUNCTION', the following inputs will be *ignored*: "
+    echo "For provided settings, the following inputs will be *ignored*: "
     for i in "${!FIELD_IGNORED[@]}"; do
       echo "$i=${FIELD_IGNORED[$i]}"
     done
@@ -164,151 +175,159 @@ do
 
 	# if we are doing per-sample processing
 	if [[ "$VARIANTS" == true ]]; then
-	  FASTQS_PATH=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq
+	  INPUTS_PATH=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_"$INPUT_TYPE"
 
 	  # if we are processing just one sample
 	  if [[ "$SAMPLE" != NA ]]; then
 	    SAMPLE_LIST=($SAMPLE)
 	  else
-	    # set up to find all the relevant fastqs
-	    DELIMITER=_R1_001.fastq.gz
-      BOTH_FASTQS=$(aws s3 ls $FASTQS_PATH/ |  grep ".fastq.gz" | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
-	    R1_FASTQS=$(echo "$BOTH_FASTQS" |  grep $DELIMITER )
+	    # set up to find all the relevant input files
+      INPUT_BASE_NAMES=$(aws s3 ls $INPUTS_PATH/ |  grep $INPUT_SUFFIX | sort -k3 -n | awk '{print $NF}' | sort | uniq | grep -v Undetermined)
 
-      # If necessary, merge fastq files from multiple lanes
-      if [[ "$MERGE_LANES" == true ]]; then
-        # get the (non-unique) list of sample identifiers without lane/read info (but with sample number)
-        INSPECT_DELIMITER=__
-        SAMPLES_WO_LANES_LIST=()
-        for R1_FASTQ in $(echo $R1_FASTQS); do
-          SEQUENCING_INFO=$(echo $R1_FASTQ | awk -F $INSPECT_DELIMITER '{print $NF}')
-          SAMPLE_NUM=$(echo $SEQUENCING_INFO | awk -F _ '{print $1}')
-          A_SAMPLE=$(echo $R1_FASTQ | sed "s/$SEQUENCING_INFO/$SAMPLE_NUM/g")
-          SAMPLES_WO_LANES_LIST+=($A_SAMPLE)
-        done
+      # if dealing with fastq files
+      if [[ "$FQ" =~ (se|pe)$ ]]; then
+        INPUT_NAMES=$(echo "$INPUT_BASE_NAMES" |  grep $INPUT_DELIMITER )
 
-        # reduce above list to only unique values and loop over them
-        FINAL_R1_FASTQS=()
-        for SAMPLE in $(printf '%s\n' "${SAMPLES_WO_LANES_LIST[@]}" | sort | uniq ); do
-          LANES=$(echo "$BOTH_FASTQS" | grep "$SAMPLE" | awk -F $INSPECT_DELIMITER '{print $NF}'| awk -F '_L|_R' '{print $2}' | sort | uniq | grep 00)
-          LANES_COMBINED=$(echo $LANES | sed 's/ //g')
+        # If necessary, merge fastq files from multiple lanes (functionality not available for bams)
+        if [[ "$MERGE_LANES" == true ]]; then
+          # get the (non-unique) list of sample identifiers without lane/read info (but with sample number)
+          INSPECT_DELIMITER=__
+          SAMPLES_WO_LANES_LIST=()
+          for R1_FASTQ in $(echo $INPUT_NAMES); do
+            SEQUENCING_INFO=$(echo $R1_FASTQ | awk -F $INSPECT_DELIMITER '{print $NF}')
+            SAMPLE_NUM=$(echo $SEQUENCING_INFO | awk -F _ '{print $1}')
+            A_SAMPLE=$(echo $R1_FASTQ | sed "s/$SEQUENCING_INFO/$SAMPLE_NUM/g")
+            SAMPLES_WO_LANES_LIST+=($A_SAMPLE)
+          done
 
-          FINAL_R1_FASTQS+=("$SAMPLE"_"$LANES_COMBINED""$DELIMITER")
-        done
+          # reduce above list to only unique values and loop over them
+          FINAL_INPUT_NAMES=()
+          for SAMPLE in $(printf '%s\n' "${SAMPLES_WO_LANES_LIST[@]}" | sort | uniq ); do
+            LANES=$(echo "$INPUT_BASE_NAMES" | grep "$SAMPLE" | awk -F $INSPECT_DELIMITER '{print $NF}'| awk -F '_L|_R' '{print $2}' | sort | uniq | grep 00)
+            LANES_COMBINED=$(echo $LANES | sed 's/ //g')
 
-        qsub -v SEQ_RUN=$SEQ_RUN \
-           -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
-           -v S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq \
-           -wd /shared/workspace/projects/covid/logs \
-           -N m_"$SEQ_RUN" \
-           -pe smp 16 \
-           -S /bin/bash \
-           $PIPELINEDIR/pipeline/merge_lanes.sh
+            FINAL_INPUT_NAMES+=("$SAMPLE"_"$LANES_COMBINED""$INPUT_DELIMITER")
+          done
 
-        R1_FASTQS=$(printf '%s\n' "${FINAL_R1_FASTQS[@]}")
-        QSUBSAMPLEPARAMS=' -hold_jid m_'$SEQ_RUN''
-      fi # end if we are merging lanes
+          qsub -v SEQ_RUN=$SEQ_RUN \
+             -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
+             -v S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq \
+             -wd /shared/workspace/projects/covid/logs \
+             -N m_"$SEQ_RUN" \
+             -pe smp 16 \
+             -S /bin/bash \
+             $PIPELINEDIR/pipeline/merge_lanes.sh
 
-	    SAMPLE_LIST=$(echo "$R1_FASTQS" | awk -F $DELIMITER '{print $1}' | sort | uniq)
+          INPUT_NAMES=$(printf '%s\n' "${FINAL_INPUT_NAMES[@]}")
+          QSUBSAMPLEPARAMS=' -hold_jid m_'$SEQ_RUN''
+        fi # end if we are merging lanes
+      else
+        INPUT_NAMES=$INPUT_BASE_NAMES
+      fi # end if input is/isn't fastq
+
+	    SAMPLE_LIST=$(echo "$INPUT_NAMES" | awk -F $INPUT_DELIMITER '{print $1}' | sort | uniq)
 	  fi # end if we are handling all samples, not just one
 
 	  # sanity-check we have at least one sample to run
     if [[ "$SAMPLE_LIST" == "" ]]; then
-      echo "Error: There are no samples to run in $FASTQS_PATH"
+      echo "Error: There are no samples to run in $INPUTS_PATH"
       exit 1
     fi
 
-		# Run VARIANTS step on each sample
+# TODO: remove debugging comments!!
+#		# Run VARIANTS step on each sample
 		for SAMPLE in $SAMPLE_LIST; do
-			qsub $QSUBSAMPLEPARAMS \
-				-v SEQ_RUN="$SEQ_RUN" \
-				-v SAMPLE=$SAMPLE \
-				-v S3DOWNLOAD=$S3DOWNLOAD \
-        -v PRIMER_BED_FNAME=$PRIMER_BED_FNAME \
-				-v MERGE_LANES=$MERGE_LANES \
-				-v FQ=$FQ \
-				-v TIMESTAMP=$TIMESTAMP \
-				-v VERSION_INFO="$VERSION_INFO" \
-				-v READ_CAP=$READ_CAP \
-				-N v_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
-				-wd /shared/workspace/projects/covid/logs \
-				-pe smp 2 \
-				-S /bin/bash \
-				$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
+		  echo $SAMPLE
+#			qsub $QSUBSAMPLEPARAMS \
+#				-v SEQ_RUN="$SEQ_RUN" \
+#				-v SAMPLE=$SAMPLE \
+#				-v S3DOWNLOAD=$S3DOWNLOAD \
+#        -v PRIMER_BED_FNAME=$PRIMER_BED_FNAME \
+#				-v MERGE_LANES=$MERGE_LANES \
+#				-v FQ=$FQ \
+#				-v TIMESTAMP=$TIMESTAMP \
+#				-v VERSION_INFO="$VERSION_INFO" \
+#				-v READ_CAP=$READ_CAP \
+#       -v INPUT_TYPE=$INPUT_TYPE \
+#				-N v_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
+#				-wd /shared/workspace/projects/covid/logs \
+#				-pe smp 2 \
+#				-S /bin/bash \
+#				$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
 		done
 	fi  # end if we are calling variants
-
-	if [[ "$QC" == true ]]; then
-    qsub \
-      -hold_jid 'v_'$SEQ_RUN'_'$TIMESTAMP'_*' \
-      -v SEQ_RUN=$SEQ_RUN \
-      -v S3DOWNLOAD=$S3DOWNLOAD \
-      -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
-      -v FQ=$FQ \
-      -v TIMESTAMP=$TIMESTAMP \
-      -v ISTEST=$ISTEST \
-      -v VERSION_INFO="$VERSION_INFO" \
-      -N q_"$SEQ_RUN" \
-      -wd /shared/workspace/projects/covid/logs \
-      -pe smp 32 \
-      -S /bin/bash \
-        $PIPELINEDIR/qc/qc_summary.sh
-	fi # end if we are running qc
-
-  # lineage and tree output is stored to a different location than
-  # the outputs of the earlier steps, so it needs a slightly different
-  # identifier for its process
-  PROCESSINGID="$TIMESTAMP"-"$PHYLO_SEQ_RUN"
-
-	if [[ "$LINEAGE" == true ]]; then
-	    qsub \
-      -hold_jid 'q_'$SEQ_RUN'' \
-      -v ORGANIZATION=$ORGANIZATION \
-			-v PROCESSINGID=$PROCESSINGID \
-			-v SEQ_RUN=$PHYLO_SEQ_RUN \
-			-v ISTEST=$ISTEST \
-			-v WORKSPACE=/scratch/phylogeny/$PROCESSINGID \
-			-v VERSION_INFO="$VERSION_INFO" \
-			-N l_"$PROCESSINGID" \
-			-wd /shared/workspace/projects/covid/logs \
-			-pe smp 16 \
-			-S /bin/bash \
-	    	$PIPELINEDIR/pipeline/lineages.sh
-
-		QSUBLINEAGEPARAMS=' -hold_jid l_'$PROCESSINGID
-	fi # end if we are calling lineages
-
-  if [[ "$TREE_BUILD" == true ]]; then
-    # TODO: this is a temporary fix to build only stringent trees
-    #  In the future, we will want to make this more tunable
-    for DATASET in stringent; do # loose_stringent passQC; do
-      qsub \
-        $QSUBLINEAGEPARAMS \
-        -v ORGANIZATION=$ORGANIZATION \
-        -v PROCESSINGID=$PROCESSINGID \
-        -v DATASET=$DATASET \
-        -v ISTEST=$ISTEST \
-        -v WORKSPACE=/scratch/treebuilding/$PROCESSINGID/$DATASET \
-        -v VERSION_INFO="$VERSION_INFO" \
-        -N t_"$DATASET"_"$PROCESSINGID" \
-        -wd /shared/workspace/projects/covid/logs \
-        -pe smp 16 \
-        -S /bin/bash \
-          $PIPELINEDIR/pipeline/treebuild.sh
-    done
-  fi # end if we are building trees
-
-  # if we did variant or qc processing, write a file of the
-  # settings used into the results directory for this seq_run/timestamp
-  if [ "$VARIANTS" == true ] || [ "$QC" == true ]; then
-    SETTINGS_FNAME="$SEQ_RUN"-"$TIMESTAMP"-"$FUNCTION"-$(date +'%Y-%m-%d_%H-%M-%S').csv
-    echo $INPUT_FIELDS > $SETTINGS_FNAME
-    echo $INPUT_VALS >> $SETTINGS_FNAME
-    aws s3 cp $SETTINGS_FNAME $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
-	  rm $SETTINGS_FNAME
-  fi
-
-  # ensure that, if we are processing additional input rows,
-  # they will have a distinct timestamp
-  sleep 1
+#
+#	if [[ "$QC" == true ]]; then
+#    qsub \
+#      -hold_jid 'v_'$SEQ_RUN'_'$TIMESTAMP'_*' \
+#      -v SEQ_RUN=$SEQ_RUN \
+#      -v S3DOWNLOAD=$S3DOWNLOAD \
+#      -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
+#      -v FQ=$FQ \
+#      -v TIMESTAMP=$TIMESTAMP \
+#      -v ISTEST=$ISTEST \
+#      -v VERSION_INFO="$VERSION_INFO" \
+#      -N q_"$SEQ_RUN" \
+#      -wd /shared/workspace/projects/covid/logs \
+#      -pe smp 32 \
+#      -S /bin/bash \
+#        $PIPELINEDIR/qc/qc_summary.sh
+#	fi # end if we are running qc
+#
+#  # lineage and tree output is stored to a different location than
+#  # the outputs of the earlier steps, so it needs a slightly different
+#  # identifier for its process
+#  PROCESSINGID="$TIMESTAMP"-"$PHYLO_SEQ_RUN"
+#
+#	if [[ "$LINEAGE" == true ]]; then
+#	    qsub \
+#      -hold_jid 'q_'$SEQ_RUN'' \
+#      -v ORGANIZATION=$ORGANIZATION \
+#			-v PROCESSINGID=$PROCESSINGID \
+#			-v SEQ_RUN=$PHYLO_SEQ_RUN \
+#			-v ISTEST=$ISTEST \
+#			-v WORKSPACE=/scratch/phylogeny/$PROCESSINGID \
+#			-v VERSION_INFO="$VERSION_INFO" \
+#			-N l_"$PROCESSINGID" \
+#			-wd /shared/workspace/projects/covid/logs \
+#			-pe smp 16 \
+#			-S /bin/bash \
+#	    	$PIPELINEDIR/pipeline/lineages.sh
+#
+#		QSUBLINEAGEPARAMS=' -hold_jid l_'$PROCESSINGID
+#	fi # end if we are calling lineages
+#
+#  if [[ "$TREE_BUILD" == true ]]; then
+#    # TODO: this is a temporary fix to build only stringent trees
+#    #  In the future, we will want to make this more tunable
+#    for DATASET in stringent; do # loose_stringent passQC; do
+#      qsub \
+#        $QSUBLINEAGEPARAMS \
+#        -v ORGANIZATION=$ORGANIZATION \
+#        -v PROCESSINGID=$PROCESSINGID \
+#        -v DATASET=$DATASET \
+#        -v ISTEST=$ISTEST \
+#        -v WORKSPACE=/scratch/treebuilding/$PROCESSINGID/$DATASET \
+#        -v VERSION_INFO="$VERSION_INFO" \
+#        -N t_"$DATASET"_"$PROCESSINGID" \
+#        -wd /shared/workspace/projects/covid/logs \
+#        -pe smp 16 \
+#        -S /bin/bash \
+#          $PIPELINEDIR/pipeline/treebuild.sh
+#    done
+#  fi # end if we are building trees
+#
+#  # if we did variant or qc processing, write a file of the
+#  # settings used into the results directory for this seq_run/timestamp
+#  if [ "$VARIANTS" == true ] || [ "$QC" == true ]; then
+#    SETTINGS_FNAME="$SEQ_RUN"-"$TIMESTAMP"-"$FUNCTION"-$(date +'%Y-%m-%d_%H-%M-%S').csv
+#    echo $INPUT_FIELDS > $SETTINGS_FNAME
+#    echo $INPUT_VALS >> $SETTINGS_FNAME
+#    aws s3 cp $SETTINGS_FNAME $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
+#	  rm $SETTINGS_FNAME
+#  fi
+#
+#  # ensure that, if we are processing additional input rows,
+#  # they will have a distinct timestamp
+#  sleep 1
 done

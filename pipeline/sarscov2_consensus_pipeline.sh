@@ -9,42 +9,50 @@ source $ANACONDADIR/activate covid1.2
 # Set variables
 THREADS=2
 PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
-REF_FAS="/scratch/reference/NC_045512.2.fas"
-REF_MMI="/scratch/reference/NC_045512.2.fas.mmi"
-REF_GFF="/scratch/reference/NC_045512.2.gff3"
 INSPECT_DELIMITER=__
 INTERNAL_DELIMITER=_
 
-FASTQBASE=$SAMPLE
-SEQUENCING_INFO=$(echo $SAMPLE | awk -F $INSPECT_DELIMITER '{print $5}')
-LANE_INFO=$(echo $SEQUENCING_INFO | awk -F $INTERNAL_DELIMITER '{print $2}' | sed "s/L//g")
-SAMPLEID=$(echo $SAMPLE | sed "s/$SEQUENCING_INFO/$LANE_INFO/g")
+if [[ "$INPUT_TYPE" == fastq ]]; then
+  SEQUENCING_INFO=$(echo $SAMPLE | awk -F $INSPECT_DELIMITER '{print $5}')
+  LANE_INFO=$(echo $SEQUENCING_INFO | awk -F $INTERNAL_DELIMITER '{print $2}' | sed "s/L//g")
+  SAMPLEID=$(echo $SAMPLE | sed "s/$SEQUENCING_INFO/$LANE_INFO/g")
+  REF_NAME="NC_045512.2"
+fi
+
+if [[ "$INPUT_TYPE" == bam ]]; then
+  SAMPLEID=$SAMPLE
+  # Thermo rep said: "The reference file used for mapping is ... the same sequence as the original
+  # MN908947.3 SARS sequence, we named it as 2019-nCoV."
+  # (Note that 2019-nCoV.fas is the exact same sequence as NC_045512.2.fas ...)
+  REF_NAME="2019-nCoV"
+fi
+
+REF_FAS="/scratch/reference/"$REF_NAME".fas"
+REF_MMI="/scratch/reference/$REF_NAME.mmi"
+REF_GFF="/scratch/reference/$REF_NAME.gff3"
+
 WORKSPACE=/scratch/$SAMPLEID/$TIMESTAMP
 RESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_samples/$SAMPLEID
+# NB: do NOT put this line before the previous RESULTS= line, since this line is *redefining* S3DOWNLOAD
+S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_$INPUT_TYPE
 
-# Clear fastq directory if node is being reused
+# Clear input data directory if node is being reused
 rm -rf $WORKSPACE/*
-mkdir -p $WORKSPACE/fastq
+mkdir -p $WORKSPACE/$INPUT_TYPE
 
 echo "$VERSION_INFO" >> $WORKSPACE/"$SAMPLEID".version.log
 
 # Move reference files to compute node once
 if [[ ! -f "$REF_FAS" ]]; then
 	mkdir -p /scratch/reference/
-    cp $PIPELINEDIR/reference_files/NC_045512.2.fas $REF_FAS
-    cp $PIPELINEDIR/reference_files/NC_045512.2.fas.mmi $REF_MMI
-    cp $PIPELINEDIR/reference_files/NC_045512.2.gff3 $REF_GFF
+    cp $PIPELINEDIR/reference_files/$REF_NAME.fas $REF_FAS
+    cp $PIPELINEDIR/reference_files/$REF_NAME.gff3 $REF_GFF
 fi
 
-if [[ "$GENEXUS_BAM" == true ]]; then
-    # Thermo rep said: "The reference file used for mapping is ... the same sequence as the original
-    # MN908947.3 SARS sequence, we named it as 2019-nCoV."
-    # (Note that 2019-nCoV.fas is the exact same sequence as NC_045512.2.fas ...)
-    cp $PIPELINEDIR/reference_files/2019-nCoV.fas $REF_FAS
-    cp $PIPELINEDIR/reference_files/2019-nCoV.gff3 $REF_GFF
-    S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_bam
-    aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ --recursive --exclude "*" --include "$SAMPLEID.trimmed.sorted.bam"
-else
+if [[ "$INPUT_TYPE" == fastq ]]; then
+  # will also need an MMI file for the reference; get it now
+  cp $PIPELINEDIR/reference_files/$REF_NAME.fas.mmi $REF_MMI
+
   # ensure that primer file is downloaded
   SCRATCH_PRIMER_FP=/scratch/reference/$PRIMER_BED_FNAME
   if [[ ! -f "$SCRATCH_PRIMER_FP" ]]; then
@@ -52,27 +60,25 @@ else
   fi
 
   if [[ "$MERGE_LANES" == true ]]; then
-    S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq/"$SEQ_RUN"_lane_merged_fastq
-  else
-    S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq
+    # NB: Once again renaming S3DOWNLOAD in this situation
+    S3DOWNLOAD=$S3DOWNLOAD/"$SEQ_RUN"_lane_merged_fastq
   fi
 
-  # Step 0: Download fastq
-  # always download read 1
-  aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$FASTQBASE*R1_001.fastq.gz"
+  # Step 0: Download input data
+  aws s3 cp $S3DOWNLOAD/ $WORKSPACE/$INPUT_TYPE/ --recursive --exclude "*" --include "$SAMPLEID*R1_001.fastq.gz"
 
-  { time ( q30.py $WORKSPACE/fastq/"$FASTQBASE"*R1_001.fastq.gz $WORKSPACE/"$SAMPLEID"_R1_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R1.log.0.q30.log
+  { time ( q30.py $WORKSPACE/$INPUT_TYPE/"$SAMPLE"*R1_001.fastq.gz $WORKSPACE/"$SAMPLEID"_R1_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R1.log.0.q30.log
   echo -e "$SAMPLEID\tq30 R1 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
   if [[ "$FQ" == pe ]]; then
-    aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$FASTQBASE*R2_001.fastq.gz"
+    aws s3 cp $S3DOWNLOAD/ $WORKSPACE/$INPUT_TYPE/ --recursive --exclude "*" --include "$SAMPLE*R2_001.fastq.gz"
 
-    { time ( q30.py $WORKSPACE/fastq/"$FASTQBASE"*R2_001.fastq.gz $WORKSPACE/"$SAMPLEID"_R2_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R2.log.0.q30.log
+    { time ( q30.py $WORKSPACE/$INPUT_TYPE/"$SAMPLE"*R2_001.fastq.gz $WORKSPACE/"$SAMPLEID"_R2_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R2.log.0.q30.log
     echo -e "$SAMPLEID\tq30 R2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
   fi
 
   # Step 1: Map Reads + Sort
-  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$FASTQBASE"*.fastq.gz | samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
+  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/$INPUT_TYPE/"$SAMPLE"*.fastq.gz | samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
   echo -e "$SAMPLEID\tminimap2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
   # Step 2: Trim Sorted BAM
@@ -82,7 +88,18 @@ else
   # Step 3: Sort Trimmed BAM
   { time ( samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam $WORKSPACE/"$SAMPLEID".trimmed.bam && samtools index $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam && rm $WORKSPACE/"$SAMPLEID".trimmed.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log
   echo -e "$SAMPLEID\tsamtools sort exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
-fi  # end if this is a genexus pre-processed bam or a regular fastq
+fi # end if the input is fastq
+
+if [[ "$INPUT_TYPE" == bam ]]; then
+  # if genexus bam, download just one file and rename it to have the same naming convention as
+  # trimmed sorted bam produced by the above step
+  aws s3 cp $S3DOWNLOAD/ $WORKSPACE/$INPUT_TYPE/ --recursive --exclude "*" --include "$SAMPLE*.bam"
+  TBAM=$WORKSPACE/$INPUT_TYPE/"$SAMPLE*.bam"
+
+  # filter out bogus empty records in the genexus bam for other "chromosomes"--other reference sequences
+  # that they align everything against
+  { time ( samtools reheader <(samtools view -H $TBAM | grep -P "^@HD\t" && samtools view -H $TBAM | grep -P "^@SQ\tSN:$REFID\t") $TBAM > $WORKSPACE/"$SAMPLE.trimmed.sorted.bam") ; } 2> $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log
+fi # end if the input is a genexus pre-processed bam
 
 # Step 3a: Count number of trimmed bam reads
 { time ( echo -e "$SAMPLEID\t"$(samtools view -c -F 260 $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) > $WORKSPACE/"$SAMPLEID".trimmed_bam_read_count.tsv) ; } >> $WORKSPACE/"$SAMPLEID".log.2.trim.log 2>&1
