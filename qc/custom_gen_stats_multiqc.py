@@ -184,7 +184,8 @@ def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
             data_dict[name] = temp_pctQ30_dict
             data_dict[name] = temp_uncapped_reads_dict
     else:
-        raise ValueError(f"Unrecognized se or pe value '{se_or_pe}'")
+        print(f"Warning: Unable to run generate percent greater than q30 and "
+              f"number of uncapped reads for input type '{se_or_pe}'")
 
     return data_dict
 

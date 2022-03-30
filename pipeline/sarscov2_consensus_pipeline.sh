@@ -38,7 +38,6 @@ S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_$INPUT_TYPE
 
 # Clear input data directory if node is being reused
 rm -rf $WORKSPACE/*
-mkdir -p $WORKSPACE/$INPUT_TYPE
 
 echo "$VERSION_INFO" >> $WORKSPACE/"$SAMPLEID".version.log
 
@@ -50,6 +49,9 @@ if [[ ! -f "$REF_FAS" ]]; then
 fi
 
 if [[ "$INPUT_TYPE" == fastq ]]; then
+  # make working directory to hold the fastqs
+  mkdir -p $WORKSPACE/fastq
+
   # will also need an MMI file for the reference; get it now
   cp $PIPELINEDIR/reference_files/$REF_NAME.fas.mmi $REF_MMI
 
@@ -65,25 +67,26 @@ if [[ "$INPUT_TYPE" == fastq ]]; then
   fi
 
   # Step 0: Download input data
-  aws s3 cp $S3DOWNLOAD/ $WORKSPACE/$INPUT_TYPE/ --recursive --exclude "*" --include "$SAMPLEID*R1_001.fastq.gz"
+  aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLEID*R1_001.fastq.gz"
 
-  { time ( q30.py $WORKSPACE/$INPUT_TYPE/"$SAMPLE"*R1_001.fastq.gz $WORKSPACE/"$SAMPLEID"_R1_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R1.log.0.q30.log
+  { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R1_001.fastq.gz $WORKSPACE/"$SAMPLEID"_R1_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R1.log.0.q30.log
   echo -e "$SAMPLEID\tq30 R1 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
   if [[ "$FQ" == pe ]]; then
-    aws s3 cp $S3DOWNLOAD/ $WORKSPACE/$INPUT_TYPE/ --recursive --exclude "*" --include "$SAMPLE*R2_001.fastq.gz"
+    aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R2_001.fastq.gz"
 
-    { time ( q30.py $WORKSPACE/$INPUT_TYPE/"$SAMPLE"*R2_001.fastq.gz $WORKSPACE/"$SAMPLEID"_R2_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R2.log.0.q30.log
+    { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R2_001.fastq.gz $WORKSPACE/"$SAMPLEID"_R2_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R2.log.0.q30.log
     echo -e "$SAMPLEID\tq30 R2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
   fi
 
   # Step 1: Map Reads + Sort
-  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/$INPUT_TYPE/"$SAMPLE"*.fastq.gz | samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
+  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$SAMPLE"*.fastq.gz | samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
   echo -e "$SAMPLEID\tminimap2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
   # Step 2: Trim Sorted BAM
   { time ( ivar trim -x 5 -e -i $WORKSPACE/"$SAMPLEID".sorted.bam -b $SCRATCH_PRIMER_FP -p $WORKSPACE/"$SAMPLEID".trimmed ) ; } > $WORKSPACE/"$SAMPLEID".log.2.trim.log 2>&1
   echo -e "$SAMPLEID\tivar trim exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
+  QUALIMAP_BAM=$WORKSPACE/"$SAMPLEID".sorted.bam
 
   # Step 3: Sort Trimmed BAM
   { time ( samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam $WORKSPACE/"$SAMPLEID".trimmed.bam && samtools index $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam && rm $WORKSPACE/"$SAMPLEID".trimmed.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log
@@ -93,12 +96,13 @@ fi # end if the input is fastq
 if [[ "$INPUT_TYPE" == bam ]]; then
   # if genexus bam, download just one file and rename it to have the same naming convention as
   # trimmed sorted bam produced by the above step
-  aws s3 cp $S3DOWNLOAD/ $WORKSPACE/$INPUT_TYPE/ --recursive --exclude "*" --include "$SAMPLE*.bam"
-  TBAM=$WORKSPACE/$INPUT_TYPE/"$SAMPLE*.bam"
+  aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ --recursive --exclude "*" --include "$SAMPLE*.unfiltered.bam"
+  TBAM=$WORKSPACE/"$SAMPLE*.bam"
 
   # filter out bogus empty records in the genexus bam for other "chromosomes"--other reference sequences
   # that they align everything against
   { time ( samtools reheader <(samtools view -H $TBAM | grep -P "^@HD\t" && samtools view -H $TBAM | grep -P "^@SQ\tSN:$REF_NAME\t") $TBAM > $WORKSPACE/"$SAMPLEID.trimmed.sorted.bam") ; } 2> $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log
+  QUALIMAP_BAM=$WORKSPACE/"$SAMPLEID.trimmed.sorted.bam"
 fi # end if the input is a genexus pre-processed bam
 
 # Step 3a: Count number of trimmed bam reads
@@ -122,7 +126,7 @@ echo -e "$SAMPLEID\tivar consensus exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit
 echo -e "$SAMPLEID\tsamtools depth exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # # Step 8: Qualimap
-{ time ( qualimap bamqc -bam $WORKSPACE/"$SAMPLEID".sorted.bam -nt $THREADS --java-mem-size=4G -outdir $WORKSPACE/"$SAMPLEID".sorted.stats ) ; } > $WORKSPACE/"$SAMPLEID".log.8.qualimap.sorted.log 2>&1
+{ time ( qualimap bamqc -bam $QUALIMAP_BAM -nt $THREADS --java-mem-size=4G -outdir $WORKSPACE/"$SAMPLEID".sorted.stats ) ; } > $WORKSPACE/"$SAMPLEID".log.8.qualimap.sorted.log 2>&1
 echo -e "$SAMPLEID\tqualimap exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 9: Acceptance
@@ -148,6 +152,4 @@ echo -e "$SAMPLEID\tn metric exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 # by the rest of the pipeline and is therefore not cause for failing a run
 grep -v 'exit code: 0\|qualimap exit code: 255' $WORKSPACE/"$SAMPLEID".exit.log | head -n 1 > $WORKSPACE/"$SAMPLEID".error.log
 
-# TODO: should I be excluding the genexus bams if we started from those?
-# or should I include them, since they are included in all the other deliverables?
-aws s3 cp $WORKSPACE/ $RESULTS/ --recursive --include "*" --exclude "*fastq.gz"
+aws s3 cp $WORKSPACE/ $RESULTS/ --recursive --include "*" --exclude "*fastq.gz" --exclude "*.unfiltered.bam"
