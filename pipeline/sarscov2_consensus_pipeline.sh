@@ -67,20 +67,20 @@ if [[ "$INPUT_TYPE" == fastq ]]; then
   fi
 
   # Step 0: Download input data
-  aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLEID*R1_001.fastq.gz"
+  aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLEID*R1_001$INPUT_SUFFIX"
 
-  { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R1_001.fastq.gz $WORKSPACE/"$SAMPLEID"_R1_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R1.log.0.q30.log
+  { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R1_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R1_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R1.log.0.q30.log
   echo -e "$SAMPLEID\tq30 R1 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
   if [[ "$FQ" == pe ]]; then
-    aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R2_001.fastq.gz"
+    aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R2_001$INPUT_SUFFIX"
 
-    { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R2_001.fastq.gz $WORKSPACE/"$SAMPLEID"_R2_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R2.log.0.q30.log
+    { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R2_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R2_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R2.log.0.q30.log
     echo -e "$SAMPLEID\tq30 R2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
   fi
 
   # Step 1: Map Reads + Sort
-  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$SAMPLE"*.fastq.gz | samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
+  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$SAMPLE"*$INPUT_SUFFIX | samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
   echo -e "$SAMPLEID\tminimap2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
   # Step 2: Trim Sorted BAM
@@ -96,8 +96,8 @@ fi # end if the input is fastq
 if [[ "$INPUT_TYPE" == bam ]]; then
   # if genexus bam, download just one file and rename it to have the same naming convention as
   # trimmed sorted bam produced by the above step
-  aws s3 cp $S3DOWNLOAD/ $WORKSPACE/ --recursive --exclude "*" --include "$SAMPLE*.unfiltered.bam"
-  TBAM=$WORKSPACE/"$SAMPLE*.bam"
+  TBAM=$WORKSPACE/"$SAMPLE$INPUT_SUFFIX"
+  aws s3 cp $S3DOWNLOAD/"$SAMPLE$INPUT_SUFFIX" $TBAM
 
   # filter out bogus empty records in the genexus bam for other "chromosomes"--other reference sequences
   # that they align everything against
@@ -152,4 +152,4 @@ echo -e "$SAMPLEID\tn metric exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 # by the rest of the pipeline and is therefore not cause for failing a run
 grep -v 'exit code: 0\|qualimap exit code: 255' $WORKSPACE/"$SAMPLEID".exit.log | head -n 1 > $WORKSPACE/"$SAMPLEID".error.log
 
-aws s3 cp $WORKSPACE/ $RESULTS/ --recursive --include "*" --exclude "*fastq.gz" --exclude "*.unfiltered.bam"
+aws s3 cp $WORKSPACE/ $RESULTS/ --recursive --include "*" --exclude $INPUT_SUFFIX

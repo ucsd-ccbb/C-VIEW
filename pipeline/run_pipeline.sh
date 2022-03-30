@@ -246,7 +246,8 @@ do
 				-v TIMESTAMP=$TIMESTAMP \
 				-v VERSION_INFO="$VERSION_INFO" \
 				-v READ_CAP=$READ_CAP \
-       -v INPUT_TYPE=$INPUT_TYPE \
+        -v INPUT_TYPE=$INPUT_TYPE \
+        -v INPUT_SUFFIX=$INPUT_SUFFIX \
 				-N v_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
 				-wd /shared/workspace/projects/covid/logs \
 				-pe smp 2 \
