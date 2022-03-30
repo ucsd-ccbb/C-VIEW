@@ -237,23 +237,22 @@ do
 # TODO: remove debugging comments!!
 #		# Run VARIANTS step on each sample
 		for SAMPLE in $SAMPLE_LIST; do
-		  echo $SAMPLE
-#			qsub $QSUBSAMPLEPARAMS \
-#				-v SEQ_RUN="$SEQ_RUN" \
-#				-v SAMPLE=$SAMPLE \
-#				-v S3DOWNLOAD=$S3DOWNLOAD \
-#        -v PRIMER_BED_FNAME=$PRIMER_BED_FNAME \
-#				-v MERGE_LANES=$MERGE_LANES \
-#				-v FQ=$FQ \
-#				-v TIMESTAMP=$TIMESTAMP \
-#				-v VERSION_INFO="$VERSION_INFO" \
-#				-v READ_CAP=$READ_CAP \
-#       -v INPUT_TYPE=$INPUT_TYPE \
-#				-N v_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
-#				-wd /shared/workspace/projects/covid/logs \
-#				-pe smp 2 \
-#				-S /bin/bash \
-#				$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
+			qsub $QSUBSAMPLEPARAMS \
+				-v SEQ_RUN="$SEQ_RUN" \
+				-v SAMPLE=$SAMPLE \
+				-v S3DOWNLOAD=$S3DOWNLOAD \
+        -v PRIMER_BED_FNAME=$PRIMER_BED_FNAME \
+				-v MERGE_LANES=$MERGE_LANES \
+				-v FQ=$FQ \
+				-v TIMESTAMP=$TIMESTAMP \
+				-v VERSION_INFO="$VERSION_INFO" \
+				-v READ_CAP=$READ_CAP \
+       -v INPUT_TYPE=$INPUT_TYPE \
+				-N v_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
+				-wd /shared/workspace/projects/covid/logs \
+				-pe smp 2 \
+				-S /bin/bash \
+				$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
 		done
 	fi  # end if we are calling variants
 #
