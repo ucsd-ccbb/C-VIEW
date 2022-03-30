@@ -17,6 +17,7 @@ if [[ "$INPUT_TYPE" == fastq ]]; then
   LANE_INFO=$(echo $SEQUENCING_INFO | awk -F $INTERNAL_DELIMITER '{print $2}' | sed "s/L//g")
   SAMPLEID=$(echo $SAMPLE | sed "s/$SEQUENCING_INFO/$LANE_INFO/g")
   REF_NAME="NC_045512.2"
+  REF_ORF_LIMITS="266-29674"
 fi
 
 if [[ "$INPUT_TYPE" == bam ]]; then
@@ -25,6 +26,7 @@ if [[ "$INPUT_TYPE" == bam ]]; then
   # MN908947.3 SARS sequence, we named it as 2019-nCoV."
   # (Note that 2019-nCoV.fas is the exact same sequence as NC_045512.2.fas ...)
   REF_NAME="2019-nCoV"
+  REF_ORF_LIMITS="266-29674"  # not a typo, really identical to the limits for se/pe--genexus uses a different label for its reference sequence but the sequence itself is identical
 fi
 
 REF_FAS="/scratch/reference/"$REF_NAME".fas"
@@ -135,7 +137,7 @@ IVAR_VER=$(ivar version)
 echo -e "$SAMPLEID\tacceptance.py exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 10: Coverage
-{ time ( samtools depth -r NC_045512.2:266-29674 -d 0 -a $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam | \
+{ time ( samtools depth -r $REF_NAME:$REF_ORF_LIMITS -d 0 -a $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam | \
   awk -v b="$SAMPLEID.trimmed.sorted.bam" 'BEGIN{MIN=10000000000;MAX=0;NUC=0;COV=0;DEPTH=0;NUCZERO=0;}{if(MIN > $3){MIN=$3;};if(MAX < $3){MAX=$3;};if($3==0){NUCZERO+=1};if($3 >= 10){COV+=1;}NUC+=1;DEPTH+=$3;}END{if(NUC>0){print b"\t"(COV/NUC)*100"\t"DEPTH/NUC"\t"MIN"\t"MAX"\t"NUCZERO}else{print b"\t"0"\t"0"\t"MIN"\t"MAX"\t"NUCZERO}}' ) ; } >> $WORKSPACE/"$SAMPLEID".coverage.tsv 2> $WORKSPACE/"$SAMPLEID".log.10.coverage.log
 echo -e "$SAMPLEID\tcoverage exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
