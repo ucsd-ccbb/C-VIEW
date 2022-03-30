@@ -273,9 +273,9 @@ def write_custom_multiqc_yaml(arg_list):
         # metrics to None for each sample so that any code looking for those keys at least finds
         # something
         for curr_sample in data_dict:
-            data_dict[curr_sample][PCT_30_KEY] = None
-            data_dict[curr_sample][UNCAPPED_READS_KEY] = None
-            data_dict[curr_sample][SUBSAMPLED_MAPPED_PCT_ALIGNED_KEY] = None
+            data_dict[curr_sample][PCT_30_KEY] = NA_VAL
+            data_dict[curr_sample][UNCAPPED_READS_KEY] = NA_VAL
+            data_dict[curr_sample][SUBSAMPLED_MAPPED_PCT_ALIGNED_KEY] = NA_VAL
         # next sample
     # endif
 
