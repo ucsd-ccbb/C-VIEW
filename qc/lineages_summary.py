@@ -14,6 +14,7 @@ VARIANT_VAL = "variant"
 VARIANT_AND_EP_VAL = "variant_and_epidemiology"
 IS_HIST_OR_REF = "is_hist_or_ref"
 OVERALL_FAIL_KEY = "overall_fail"
+ANY_FAIL_KEY = "any_fail"
 
 
 # recreate un-reversable pangolin name munge;
@@ -78,47 +79,74 @@ def expand_with_added_fa_names(merged_summaries_df, added_fa_names_fp):
 
 
 def add_final_qc_filters_inplace(qc_and_lineage_w_search_ids_df):
-    qc_and_lineage_w_search_ids_df.loc[:, "mapped_reads_lt_50k"] = \
-        ((qc_and_lineage_w_search_ids_df["mapped_reads"] < 50000) |
-         qc_and_lineage_w_search_ids_df["mapped_reads"].isna())
+    MAPPED_READS_KEY = "mapped_reads"
+    MAPPED_LT_50K_KEY = "mapped_reads_lt_50k"
+    UNCAPPED_READS_KEY = "Uncapped_Reads"
+    UNCAPPED_LT_100K_KEY = "uncapped_reads_lt_100k"
+    SUB_MAP_KEY = "Sub_Map_Pct_Aligned"
+    SUB_MAP_LT_50_KEY = "sub_map_pct_aligned_lt_50"
+    P25_KEY = "P25_Ins_size"
+    P25_LT_140_KEY = "p25_ins_size_lt_140"
+    PCT_Q30_KEY = "Pct_Q30"
+    PCT_Q30_LT_90_KEY = "percent_q30_lt_90"
+    COV_GTE_10_KEY = "coverage_gte_10_reads"
+    COV_GTE_10_LT_95_KEY = "coverage_gte_10_reads_lt_95"
+    MEAN_COV_KEY = "mean_coverage"
+    MEAN_COV_LT_500_KEY = "mean_coverage_lt_500"
 
-    qc_and_lineage_w_search_ids_df.loc[:, "uncapped_reads_lt_100k"] = \
-        ((qc_and_lineage_w_search_ids_df["Uncapped_Reads"] < 50000))  # |
+    keypairs = [(MAPPED_READS_KEY, MAPPED_LT_50K_KEY),
+                (UNCAPPED_READS_KEY, UNCAPPED_LT_100K_KEY),
+                (SUB_MAP_KEY, SUB_MAP_LT_50_KEY),
+                (P25_KEY, P25_LT_140_KEY),
+                (PCT_Q30_KEY, PCT_Q30_LT_90_KEY),
+                (COV_GTE_10_KEY, COV_GTE_10_LT_95_KEY),
+                (MEAN_COV_KEY, MEAN_COV_LT_500_KEY)]
+
+    qc_and_lineage_w_search_ids_df.loc[:, MAPPED_LT_50K_KEY] = \
+        ((qc_and_lineage_w_search_ids_df[MAPPED_READS_KEY] < 50000))  #|
+         #qc_and_lineage_w_search_ids_df["mapped_reads"].isna())
+
+    qc_and_lineage_w_search_ids_df.loc[:, UNCAPPED_LT_100K_KEY] = \
+        ((qc_and_lineage_w_search_ids_df[UNCAPPED_READS_KEY] < 50000))  # |
          # qc_and_lineage_w_search_ids_df["Uncapped_Reads"].isna())
 
-    qc_and_lineage_w_search_ids_df.loc[:, "sub_map_pct_aligned_lt_50"] = \
-        ((qc_and_lineage_w_search_ids_df["Sub_Map_Pct_Aligned"] < 50))  # |
+    qc_and_lineage_w_search_ids_df.loc[:, SUB_MAP_LT_50_KEY] = \
+        ((qc_and_lineage_w_search_ids_df[SUB_MAP_KEY] < 50))  # |
          # qc_and_lineage_w_search_ids_df["Sub_Map_Pct_Aligned"].isna())
 
-    qc_and_lineage_w_search_ids_df.loc[:, "p25_ins_size_lt_140"] = \
-        ((qc_and_lineage_w_search_ids_df["P25_Ins_size"] < 140) |
-         qc_and_lineage_w_search_ids_df["P25_Ins_size"].isna())
+    qc_and_lineage_w_search_ids_df.loc[:, P25_LT_140_KEY] = \
+        ((qc_and_lineage_w_search_ids_df[P25_KEY] < 140))  # |
+         #qc_and_lineage_w_search_ids_df["P25_Ins_size"].isna())
 
-    qc_and_lineage_w_search_ids_df.loc[:, "percent_q30_lt_90"] = \
-        ((qc_and_lineage_w_search_ids_df["Pct_Q30"] < 90))  # |
+    qc_and_lineage_w_search_ids_df.loc[:, PCT_Q30_LT_90_KEY] = \
+        ((qc_and_lineage_w_search_ids_df[PCT_Q30_KEY] < 90))  # |
          # qc_and_lineage_w_search_ids_df["Pct_Q30"].isna())
 
-    qc_and_lineage_w_search_ids_df.loc[:, "coverage_gte_10_reads_lt_95"] = \
-        ((qc_and_lineage_w_search_ids_df["coverage_gte_10_reads"] < 0.95) |
-         qc_and_lineage_w_search_ids_df["coverage_gte_10_reads"].isna())
+    qc_and_lineage_w_search_ids_df.loc[:, COV_GTE_10_LT_95_KEY] = \
+        ((qc_and_lineage_w_search_ids_df[COV_GTE_10_KEY] < 0.95))  # |
+         #qc_and_lineage_w_search_ids_df[COV_GTE_10_KEY].isna())
 
-    qc_and_lineage_w_search_ids_df.loc[:, "mean_coverage_lt_500"] = \
-        ((qc_and_lineage_w_search_ids_df["mean_coverage"] < 500) |
-         qc_and_lineage_w_search_ids_df["mean_coverage"].isna())
+    qc_and_lineage_w_search_ids_df.loc[:, MEAN_COV_LT_500_KEY] = \
+        ((qc_and_lineage_w_search_ids_df[MEAN_COV_KEY] < 500))  #|
+         #qc_and_lineage_w_search_ids_df[MEAN_COV_KEY].isna())
 
-    qc_and_lineage_w_search_ids_df.loc[:, "any_fail"] = \
-        (qc_and_lineage_w_search_ids_df["mapped_reads_lt_50k"] |
-         qc_and_lineage_w_search_ids_df["uncapped_reads_lt_100k"] |
-         qc_and_lineage_w_search_ids_df["sub_map_pct_aligned_lt_50"] |
-         qc_and_lineage_w_search_ids_df["p25_ins_size_lt_140"] |
-         qc_and_lineage_w_search_ids_df["percent_q30_lt_90"] |
-         qc_and_lineage_w_search_ids_df["coverage_gte_10_reads_lt_95"] |
-         qc_and_lineage_w_search_ids_df["mean_coverage_lt_500"])
+    for curr_keypair in keypairs:
+        qc_and_lineage_w_search_ids_df.loc[
+            qc_and_lineage_w_search_ids_df[curr_keypair[0]].isna(), curr_keypair[1]] = None
+
+    qc_and_lineage_w_search_ids_df.loc[:, ANY_FAIL_KEY] = \
+        (qc_and_lineage_w_search_ids_df[MAPPED_LT_50K_KEY] |
+         qc_and_lineage_w_search_ids_df[UNCAPPED_LT_100K_KEY] |
+         qc_and_lineage_w_search_ids_df[SUB_MAP_LT_50_KEY] |
+         qc_and_lineage_w_search_ids_df[P25_LT_140_KEY] |
+         qc_and_lineage_w_search_ids_df[PCT_Q30_LT_90_KEY] |
+         qc_and_lineage_w_search_ids_df[COV_GTE_10_LT_95_KEY] |
+         qc_and_lineage_w_search_ids_df[MEAN_COV_LT_500_KEY])
 
     # some older records may not *have* an n metric;
     # these should NOT be overall fails
     qc_and_lineage_w_search_ids_df.loc[:, OVERALL_FAIL_KEY] = \
-        (qc_and_lineage_w_search_ids_df["any_fail"] |
+        (qc_and_lineage_w_search_ids_df[ANY_FAIL_KEY] |
          (qc_and_lineage_w_search_ids_df["n_metric"] > 19))
 
 
