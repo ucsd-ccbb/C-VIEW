@@ -83,20 +83,20 @@ def add_final_qc_filters_inplace(qc_and_lineage_w_search_ids_df):
          qc_and_lineage_w_search_ids_df["mapped_reads"].isna())
 
     qc_and_lineage_w_search_ids_df.loc[:, "uncapped_reads_lt_100k"] = \
-        ((qc_and_lineage_w_search_ids_df["Uncapped_Reads"] < 50000) |
-         qc_and_lineage_w_search_ids_df["Uncapped_Reads"].isna())
+        ((qc_and_lineage_w_search_ids_df["Uncapped_Reads"] < 50000))  # |
+         # qc_and_lineage_w_search_ids_df["Uncapped_Reads"].isna())
 
     qc_and_lineage_w_search_ids_df.loc[:, "sub_map_pct_aligned_lt_50"] = \
-        ((qc_and_lineage_w_search_ids_df["Sub_Map_Pct_Aligned"] < 50) |
-         qc_and_lineage_w_search_ids_df["Sub_Map_Pct_Aligned"].isna())
+        ((qc_and_lineage_w_search_ids_df["Sub_Map_Pct_Aligned"] < 50))  # |
+         # qc_and_lineage_w_search_ids_df["Sub_Map_Pct_Aligned"].isna())
 
     qc_and_lineage_w_search_ids_df.loc[:, "p25_ins_size_lt_140"] = \
         ((qc_and_lineage_w_search_ids_df["P25_Ins_size"] < 140) |
          qc_and_lineage_w_search_ids_df["P25_Ins_size"].isna())
 
     qc_and_lineage_w_search_ids_df.loc[:, "percent_q30_lt_90"] = \
-        ((qc_and_lineage_w_search_ids_df["Pct_Q30"] < 90) |
-         qc_and_lineage_w_search_ids_df["Pct_Q30"].isna())
+        ((qc_and_lineage_w_search_ids_df["Pct_Q30"] < 90))  # |
+         # qc_and_lineage_w_search_ids_df["Pct_Q30"].isna())
 
     qc_and_lineage_w_search_ids_df.loc[:, "coverage_gte_10_reads_lt_95"] = \
         ((qc_and_lineage_w_search_ids_df["coverage_gte_10_reads"] < 0.95) |
