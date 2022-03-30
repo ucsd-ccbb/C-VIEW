@@ -234,7 +234,6 @@ do
       exit 1
     fi
 
-# TODO: remove debugging comments!!
 #		# Run VARIANTS step on each sample
 		for SAMPLE in $SAMPLE_LIST; do
 			qsub $QSUBSAMPLEPARAMS \
@@ -255,78 +254,78 @@ do
 				$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
 		done
 	fi  # end if we are calling variants
-#
-#	if [[ "$QC" == true ]]; then
-#    qsub \
-#      -hold_jid 'v_'$SEQ_RUN'_'$TIMESTAMP'_*' \
-#      -v SEQ_RUN=$SEQ_RUN \
-#      -v S3DOWNLOAD=$S3DOWNLOAD \
-#      -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
-#      -v FQ=$FQ \
-#      -v TIMESTAMP=$TIMESTAMP \
-#      -v ISTEST=$ISTEST \
-#      -v VERSION_INFO="$VERSION_INFO" \
-#      -N q_"$SEQ_RUN" \
-#      -wd /shared/workspace/projects/covid/logs \
-#      -pe smp 32 \
-#      -S /bin/bash \
-#        $PIPELINEDIR/qc/qc_summary.sh
-#	fi # end if we are running qc
-#
-#  # lineage and tree output is stored to a different location than
-#  # the outputs of the earlier steps, so it needs a slightly different
-#  # identifier for its process
-#  PROCESSINGID="$TIMESTAMP"-"$PHYLO_SEQ_RUN"
-#
-#	if [[ "$LINEAGE" == true ]]; then
-#	    qsub \
-#      -hold_jid 'q_'$SEQ_RUN'' \
-#      -v ORGANIZATION=$ORGANIZATION \
-#			-v PROCESSINGID=$PROCESSINGID \
-#			-v SEQ_RUN=$PHYLO_SEQ_RUN \
-#			-v ISTEST=$ISTEST \
-#			-v WORKSPACE=/scratch/phylogeny/$PROCESSINGID \
-#			-v VERSION_INFO="$VERSION_INFO" \
-#			-N l_"$PROCESSINGID" \
-#			-wd /shared/workspace/projects/covid/logs \
-#			-pe smp 16 \
-#			-S /bin/bash \
-#	    	$PIPELINEDIR/pipeline/lineages.sh
-#
-#		QSUBLINEAGEPARAMS=' -hold_jid l_'$PROCESSINGID
-#	fi # end if we are calling lineages
-#
-#  if [[ "$TREE_BUILD" == true ]]; then
-#    # TODO: this is a temporary fix to build only stringent trees
-#    #  In the future, we will want to make this more tunable
-#    for DATASET in stringent; do # loose_stringent passQC; do
-#      qsub \
-#        $QSUBLINEAGEPARAMS \
-#        -v ORGANIZATION=$ORGANIZATION \
-#        -v PROCESSINGID=$PROCESSINGID \
-#        -v DATASET=$DATASET \
-#        -v ISTEST=$ISTEST \
-#        -v WORKSPACE=/scratch/treebuilding/$PROCESSINGID/$DATASET \
-#        -v VERSION_INFO="$VERSION_INFO" \
-#        -N t_"$DATASET"_"$PROCESSINGID" \
-#        -wd /shared/workspace/projects/covid/logs \
-#        -pe smp 16 \
-#        -S /bin/bash \
-#          $PIPELINEDIR/pipeline/treebuild.sh
-#    done
-#  fi # end if we are building trees
-#
-#  # if we did variant or qc processing, write a file of the
-#  # settings used into the results directory for this seq_run/timestamp
-#  if [ "$VARIANTS" == true ] || [ "$QC" == true ]; then
-#    SETTINGS_FNAME="$SEQ_RUN"-"$TIMESTAMP"-"$FUNCTION"-$(date +'%Y-%m-%d_%H-%M-%S').csv
-#    echo $INPUT_FIELDS > $SETTINGS_FNAME
-#    echo $INPUT_VALS >> $SETTINGS_FNAME
-#    aws s3 cp $SETTINGS_FNAME $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
-#	  rm $SETTINGS_FNAME
-#  fi
-#
-#  # ensure that, if we are processing additional input rows,
-#  # they will have a distinct timestamp
-#  sleep 1
+
+	if [[ "$QC" == true ]]; then
+    qsub \
+      -hold_jid 'v_'$SEQ_RUN'_'$TIMESTAMP'_*' \
+      -v SEQ_RUN=$SEQ_RUN \
+      -v S3DOWNLOAD=$S3DOWNLOAD \
+      -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
+      -v FQ=$FQ \
+      -v TIMESTAMP=$TIMESTAMP \
+      -v ISTEST=$ISTEST \
+      -v VERSION_INFO="$VERSION_INFO" \
+      -N q_"$SEQ_RUN" \
+      -wd /shared/workspace/projects/covid/logs \
+      -pe smp 32 \
+      -S /bin/bash \
+        $PIPELINEDIR/qc/qc_summary.sh
+	fi # end if we are running qc
+
+  # lineage and tree output is stored to a different location than
+  # the outputs of the earlier steps, so it needs a slightly different
+  # identifier for its process
+  PROCESSINGID="$TIMESTAMP"-"$PHYLO_SEQ_RUN"
+
+	if [[ "$LINEAGE" == true ]]; then
+	    qsub \
+      -hold_jid 'q_'$SEQ_RUN'' \
+      -v ORGANIZATION=$ORGANIZATION \
+			-v PROCESSINGID=$PROCESSINGID \
+			-v SEQ_RUN=$PHYLO_SEQ_RUN \
+			-v ISTEST=$ISTEST \
+			-v WORKSPACE=/scratch/phylogeny/$PROCESSINGID \
+			-v VERSION_INFO="$VERSION_INFO" \
+			-N l_"$PROCESSINGID" \
+			-wd /shared/workspace/projects/covid/logs \
+			-pe smp 16 \
+			-S /bin/bash \
+	    	$PIPELINEDIR/pipeline/lineages.sh
+
+		QSUBLINEAGEPARAMS=' -hold_jid l_'$PROCESSINGID
+	fi # end if we are calling lineages
+
+  if [[ "$TREE_BUILD" == true ]]; then
+    # TODO: this is a temporary fix to build only stringent trees
+    #  In the future, we will want to make this more tunable
+    for DATASET in stringent; do # loose_stringent passQC; do
+      qsub \
+        $QSUBLINEAGEPARAMS \
+        -v ORGANIZATION=$ORGANIZATION \
+        -v PROCESSINGID=$PROCESSINGID \
+        -v DATASET=$DATASET \
+        -v ISTEST=$ISTEST \
+        -v WORKSPACE=/scratch/treebuilding/$PROCESSINGID/$DATASET \
+        -v VERSION_INFO="$VERSION_INFO" \
+        -N t_"$DATASET"_"$PROCESSINGID" \
+        -wd /shared/workspace/projects/covid/logs \
+        -pe smp 16 \
+        -S /bin/bash \
+          $PIPELINEDIR/pipeline/treebuild.sh
+    done
+  fi # end if we are building trees
+
+  # if we did variant or qc processing, write a file of the
+  # settings used into the results directory for this seq_run/timestamp
+  if [ "$VARIANTS" == true ] || [ "$QC" == true ]; then
+    SETTINGS_FNAME="$SEQ_RUN"-"$TIMESTAMP"-"$FUNCTION"-$(date +'%Y-%m-%d_%H-%M-%S').csv
+    echo $INPUT_FIELDS > $SETTINGS_FNAME
+    echo $INPUT_VALS >> $SETTINGS_FNAME
+    aws s3 cp $SETTINGS_FNAME $S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/
+	  rm $SETTINGS_FNAME
+  fi
+
+  # ensure that, if we are processing additional input rows,
+  # they will have a distinct timestamp
+  sleep 1
 done
