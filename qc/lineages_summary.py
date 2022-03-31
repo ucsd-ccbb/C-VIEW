@@ -131,8 +131,13 @@ def add_final_qc_filters_inplace(qc_and_lineage_w_search_ids_df):
          #qc_and_lineage_w_search_ids_df[MEAN_COV_KEY].isna())
 
     for curr_keypair in keypairs:
+        comparison_key = curr_keypair[1]
+        # NB: convert to "boolean", NOT "bool"--"bool" is a numpy type that can't be nullable,
+        # whereas "boolean" is a pandas type that *can* be nullable
+        qc_and_lineage_w_search_ids_df[comparison_key] = \
+            qc_and_lineage_w_search_ids_df[comparison_key].astype("boolean")
         qc_and_lineage_w_search_ids_df.loc[
-            qc_and_lineage_w_search_ids_df[curr_keypair[0]].isna(), curr_keypair[1]] = None
+            qc_and_lineage_w_search_ids_df[curr_keypair[0]].isna(), comparison_key] = None
 
     qc_and_lineage_w_search_ids_df.loc[:, ANY_FAIL_KEY] = \
         ((qc_and_lineage_w_search_ids_df[MAPPED_LT_50K_KEY] == True) |
