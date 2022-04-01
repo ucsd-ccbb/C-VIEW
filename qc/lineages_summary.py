@@ -140,13 +140,16 @@ def add_final_qc_filters_inplace(qc_and_lineage_w_search_ids_df):
             qc_and_lineage_w_search_ids_df[curr_keypair[0]].isna(), comparison_key] = None
 
     qc_and_lineage_w_search_ids_df.loc[:, ANY_FAIL_KEY] = \
-        ((qc_and_lineage_w_search_ids_df[MAPPED_LT_50K_KEY] == True) |
-         (qc_and_lineage_w_search_ids_df[UNCAPPED_LT_100K_KEY] == True) |
-         (qc_and_lineage_w_search_ids_df[SUB_MAP_LT_50_KEY] == True) |
-         (qc_and_lineage_w_search_ids_df[P25_LT_140_KEY] == True) |
-         (qc_and_lineage_w_search_ids_df[PCT_Q30_LT_90_KEY] == True) |
-         (qc_and_lineage_w_search_ids_df[COV_GTE_10_LT_95_KEY] == True) |
-         (qc_and_lineage_w_search_ids_df[MEAN_COV_LT_500_KEY] == True))
+        ((qc_and_lineage_w_search_ids_df[MAPPED_LT_50K_KEY]) |
+         (qc_and_lineage_w_search_ids_df[UNCAPPED_LT_100K_KEY]) |
+         (qc_and_lineage_w_search_ids_df[SUB_MAP_LT_50_KEY]) |
+         (qc_and_lineage_w_search_ids_df[P25_LT_140_KEY]) |
+         (qc_and_lineage_w_search_ids_df[PCT_Q30_LT_90_KEY]) |
+         (qc_and_lineage_w_search_ids_df[COV_GTE_10_LT_95_KEY]) |
+         (qc_and_lineage_w_search_ids_df[MEAN_COV_LT_500_KEY]))
+
+    qc_and_lineage_w_search_ids_df.loc[
+        qc_and_lineage_w_search_ids_df[ANY_FAIL_KEY].isna(), ANY_FAIL_KEY] = False
 
     # some older records may not *have* an n metric;
     # these should NOT be overall fails
