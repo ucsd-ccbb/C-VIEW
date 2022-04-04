@@ -5,6 +5,7 @@ import os
 
 TAXON_KEY = "taxon"
 PANGOLIN_STATUS_KEY = "qc_status"
+CVIEW_PANG_STATUS_KEY = "status"
 PASSES_PANG_STATUS_KEY = "passed_qc"
 SAMPLE_NAME = "Sample"
 SEARCH_ID = "search_id"
@@ -138,8 +139,10 @@ def create_lineages_summary(arg_list):
 
     # Load pangolin file to a dataframe and
     # copy the "taxon" column into a new col named "modded_consensus_seq_name"
+    # and rename the status column to a cview-specific name
     lineage_df = pd.read_csv(lineage_fp, dtype=str)
     lineage_df[MOD_CONS_NAME] = lineage_df[TAXON_KEY]
+    lineage_df.rename(columns={PANGOLIN_STATUS_KEY: CVIEW_PANG_STATUS_KEY}, inplace=True)
 
     # outer merge expanded summaries with lineages (includes lines for
     # both samples that went through lineage calling and those that didn't)
