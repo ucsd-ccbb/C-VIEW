@@ -152,7 +152,7 @@ def create_lineages_summary(arg_list):
     # calculate usable_for: nothing, variant, variant_and_epidemiology
     fraction_coverage = output_df['coverage_gte_10_reads'].astype(float)
     # believe checking as below should exclude NAs ...
-    passes_pangolin = output_df[PANGOLIN_STATUS_KEY] == PASSES_PANG_STATUS_KEY
+    passes_pangolin = output_df[CVIEW_PANG_STATUS_KEY] == PASSES_PANG_STATUS_KEY
     gte_70_and_passes_pangolin = passes_pangolin & (fraction_coverage >= 0.70)
     gt_95_and_passes_pangolin = passes_pangolin & (fraction_coverage > 0.95)
     output_df[USABLE_NAME] = NOTHING_VAL
