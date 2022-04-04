@@ -3,6 +3,9 @@ from sys import argv
 import glob
 import os
 
+TAXON_KEY = "taxon"
+PANGOLIN_STATUS_KEY = "qc_status"
+PASSES_PANG_STATUS_KEY = "passed_qc"
 SAMPLE_NAME = "Sample"
 SEARCH_ID = "search_id"
 SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
@@ -136,7 +139,7 @@ def create_lineages_summary(arg_list):
     # Load pangolin file to a dataframe and
     # copy the "taxon" column into a new col named "modded_consensus_seq_name"
     lineage_df = pd.read_csv(lineage_fp, dtype=str)
-    lineage_df[MOD_CONS_NAME] = lineage_df["taxon"]
+    lineage_df[MOD_CONS_NAME] = lineage_df[TAXON_KEY]
 
     # outer merge expanded summaries with lineages (includes lines for
     # both samples that went through lineage calling and those that didn't)
@@ -146,7 +149,7 @@ def create_lineages_summary(arg_list):
     # calculate usable_for: nothing, variant, variant_and_epidemiology
     fraction_coverage = output_df['coverage_gte_10_reads'].astype(float)
     # believe checking as below should exclude NAs ...
-    passes_pangolin = output_df['status'] == "passed_qc"
+    passes_pangolin = output_df[PANGOLIN_STATUS_KEY] == PASSES_PANG_STATUS_KEY
     gte_70_and_passes_pangolin = passes_pangolin & (fraction_coverage >= 0.70)
     gt_95_and_passes_pangolin = passes_pangolin & (fraction_coverage > 0.95)
     output_df[USABLE_NAME] = NOTHING_VAL
