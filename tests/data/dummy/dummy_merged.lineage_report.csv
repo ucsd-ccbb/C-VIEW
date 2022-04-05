@@ -4,7 +4,7 @@ Consensus_005idSEARCH-5332-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consens
 Consensus_007idSEARCH-5334-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus_threshold_0.5_quality_20,B.1.234,1,2/21/21,passed_qc,
 Consensus_008idSEARCH-5335-SAN_L001_L002_L003_L004.trimmed.sorted.pileup.consensus_threshold_0.5_quality_20,B.1.2,1,2/21/21,passed_qc,
 Consensus_SU003_S14_L001.trimmed.sorted.pileup.consensus_threshold_0.5_quality_20,B.1.429,1,2/21/21,passed_qc,
-NC_045512.2_Severe_acute_respiratory_syndrome_coronavirus_2_isolate_Wuhan-Hu-1__complete_genome,B.1,1,2/21/21,passed_qc,
+"NC_045512.2 Severe acute respiratory syndrome coronavirus 2 isolate Wuhan-Hu-1, complete genome",B.1,1,2/21/21,passed_qc,
 hCoV-19/bat/Yunnan/RmYN02/2019|EPI_ISL_412977|2019-06-25,A.1,1,2/21/21,passed_qc,
 hCoV-19/USA/CA-SEARCH-5574/2020|EPI_ISL_751801|2020-12-29,B.1.1.7,1,2/21/21,passed_qc,17/17 B.1.1.7 SNPs
 Consensus_168idSASEA-SD231-SAN_L001_L002_L003_L004_threshold_0.5_quality_20,B.1.346,1,2/21/21,passed_qc,
