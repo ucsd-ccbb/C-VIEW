@@ -85,8 +85,7 @@ def make_bespoke_outputs(arg_list):
             if special_df is None:
                 special_df = curr_source_df
             else:
-                special_df = special_df.append(
-                    curr_source_df, ignore_index=True)
+                special_df = pd.concat([special_df, curr_source_df], ignore_index=True)
         else:
             output_partial_df(curr_source_df, out_fp_prefix, curr_source_name)
     # next
