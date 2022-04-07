@@ -12,7 +12,6 @@ THREADS=8
 rm -rf $WORKSPACE
 mkdir -p $WORKSPACE
 mkdir -p $WORKSPACE/passQC
-# mkdir -p $WORKSPACE/loose_stringent
 mkdir -p $WORKSPACE/stringent
 
 # Based on inputs, decide what to download from where
@@ -61,6 +60,10 @@ runLineages () {
   INSPECT_METADATA_FNAME=$(aws s3 ls $S3INSPECT/ |  grep $INSPECT_METADATA_PATTERN| sort | tail -n 1 | awk '{print $NF}')
   # echo $S3INSPECT/$INSPECT_METADATA_FNAME >> $WORKSPACE/"$PROCESSINGID"-lineages.debug.log
   aws s3 cp "$S3INSPECT"/"$INSPECT_METADATA_FNAME" $WORKSPACE/$INSPECT_METADATA_FNAME
+
+  # generate file of input checksums, for record-keeping
+  python $PIPELINEDIR/pipeline/document_input_checksums.py \
+    $WORKSPACE $WORKSPACE/"$PROCESSINGID"_input_checksums.csv
 
 	# start with the reference sequence
 	cat $PIPELINEDIR/reference_files/NC_045512.2.fas > $WORKSPACE/"$PROCESSINGID"_refs_hist.fas
@@ -130,9 +133,6 @@ runLineages () {
   # add the refs_hist.fas to the stringent_only.fas
   cat $WORKSPACE/"$PROCESSINGID"_refs_hist.fas $WORKSPACE/stringent/"$PROCESSINGID"_stringent_only.fas >> $WORKSPACE/stringent/"$PROCESSINGID"_stringent_refs_hist.fas
 
-  # add the loose_only.fas to the stringent_refs_hist.fas
-  # cat $WORKSPACE/stringent/"$PROCESSINGID"_stringent_refs_hist.fas $WORKSPACE/loose_stringent/"$PROCESSINGID"_loose_only.fas >> $WORKSPACE/loose_stringent/"$PROCESSINGID"_loose_stringent_refs_hist.fas
-
   aws s3 cp $WORKSPACE/"$PROCESSINGID".full_summary.csv $S3INSPECT/"$PROCESSINGID".full_summary.csv
 }
 
@@ -140,4 +140,4 @@ runLineages () {
 aws s3 cp $WORKSPACE/"$PROCESSINGID"-lineages.log $S3UPLOAD/phylogeny/$PROCESSINGID/\
 
 grep -v "exit code: 0" $WORKSPACE/"$PROCESSINGID"-lineages.exit.log | head -n 1 >> $WORKSPACE/"$PROCESSINGID"-lineages.error.log
-aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$PROCESSINGID/ --recursive --quiet
+aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$PROCESSINGID/ --recursive --quiet --include "*"  --exclude "*.fas" --exclude "*-summary.csv" --include "*_refs_hist.fas" --include "$PROCESSINGID_passQC.fas"

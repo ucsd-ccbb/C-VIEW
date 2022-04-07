@@ -109,7 +109,7 @@ runQC () {
 	# cumulative data folder
 	S3CUMULATIVE=$S3DOWNLOAD
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
+	#aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 }
 
