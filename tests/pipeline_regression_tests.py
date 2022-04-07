@@ -1,7 +1,7 @@
 from sys import argv
 import os
 import boto3
-from wand.image import Image
+#from wand.image import Image
 import pandas as pd
 import filecmp
 
@@ -21,12 +21,13 @@ def _split_s3_url(s3_results_url):
 
 
 def compare_pdfs(expected_pdf_fp, real_pdf_fp):
-    real_img = Image(filename=real_pdf_fp, resolution=150)
-    with Image(filename=expected_pdf_fp,
-               resolution=150) as expected_img:
-        imgs_diff = real_img.compare(
-            expected_img, metric='root_mean_square')
-        return imgs_diff[1]
+    raise ValueError("Comparing pdfs is not currently supported")
+    # real_img = Image(filename=real_pdf_fp, resolution=150)
+    # with Image(filename=expected_pdf_fp,
+    #            resolution=150) as expected_img:
+    #     imgs_diff = real_img.compare(
+    #         expected_img, metric='root_mean_square')
+    #     return imgs_diff[1]
 
 
 def regression_test(gs_fp, temp_dir, s3_results_url):
@@ -78,4 +79,6 @@ def regression_test(gs_fp, temp_dir, s3_results_url):
 
 
 if __name__ == '__main__':
+    # TODO: remove test arguments!
+    argv = ["pipeline_regression_tests.py", "/Users/abirmingham/Work/Repositories/cview/tests/data/gold_standard", "/Users/abirmingham/Desktop/regression_temp", "s3://ucsd-rtl-test/2021-02-08-ARTIC_partial/2021-02-08-ARTIC_partial_results/2022-04-07_19-53-44_pe/"]
     regression_test(argv[1], argv[2], argv[3])

@@ -133,10 +133,10 @@ custom_data:
       065idSEARCH-5392-SAN_L001_L002_L003_L004:
         P25 Ins. size: 182
         Pct >=Q30: 94.631
-      067idSEARCH-5394-SAN_L001_L002_L003_L004:
+      SEARCH-5394__XXXXX__XX__2021-02-08-ARTIC_partial__001002003004:
         P25 Ins. size: 260
         Pct >=Q30: 93.775
-      069idSEARCH-5396-SAN_L001_L002_L003_L004:
+      SEARCH-5396__XXXXX__XX__2021-02-08-ARTIC_partial__001002003004:
         P25 Ins. size: 187
         Pct >=Q30: 94.623
     pconfig:
