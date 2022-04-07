@@ -3,6 +3,10 @@ from sys import argv
 import glob
 import os
 
+TAXON_KEY = "taxon"
+PANGOLIN_STATUS_KEY = "qc_status"
+CVIEW_PANG_STATUS_KEY = "status"
+PASSES_PANG_STATUS_KEY = "passed_qc"
 SAMPLE_NAME = "Sample"
 SEARCH_ID = "search_id"
 SEQ_POOL_COMP_ID = "sequenced_pool_component_id"
@@ -68,11 +72,12 @@ def expand_with_added_fa_names(merged_summaries_df, added_fa_names_fp):
     expanded_df.fillna({CONS_NAME: ''}, inplace=True)
     expanded_df.fillna({IS_HIST_OR_REF: False}, inplace=True)
 
-    # add a "modded_consensus_seq_name" col
-    # by modifying the consensus name column contents according to
-    # pangolin's irreversible munge rules
-    expanded_df[MOD_CONS_NAME] = \
-        expanded_df[CONS_NAME].apply(_perform_pangolin_name_munge)
+    # add a "modded_consensus_seq_name" col;
+    # this used to be necessary because before pangolin 4+,
+    # pangolin irreversibly munged consensus sequence names.
+    # Pangolin 4 removes this munge, but later joins/etc are based on
+    # this column, so it is easier to keep it than remove it.
+    expanded_df[MOD_CONS_NAME] = expanded_df[CONS_NAME]
 
     return expanded_df
 
@@ -135,8 +140,10 @@ def create_lineages_summary(arg_list):
 
     # Load pangolin file to a dataframe and
     # copy the "taxon" column into a new col named "modded_consensus_seq_name"
+    # and rename the status column to a cview-specific name
     lineage_df = pd.read_csv(lineage_fp, dtype=str)
-    lineage_df[MOD_CONS_NAME] = lineage_df["taxon"]
+    lineage_df[MOD_CONS_NAME] = lineage_df[TAXON_KEY]
+    lineage_df.rename(columns={PANGOLIN_STATUS_KEY: CVIEW_PANG_STATUS_KEY}, inplace=True)
 
     # outer merge expanded summaries with lineages (includes lines for
     # both samples that went through lineage calling and those that didn't)
@@ -146,7 +153,7 @@ def create_lineages_summary(arg_list):
     # calculate usable_for: nothing, variant, variant_and_epidemiology
     fraction_coverage = output_df['coverage_gte_10_reads'].astype(float)
     # believe checking as below should exclude NAs ...
-    passes_pangolin = output_df['status'] == "passed_qc"
+    passes_pangolin = output_df[CVIEW_PANG_STATUS_KEY] == PASSES_PANG_STATUS_KEY
     gte_70_and_passes_pangolin = passes_pangolin & (fraction_coverage >= 0.70)
     gt_95_and_passes_pangolin = passes_pangolin & (fraction_coverage > 0.95)
     output_df[USABLE_NAME] = NOTHING_VAL
@@ -162,7 +169,9 @@ def create_lineages_summary(arg_list):
     # there *shouldn't* be any rows in the lineage that aren't in the
     # expanded summaries ... if there are, something is wrong.  Raise
     # an error (but *after* writing the output file, so we have some chance of
-    # figuring out what went wrong).
+    # figuring out what went wrong).  The most likely cause of this issue is
+    # some records not being correctly matched up between the two data sources
+    # during the outer join above.
     output_df.to_csv(out_summary_fp, index=False)
     if len(output_df) != len(expanded_summaries_df):
         raise ValueError(f"Expected {len(expanded_summaries_df)} rows, "
