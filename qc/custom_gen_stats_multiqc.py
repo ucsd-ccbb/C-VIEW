@@ -151,7 +151,7 @@ def generate_q30_based_values(input_dict, R1, S1, R2=None, S2=None):
             pctQ30 = (S1[1] + S2[1]) / (S1[0] + S2[0]) * 100
         else:
             uncapped_reads = S1[0]
-            pctQ30 = S1[1] / S1[0]
+            pctQ30 = S1[1] / S1[0] * 100
     except ZeroDivisionError:
         print(f"Warning: Unable to calculate values from q30 file due "
               f"to division by zero; reporting as {NA_VAL}")
@@ -268,10 +268,10 @@ def write_custom_multiqc_yaml(arg_list):
         data_dict = gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict)
         data_dict = gather_sub_map_pct(sub_map_stats_file_list_fp, data_dict)
     else:
-        # for non-fastq-based (single-end or paired-end) data inputs like genexus bams, we
-        # won't have the inputs needed to calculate some of the metrics.  Instead set those
-        # metrics to None for each sample so that any code looking for those keys at least finds
-        # something
+        # for non-fastq-based (single-end or paired-end) data inputs like
+        # genexus bams, we won't have the inputs needed to calculate some
+        # of the metrics.  Instead set those metrics to None for each sample so
+        # that any code looking for those keys at least finds something
         for curr_sample in data_dict:
             data_dict[curr_sample][PCT_30_KEY] = NA_VAL
             data_dict[curr_sample][UNCAPPED_READS_KEY] = NA_VAL
