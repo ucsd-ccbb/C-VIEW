@@ -46,8 +46,8 @@ do
   # validate the inputs
   # --------------------
 
-  if [ "$FUNCTION" != pipeline ] && [ "$FUNCTION" != cumulative_pipeline ] && [ "$FUNCTION" != variants ] &&  [ "$FUNCTION" != sample ] &&  [ "$FUNCTION" != qc ] &&  [ "$FUNCTION" != lineages ] &&  [ "$FUNCTION" != phylogeny ] &&  [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ]; then
-		echo "Error: Parameter FUNCTION must be one of pipeline, cumulative_pipeline, variants, sample, qc, lineages, phylogeny, cummulative_lineages, or cumulative_phylogeny"
+  if [ "$FUNCTION" != pipeline ] && [ "$FUNCTION" != cumulative_pipeline ] && [ "$FUNCTION" != variants_qc ] && [ "$FUNCTION" != variants ] &&  [ "$FUNCTION" != sample ] &&  [ "$FUNCTION" != qc ] &&  [ "$FUNCTION" != lineages ] &&  [ "$FUNCTION" != phylogeny ] &&  [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ]; then
+		echo "Error: Parameter FUNCTION must be one of pipeline, cumulative_pipeline, variants_qc, variants, sample, qc, lineages, phylogeny, cummulative_lineages, or cumulative_phylogeny"
 		exit 1
 	fi
 
@@ -61,7 +61,7 @@ do
 	  exit 1
 	fi
 
-	if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
+	if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants_qc ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
     if [[ ! "$FQ" =~ ^(se|pe|bam)$ ]]; then
       echo "Error: FQ must be one of se, pe, or bam"
       exit 1
@@ -69,7 +69,7 @@ do
 	  unset FIELD_IGNORED[FQ]
   fi
 
-  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ]; then
+  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants_qc ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ]; then
     VARIANTS=true
 
     if [[ "$FQ" =~ ^(se|pe)$ ]]; then
@@ -117,7 +117,7 @@ do
     fi
   fi
 
-  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == qc ]; then
+  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants_qc ] || [ "$FUNCTION" == qc ]; then
     QC=true
   fi
 
@@ -234,7 +234,7 @@ do
       exit 1
     fi
 
-#		# Run VARIANTS step on each sample
+		# Run VARIANTS step on each sample
 		for SAMPLE in $SAMPLE_LIST; do
 			qsub $QSUBSAMPLEPARAMS \
 				-v SEQ_RUN="$SEQ_RUN" \
