@@ -124,10 +124,11 @@ def add_final_qc_filters_inplace(qc_and_lineage_w_search_ids_df):
         if any_fail_values is None:
             any_fail_values = qc_and_lineage_w_search_ids_df[comp_key]
         else:
-            # NB: Don't let pycharm tell you to change this to "Union[<stuff>]
-            # as that doesn't work; it seems unable to tell this is a pandas
-            # operation
-            any_fail_values = any_fail_values | \
+            # NB: the "pd.Series" here is actually unnecessary (any_fail_values
+            # is already a Series) but without it pycharm's linter can't tell
+            # this is a pandas operation and so gives a spurious fatal error:
+            # "Python version 3.9 does not allow writing union types as X | Y"
+            any_fail_values = pd.Series(any_fail_values) | \
                               qc_and_lineage_w_search_ids_df[comp_key]
 
         # NOW convert new comparison column to "boolean"
