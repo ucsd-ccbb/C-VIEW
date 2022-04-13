@@ -69,7 +69,7 @@ if [[ "$INPUT_TYPE" == fastq ]]; then
   fi
 
   # Step 0: Download input data
-  aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLEID*R1_001$INPUT_SUFFIX"
+  aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R1_001$INPUT_SUFFIX"
 
   { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R1_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R1_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R1.log.0.q30.log
   echo -e "$SAMPLEID\tq30 R1 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
