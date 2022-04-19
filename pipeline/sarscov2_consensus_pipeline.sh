@@ -156,4 +156,4 @@ echo -e "$SAMPLEID\tn metric exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 # by the rest of the pipeline and is therefore not cause for failing a run
 grep -v 'exit code: 0\|qualimap exit code: 255' $WORKSPACE/"$SAMPLEID".exit.log | head -n 1 > $WORKSPACE/"$SAMPLEID".error.log
 
-aws s3 cp $WORKSPACE/ $RESULTS/ --recursive --include "*" --exclude $INPUT_SUFFIX
+aws s3 cp $WORKSPACE/ $RESULTS/ --recursive --include "*" --exclude "*$INPUT_SUFFIX"
