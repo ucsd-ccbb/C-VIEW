@@ -18,6 +18,12 @@ import re
 import yaml
 
 NA_VAL = "NA"
+P25_KEY = "P25 Ins. size"
+PCT_30_KEY = "Pct >=Q30"
+UNCAPPED_READS_KEY = "Uncapped Reads"
+SUBSAMPLED_MAPPED_PCT_ALIGNED_KEY = "Sub Map Pct Aligned"
+SE_VALUE = "se"
+PE_VALUE = "pe"
 
 
 def parseSeqQual(q30File):
@@ -103,7 +109,7 @@ def gather_p25_ins_sizes(qmap_file_list_fp):
                     break
                 else:
                     stats = [NA_VAL]
-            data_dict[sample_name] = {"P25 Ins. size": stats[0]}
+            data_dict[sample_name] = {P25_KEY: stats[0]}
     # p25sQ30s[sample_name].append(stats[0])
 
     return data_dict
@@ -113,19 +119,19 @@ def insert_pct_gte_q30_in_sample_dict(data_dict, name, pctQ30):
     temp_sample_dict = data_dict.get(name, dict())
     if pctQ30 != NA_VAL:
         pctQ30 = round(pctQ30, 3)
-    temp_sample_dict["Pct >=Q30"] = pctQ30
+    temp_sample_dict[PCT_30_KEY] = pctQ30
     return temp_sample_dict
 
 
 def insert_uncapped_reads_in_sample_dict(data_dict, name, uncappedReads):
     temp_sample_dict = data_dict.get(name, dict())
-    temp_sample_dict["Uncapped Reads"] = uncappedReads
+    temp_sample_dict[UNCAPPED_READS_KEY] = uncappedReads
     return temp_sample_dict
 
 
 def insert_sub_map_pct_in_sample_dict(data_dict, name, pctSubMap):
     temp_sample_dict = data_dict.get(name, dict())
-    temp_sample_dict["Sub Map Pct Aligned"] = pctSubMap
+    temp_sample_dict[SUBSAMPLED_MAPPED_PCT_ALIGNED_KEY] = pctSubMap
     return temp_sample_dict
 
 
@@ -145,7 +151,7 @@ def generate_q30_based_values(input_dict, R1, S1, R2=None, S2=None):
             pctQ30 = (S1[1] + S2[1]) / (S1[0] + S2[0]) * 100
         else:
             uncapped_reads = S1[0]
-            pctQ30 = S1[1] / S1[0]
+            pctQ30 = S1[1] / S1[0] * 100
     except ZeroDivisionError:
         print(f"Warning: Unable to calculate values from q30 file due "
               f"to division by zero; reporting as {NA_VAL}")
@@ -163,7 +169,7 @@ def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
     with open(q30_file_list_fp) as q30sFile:
         q30s_paths = [line.strip() for line in q30sFile]
 
-    if se_or_pe == "se":
+    if se_or_pe == SE_VALUE:
         for R1 in q30s_paths:
             S1 = parseSeqQual(R1)
 
@@ -172,7 +178,7 @@ def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
 
             data_dict[name] = temp_pctQ30_dict
             data_dict[name] = temp_uncapped_reads_dict
-    elif se_or_pe == "pe":
+    elif se_or_pe == PE_VALUE:
         # Get Q30s for both R1 and R2
         for R1, R2 in pairwise(q30s_paths):
             S1 = parseSeqQual(R1)
@@ -184,7 +190,8 @@ def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
             data_dict[name] = temp_pctQ30_dict
             data_dict[name] = temp_uncapped_reads_dict
     else:
-        raise ValueError(f"Unrecognized se or pe value '{se_or_pe}'")
+        print(f"Warning: Unable to run generate percent greater than q30 and "
+              f"number of uncapped reads for input type '{se_or_pe}'")
 
     return data_dict
 
@@ -223,19 +230,19 @@ def generate_multiqc_dict(data_dict):
             "my_genstats": {
                 "plot_type": "generalstats",
                 "pconfig": [
-                    {"P25 Ins. size": {
+                    {P25_KEY: {
                         "min": 0,
                         "scale": "RdYlGn"
                     }},
-                    {"Pct >=Q30": {
+                    {PCT_30_KEY: {
                         "max": 100,
                         "min": 0,
                         "suffix": "%"
                     }},
-                    {"Uncapped Reads": {
+                    {UNCAPPED_READS_KEY: {
                         "min": 0
                     }},
-                    {"Sub Map Pct Aligned": {
+                    {SUBSAMPLED_MAPPED_PCT_ALIGNED_KEY: {
                         "max": 100,
                         "min": 0,
                         "suffix": "%"
@@ -257,8 +264,21 @@ def write_custom_multiqc_yaml(arg_list):
     output_fp = arg_list[5]
 
     data_dict = gather_p25_ins_sizes(qmap_file_list_fp)
-    data_dict = gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict)
-    data_dict = gather_sub_map_pct(sub_map_stats_file_list_fp, data_dict)
+    if se_or_pe in [SE_VALUE, PE_VALUE]:
+        data_dict = gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict)
+        data_dict = gather_sub_map_pct(sub_map_stats_file_list_fp, data_dict)
+    else:
+        # for non-fastq-based (single-end or paired-end) data inputs like
+        # genexus bams, we won't have the inputs needed to calculate some
+        # of the metrics.  Instead set those metrics to None for each sample so
+        # that any code looking for those keys at least finds something
+        for curr_sample in data_dict:
+            data_dict[curr_sample][PCT_30_KEY] = NA_VAL
+            data_dict[curr_sample][UNCAPPED_READS_KEY] = NA_VAL
+            data_dict[curr_sample][SUBSAMPLED_MAPPED_PCT_ALIGNED_KEY] = NA_VAL
+        # next sample
+    # endif
+
     yaml_dict = generate_multiqc_dict(data_dict)
 
     with open(output_fp, 'w') as yaml_file:

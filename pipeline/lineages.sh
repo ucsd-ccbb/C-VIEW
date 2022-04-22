@@ -95,7 +95,7 @@ runLineages () {
   source $ANACONDADIR/deactivate pangolin
   source $ANACONDADIR/activate covid1.2
 
-  # produce merged_qc_and_lineages.csv
+  # produce merged qc_and_lineages.csv
   python $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE/added_fa_names.txt $WORKSPACE "-summary.csv" $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv
   echo -e "lineages_summary.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
