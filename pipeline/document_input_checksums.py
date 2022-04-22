@@ -1,5 +1,6 @@
 import os
 from hashlib import md5
+from sys import argv
 
 
 def generate_input_checksums(workspace_fp):
@@ -23,14 +24,9 @@ def generate_input_checksums(workspace_fp):
     return result
 
 
-if __name__ == '__main__':
-    # TODO: remove test arg list!
-    argv = ["document_input_checksums.py",
-            "/Users/abirmingham/Downloads",
-            "/Users/abirmingham/Desktop/test_input_doc_checksums.csv"]
-
-    input_dir = argv[1]
-    output_fp = argv[2]
+def generate_checksums_file(args_list):
+    input_dir = args_list[1]
+    output_fp = args_list[2]
 
     fname_and_checksum_dict = generate_input_checksums(input_dir)
 
@@ -41,3 +37,6 @@ if __name__ == '__main__':
     with open(output_fp, "w") as f:
         f.writelines(output_lines)
 
+
+if __name__ == '__main__':
+    generate_checksums_file(argv)
