@@ -115,7 +115,7 @@ def add_final_qc_filters_inplace(qc_and_lineage_w_search_ids_df):
 
         # make a new column holding the comparison result
         qc_and_lineage_w_search_ids_df.loc[:, comp_key] = \
-        (qc_and_lineage_w_search_ids_df[value_key].apply(comp_func))
+            (qc_and_lineage_w_search_ids_df[value_key].apply(comp_func))
 
         # build up the series holding values for the new any_fail column
         # by or-ing it together with each new comparison; note that for now,
