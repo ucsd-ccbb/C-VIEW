@@ -56,8 +56,9 @@ def prep_files_for_tree_building(arg_list):
     metadata_fp = arg_list[2]  # May be None
     full_fasta_fp = arg_list[3]
     out_stringent_fasta_fp = arg_list[4]
-    out_empress_fp = arg_list[5]
-    out_stringent_empress_fp = arg_list[6]
+    out_stringent_empress_fp = arg_list[5]
+    # optional 7th argument for passQC (not just stringent) empress metadata
+    out_empress_fp = None if len(arg_list) <= 6 else arg_list[6]
 
     qc_and_lineage_df = pd.read_csv(qc_and_lineage_fp)  # , dtype=str)
 
@@ -75,8 +76,9 @@ def prep_files_for_tree_building(arg_list):
         raw_empress_df = qc_and_lineage_df.copy()
 
     base_empress_df = generate_base_empress_df(raw_empress_df)
-    # NB that empress metadata files must be tsv
-    base_empress_df.to_csv(out_empress_fp, sep='\t', index=False)
+    if out_empress_fp:
+        # NB that empress metadata files must be tsv
+        base_empress_df.to_csv(out_empress_fp, sep='\t', index=False)
 
     stringent_mask = \
         base_empress_df[STRINGENT_TEST_COL] == STRINGENT_INCLUDE_VAL

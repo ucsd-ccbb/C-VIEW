@@ -5,7 +5,14 @@ from qc.tree_prep import prep_files_for_tree_building
 
 
 class TreePrepTest(FileTestCase):
-    def test_tree_prep(self):
+    def test_tree_prep_w_all_empress_output(self):
+        self._test_tree_prep(make_all_empress_out=True)
+
+    def test_tree_prep_w_stringent_empress_out_only(self):
+        self._test_tree_prep(make_all_empress_out=False)
+
+    def _test_tree_prep(self, make_all_empress_out=True):
+        incl_all_empress = "_all_empress_test" if make_all_empress_out else ""
         input_qc_and_lineages_fp = f"{self.dummy_dir}/" \
                                       f"dummy_qc_and_lineages_w_bjorn_" \
                                       f"for_tree_prep.csv"
@@ -20,15 +27,20 @@ class TreePrepTest(FileTestCase):
         expected_stringent_empress_metadata_fp = \
             f"{self.dummy_dir}/dummy_stringent_empress_metadata.tsv"
 
-        out_stringent_fas_fp = f"{self.test_temp_dir}/temp_stringent_only.fas"
+        out_stringent_fas_fp = f"{self.test_temp_dir}/temp_stringent_only" \
+                               f"{incl_all_empress}.fas"
         out_all_empress_fp = f"{self.test_temp_dir}/" \
                              f"temp_all_empress_metadata.tsv"
         out_stringent_empress_fp = f"{self.test_temp_dir}/" \
-                                   f"temp_stringent_empress_metadata.tsv"
+                                   f"temp_stringent_empress_metadata" \
+                                   f"{incl_all_empress}.tsv"
 
         arg_list = ["tree_prep.py", input_qc_and_lineages_fp,
                     input_metadata_fp, in_fas_fp, out_stringent_fas_fp,
-                    out_all_empress_fp, out_stringent_empress_fp]
+                    out_stringent_empress_fp]
+
+        if make_all_empress_out:
+            arg_list.append(out_all_empress_fp)
 
         all_empress_is_file = False
         stringent_empress_is_file = False
@@ -39,12 +51,15 @@ class TreePrepTest(FileTestCase):
         try:
             prep_files_for_tree_building(arg_list)
 
-            all_empress_is_file = os.path.isfile(out_all_empress_fp)
-            self.assertTrue(all_empress_is_file)
+            if not make_all_empress_out:
+                all_empress_is_file = all_empress_equal = True
+            else:
+                all_empress_is_file = os.path.isfile(out_all_empress_fp)
+                self.assertTrue(all_empress_is_file)
 
-            all_empress_equal = filecmp.cmp(
-                out_all_empress_fp, expected_all_empress_metadata_fp)
-            self.assertTrue(all_empress_equal)
+                all_empress_equal = filecmp.cmp(
+                    out_all_empress_fp, expected_all_empress_metadata_fp)
+                self.assertTrue(all_empress_equal)
 
             stringent_empress_is_file = os.path.isfile(
                 out_stringent_empress_fp)
