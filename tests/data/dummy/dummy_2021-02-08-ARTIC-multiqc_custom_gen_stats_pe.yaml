@@ -1,0 +1,33 @@
+custom_data:
+  my_genstats:
+    data:
+      SEARCH-5329__LIBPLATE1__A01__001002003004:
+        P25 Ins. size: 195
+        Pct >=Q30: 94.271
+        Sub Map Pct Aligned: 99.765
+        Uncapped Reads: 4881624
+      SEARCH-5332__LIBPLATE2__D03__001002003004:
+        P25 Ins. size: 202
+        Pct >=Q30: 94.679
+        Sub Map Pct Aligned: 99.77
+        Uncapped Reads: 3393714
+      SEARCH-5334__LIBPLATE9__F12__001002003004:
+        P25 Ins. size: 227
+        Pct >=Q30: 94.327
+        Sub Map Pct Aligned: 99.838
+        Uncapped Reads: 3792386
+    pconfig:
+    - P25 Ins. size:
+        min: 0
+        scale: RdYlGn
+    - Pct >=Q30:
+        max: 100
+        min: 0
+        suffix: '%'
+    - Uncapped Reads:
+        min: 0
+    - Sub Map Pct Aligned:
+        max: 100
+        min: 0
+        suffix: '%'
+    plot_type: generalstats

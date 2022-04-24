@@ -18,6 +18,7 @@ VARIANT_VAL = "variant"
 VARIANT_AND_EP_VAL = "variant_and_epidemiology"
 IS_HIST_OR_REF = "is_hist_or_ref"
 OVERALL_FAIL_KEY = "overall_fail"
+ANY_FAIL_KEY = "any_fail"
 
 
 # recreate un-reversable pangolin name munge;
@@ -83,47 +84,96 @@ def expand_with_added_fa_names(merged_summaries_df, added_fa_names_fp):
 
 
 def add_final_qc_filters_inplace(qc_and_lineage_w_search_ids_df):
-    qc_and_lineage_w_search_ids_df.loc[:, "mapped_reads_lt_50k"] = \
-        ((qc_and_lineage_w_search_ids_df["mapped_reads"] < 50000) |
-         qc_and_lineage_w_search_ids_df["mapped_reads"].isna())
+    MAPPED_READS_KEY = "mapped_reads"
+    MAPPED_LT_50K_KEY = "mapped_reads_lt_50k"
+    UNCAPPED_READS_KEY = "Uncapped_Reads"
+    UNCAPPED_LT_100K_KEY = "uncapped_reads_lt_100k"
+    SUB_MAP_KEY = "Sub_Map_Pct_Aligned"
+    SUB_MAP_LT_50_KEY = "sub_map_pct_aligned_lt_50"
+    P25_KEY = "P25_Ins_size"
+    P25_LT_140_KEY = "p25_ins_size_lt_140"
+    PCT_Q30_KEY = "Pct_Q30"
+    PCT_Q30_LT_90_KEY = "percent_q30_lt_90"
+    COV_GTE_10_KEY = "coverage_gte_10_reads"
+    COV_GTE_10_LT_95_KEY = "coverage_gte_10_reads_lt_95"
+    MEAN_COV_KEY = "mean_coverage"
+    MEAN_COV_LT_500_KEY = "mean_coverage_lt_500"
 
-    qc_and_lineage_w_search_ids_df.loc[:, "uncapped_reads_lt_100k"] = \
-        ((qc_and_lineage_w_search_ids_df["Uncapped_Reads"] < 50000) |
-         qc_and_lineage_w_search_ids_df["Uncapped_Reads"].isna())
+    keypairs = [(MAPPED_READS_KEY, MAPPED_LT_50K_KEY, lambda a: a < 50000),
+                (UNCAPPED_READS_KEY, UNCAPPED_LT_100K_KEY, lambda a: a < 100000),
+                (SUB_MAP_KEY, SUB_MAP_LT_50_KEY, lambda a: a < 50),
+                (P25_KEY, P25_LT_140_KEY, lambda a: a < 140),
+                (PCT_Q30_KEY, PCT_Q30_LT_90_KEY, lambda a: a < 90),
+                (COV_GTE_10_KEY, COV_GTE_10_LT_95_KEY, lambda a: a < 0.95),
+                (MEAN_COV_KEY, MEAN_COV_LT_500_KEY, lambda a: a < 500)]
 
-    qc_and_lineage_w_search_ids_df.loc[:, "sub_map_pct_aligned_lt_50"] = \
-        ((qc_and_lineage_w_search_ids_df["Sub_Map_Pct_Aligned"] < 50) |
-         qc_and_lineage_w_search_ids_df["Sub_Map_Pct_Aligned"].isna())
+    any_fail_values = None
+    for curr_tuple in keypairs:
+        value_key = curr_tuple[0]
+        comp_key = curr_tuple[1]
+        comp_func = curr_tuple[2]
 
-    qc_and_lineage_w_search_ids_df.loc[:, "p25_ins_size_lt_140"] = \
-        ((qc_and_lineage_w_search_ids_df["P25_Ins_size"] < 140) |
-         qc_and_lineage_w_search_ids_df["P25_Ins_size"].isna())
+        # make a new column holding the comparison result
+        qc_and_lineage_w_search_ids_df.loc[:, comp_key] = \
+            (qc_and_lineage_w_search_ids_df[value_key].apply(comp_func))
 
-    qc_and_lineage_w_search_ids_df.loc[:, "percent_q30_lt_90"] = \
-        ((qc_and_lineage_w_search_ids_df["Pct_Q30"] < 90) |
-         qc_and_lineage_w_search_ids_df["Pct_Q30"].isna())
+        # build up the series holding values for the new any_fail column
+        # by or-ing it together with each new comparison; note that for now,
+        # the comparison columns are numpy bools, which treat NaN as False, so
+        # if a value is missing, we assume it does NOT fail that value's check
+        if any_fail_values is None:
+            any_fail_values = qc_and_lineage_w_search_ids_df[comp_key]
+        else:
+            # NB: the "pd.Series" here is actually unnecessary (any_fail_values
+            # is already a Series) but without it pycharm's linter can't tell
+            # this is a pandas operation and so gives a spurious fatal error:
+            # "Python version 3.9 does not allow writing union types as X | Y"
+            any_fail_values = pd.Series(any_fail_values) | \
+                              qc_and_lineage_w_search_ids_df[comp_key]
 
-    qc_and_lineage_w_search_ids_df.loc[:, "coverage_gte_10_reads_lt_95"] = \
-        ((qc_and_lineage_w_search_ids_df["coverage_gte_10_reads"] < 0.95) |
-         qc_and_lineage_w_search_ids_df["coverage_gte_10_reads"].isna())
+        # NOW convert new comparison column to "boolean"
+        # NB: NOT "bool"--"bool" is a numpy type that can't be nullable,
+        # whereas "boolean" is a pandas type that *can* be nullable
+        qc_and_lineage_w_search_ids_df[comp_key] = \
+            qc_and_lineage_w_search_ids_df[comp_key].astype("boolean")
 
-    qc_and_lineage_w_search_ids_df.loc[:, "mean_coverage_lt_500"] = \
-        ((qc_and_lineage_w_search_ids_df["mean_coverage"] < 500) |
-         qc_and_lineage_w_search_ids_df["mean_coverage"].isna())
+        # if the underlying value being compared is NaN, reset the
+        # (now nullable!) comparison result to None instead of False;
+        # note this is done AFTER the any_fail comparison, just so we *know*
+        # we had no value for these comparisons and thus assumed false for 'em
+        # when calculating any_fail
+        qc_and_lineage_w_search_ids_df.loc[
+            qc_and_lineage_w_search_ids_df[value_key].isna(), comp_key] = None
+    # next comparison
 
-    qc_and_lineage_w_search_ids_df.loc[:, "any_fail"] = \
-        (qc_and_lineage_w_search_ids_df["mapped_reads_lt_50k"] |
-         qc_and_lineage_w_search_ids_df["uncapped_reads_lt_100k"] |
-         qc_and_lineage_w_search_ids_df["sub_map_pct_aligned_lt_50"] |
-         qc_and_lineage_w_search_ids_df["p25_ins_size_lt_140"] |
-         qc_and_lineage_w_search_ids_df["percent_q30_lt_90"] |
-         qc_and_lineage_w_search_ids_df["coverage_gte_10_reads_lt_95"] |
-         qc_and_lineage_w_search_ids_df["mean_coverage_lt_500"])
+    # generally, any_fail should treat comparisons based on missing values
+    # as false (not failing) as it does above. The exception is when ALL the
+    # values are missing, in which case any_fail should also be missing
+    # as we have ZERO info on it:
 
+    # get subset of dataframe containing all (and only) the comparison columns
+    comp_keys = [x[1] for x in keypairs]
+    comparisons_df = qc_and_lineage_w_search_ids_df.loc[:, comp_keys]
+
+    # make a mask id-ing rows for which ALL the comparison values
+    # are None; these should have None for their any_fail value, too
+    all_none_mask = comparisons_df.isna().all(axis=1)  # 1 means column
+    any_fail_values = any_fail_values.astype("boolean")
+    any_fail_values[all_none_mask] = None
+
+    # finally, add the new any_fail column to the output dataframe
+    qc_and_lineage_w_search_ids_df.loc[:, ANY_FAIL_KEY] = any_fail_values
+
+    # now set the overall_fail value;
     # some older records may not *have* an n metric;
     # these should NOT be overall fails
+    # TODO: how should overall_fail act if any_fail is None?
+    # as of now, if n_metric fail is false and any_fail is None,
+    # overall_fail will also be None, whereas if the n_metric check
+    # fails, overall_fail will be True even if any_fail is None.
+    # Note that if n_metric is missing, the n_metric fail will be False here.
     qc_and_lineage_w_search_ids_df.loc[:, OVERALL_FAIL_KEY] = \
-        (qc_and_lineage_w_search_ids_df["any_fail"] |
+        (qc_and_lineage_w_search_ids_df[ANY_FAIL_KEY] |
          (qc_and_lineage_w_search_ids_df["n_metric"] > 19))
 
 

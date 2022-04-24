@@ -72,6 +72,8 @@ def generate_bjorn_df(filtered_df):
     # The metadata reads in as strings (hence 'True') while the qc and lineage
     # data reads in parsed (hence False, not 'False')
     inspect_approval = filtered_df[SUBMIT_TO_GISAID] == 'True'  # noqa 712
+    # NB: this check is false for overall_fail values of None, as it should be:
+    # don't release items with overall_fail == None since they are unknown
     no_overall_fail = filtered_df[OVERALL_FAIL] == False  # noqa 712
 
     release_mask = inspect_approval & no_overall_fail
