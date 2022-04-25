@@ -3,7 +3,7 @@ from pathlib import Path
 import yaml
 from tests.test_sarscov2_consensus_acceptance import FileTestCase
 from qc.custom_gen_stats_multiqc import write_custom_multiqc_yaml, \
-    generate_q30_based_values, _calc_pct_aligned
+    insert_q30_based_values, _calc_pct_aligned
 
 
 class CustomGenStatsMultiQcTest(FileTestCase):
@@ -16,37 +16,36 @@ class CustomGenStatsMultiQcTest(FileTestCase):
             f.writelines(sorted_relevant_fps)
         return output_fp
 
-    def test_generate_q30_based_values_se(self):
+    def test_insert_q30_based_values_se(self):
         r1 = '/Users/amandabirmingham/Work/Repositories/' \
              'covid_sequencing_analysis_pipeline/tests/data/dummy/' \
              'dummy_2021-02-08-ARTIC_samples/SEARCH-5329__LIBPLATE1__' \
              'A01__001002003004/SEARCH-5329__LIBPLATE1__A01__' \
              '001002003004_R1_q30_data.txt'
         s1 = [2440812, 2319178]
-        expected_name = 'SEARCH-5329__LIBPLATE1__A01__001002003004'
-        out_name, out_pctQ30_dict, out_uncapped_reads_dict = \
-            generate_q30_based_values({}, r1, s1)
+        input_dict = {}
+        expected_dict = {'SEARCH-5329__LIBPLATE1__A01__001002003004': {
+            'Pct >=Q30': 95.017, 'Uncapped Reads': 2440812}}
+        insert_q30_based_values(input_dict, r1, s1)
 
-        self.assertEqual(expected_name, out_name)
-        self.assertDictEqual({'Pct >=Q30': 95.017}, out_pctQ30_dict)
-        self.assertDictEqual({'Uncapped Reads': 2440812}, out_uncapped_reads_dict)
+        self.assertDictEqual(expected_dict, input_dict)
 
-    def test_generate_q30_based_values_se_zero(self):
+    def test_insert_q30_based_values_se_zero(self):
         r1 = '/Users/amandabirmingham/Work/Repositories/' \
              'covid_sequencing_analysis_pipeline/tests/data/dummy/' \
              'dummy_2021-02-08-ARTIC_samples/SEARCH-5329__LIBPLATE1__' \
              'A01__001002003004/SEARCH-5329__LIBPLATE1__A01__' \
              '001002003004_R1_q30_data.txt'
         s1 = [0, 0]
+        input_dict = {}
+        expected_dict = {'SEARCH-5329__LIBPLATE1__A01__001002003004': {
+            'Pct >=Q30': 'NA', 'Uncapped Reads': 0}}
         expected_name = 'SEARCH-5329__LIBPLATE1__A01__001002003004'
-        out_name, out_pctQ30_dict, out_uncapped_reads_dict = \
-            generate_q30_based_values({}, r1, s1)
+        insert_q30_based_values(input_dict, r1, s1)
 
-        self.assertEqual(expected_name, out_name)
-        self.assertDictEqual({'Pct >=Q30': 'NA'}, out_pctQ30_dict)
-        self.assertDictEqual({'Uncapped Reads': 0}, out_uncapped_reads_dict)
+        self.assertDictEqual(expected_dict, input_dict)
 
-    def test_generate_q30_based_values_pe(self):
+    def test_insert_q30_based_values_pe(self):
         r1 = '/Users/amandabirmingham/Work/Repositories/' \
              'covid_sequencing_analysis_pipeline/tests/data/dummy/' \
              'dummy_2021-02-08-ARTIC_samples/SEARCH-5329__LIBPLATE1__' \
@@ -59,16 +58,14 @@ class CustomGenStatsMultiQcTest(FileTestCase):
              '001002003004_R2_q30_data.txt'
         s1 = [2440812, 2319178]
         s2 = [2440812, 2282795]
-        expected_name = 'SEARCH-5329__LIBPLATE1__A01__001002003004'
-        out_name, out_pctQ30_dict, out_uncapped_reads_dict = \
-            generate_q30_based_values({}, r1, s1, r2, s2)
+        input_dict = {}
+        expected_dict = {'SEARCH-5329__LIBPLATE1__A01__001002003004': {
+            'Pct >=Q30': 94.271, 'Uncapped Reads': 4881624}}
+        insert_q30_based_values(input_dict, r1, s1, r2, s2)
 
-        self.assertEqual(expected_name, out_name)
-        self.assertDictEqual({'Pct >=Q30': 94.271}, out_pctQ30_dict)
-        self.assertDictEqual({'Uncapped Reads': 4881624},
-                             out_uncapped_reads_dict)
+        self.assertDictEqual(expected_dict, input_dict)
 
-    def test_generate_q30_based_values_pe_zero(self):
+    def test_insert_q30_based_values_pe_zero(self):
         r1 = '/Users/amandabirmingham/Work/Repositories/' \
              'covid_sequencing_analysis_pipeline/tests/data/dummy/' \
              'dummy_2021-02-08-ARTIC_samples/SEARCH-5329__LIBPLATE1__' \
@@ -81,16 +78,14 @@ class CustomGenStatsMultiQcTest(FileTestCase):
              '001002003004_R2_q30_data.txt'
         s1 = [0, 0]
         s2 = [2440812, 2282795]
-        expected_name = 'SEARCH-5329__LIBPLATE1__A01__001002003004'
-        out_name, out_pctQ30_dict, out_uncapped_reads_dict = \
-            generate_q30_based_values({}, r1, s1, r2, s2)
+        input_dict = {}
+        expected_dict = {'SEARCH-5329__LIBPLATE1__A01__001002003004': {
+            'Pct >=Q30': 93.526, 'Uncapped Reads': 2440812}}
+        insert_q30_based_values(input_dict, r1, s1, r2, s2)
 
-        self.assertEqual(expected_name, out_name)
-        self.assertDictEqual({'Pct >=Q30': 93.526}, out_pctQ30_dict)
-        self.assertDictEqual({'Uncapped Reads': 2440812},
-                             out_uncapped_reads_dict)
+        self.assertDictEqual(expected_dict, input_dict)
 
-    def test_generate_q30_based_values_pe_zero_both(self):
+    def test_insert_q30_based_values_pe_zero_both(self):
         r1 = '/Users/amandabirmingham/Work/Repositories/' \
              'covid_sequencing_analysis_pipeline/tests/data/dummy/' \
              'dummy_2021-02-08-ARTIC_samples/SEARCH-5329__LIBPLATE1__' \
@@ -103,14 +98,12 @@ class CustomGenStatsMultiQcTest(FileTestCase):
              '001002003004_R2_q30_data.txt'
         s1 = [0, 0]
         s2 = [0, 0]
-        expected_name = 'SEARCH-5329__LIBPLATE1__A01__001002003004'
-        out_name, out_pctQ30_dict, out_uncapped_reads_dict = \
-            generate_q30_based_values({}, r1, s1, r2, s2)
+        input_dict = {}
+        expected_dict = {'SEARCH-5329__LIBPLATE1__A01__001002003004': {
+            'Pct >=Q30': 'NA', 'Uncapped Reads': 0}}
+        insert_q30_based_values(input_dict, r1, s1, r2, s2)
 
-        self.assertEqual(expected_name, out_name)
-        self.assertDictEqual({'Pct >=Q30': 'NA'}, out_pctQ30_dict)
-        self.assertDictEqual({'Uncapped Reads': 0},
-                             out_uncapped_reads_dict)
+        self.assertDictEqual(expected_dict, input_dict)
 
     def test__calc_pct_aligned(self):
         real_out = _calc_pct_aligned([5, 5])

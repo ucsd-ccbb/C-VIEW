@@ -115,27 +115,7 @@ def gather_p25_ins_sizes(qmap_file_list_fp):
     return data_dict
 
 
-def insert_pct_gte_q30_in_sample_dict(data_dict, name, pctQ30):
-    temp_sample_dict = data_dict.get(name, dict())
-    if pctQ30 != NA_VAL:
-        pctQ30 = round(pctQ30, 3)
-    temp_sample_dict[PCT_30_KEY] = pctQ30
-    return temp_sample_dict
-
-
-def insert_uncapped_reads_in_sample_dict(data_dict, name, uncappedReads):
-    temp_sample_dict = data_dict.get(name, dict())
-    temp_sample_dict[UNCAPPED_READS_KEY] = uncappedReads
-    return temp_sample_dict
-
-
-def insert_sub_map_pct_in_sample_dict(data_dict, name, pctSubMap):
-    temp_sample_dict = data_dict.get(name, dict())
-    temp_sample_dict[SUBSAMPLED_MAPPED_PCT_ALIGNED_KEY] = pctSubMap
-    return temp_sample_dict
-
-
-def generate_q30_based_values(input_dict, R1, S1, R2=None, S2=None):
+def insert_q30_based_values(input_dict, R1, S1, R2=None, S2=None):
     name = get_sequenced_pool_component_id(R1)
 
     if R2 is not None:
@@ -156,12 +136,13 @@ def generate_q30_based_values(input_dict, R1, S1, R2=None, S2=None):
         print(f"Warning: Unable to calculate values from q30 file due "
               f"to division by zero; reporting as {NA_VAL}")
 
-    temp_pctQ30_dict = insert_pct_gte_q30_in_sample_dict(
-        input_dict, name, pctQ30)
-    temp_uncapped_reads_dict = insert_uncapped_reads_in_sample_dict(
-        input_dict, name, uncapped_reads)
+    temp_sample_dict = input_dict.get(name, dict())
 
-    return name, temp_pctQ30_dict, temp_uncapped_reads_dict
+    if pctQ30 != NA_VAL:
+        pctQ30 = round(pctQ30, 3)
+    temp_sample_dict[PCT_30_KEY] = pctQ30
+    temp_sample_dict[UNCAPPED_READS_KEY] = uncapped_reads
+    input_dict[name] = temp_sample_dict
 
 
 def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
@@ -172,23 +153,13 @@ def gather_pct_gte_q30(q30_file_list_fp, se_or_pe, data_dict):
     if se_or_pe == SE_VALUE:
         for R1 in q30s_paths:
             S1 = parseSeqQual(R1)
-
-            name, temp_pctQ30_dict, temp_uncapped_reads_dict = \
-                generate_q30_based_values(data_dict, R1, S1)
-
-            data_dict[name] = temp_pctQ30_dict
-            data_dict[name] = temp_uncapped_reads_dict
+            insert_q30_based_values(data_dict, R1, S1)
     elif se_or_pe == PE_VALUE:
         # Get Q30s for both R1 and R2
         for R1, R2 in pairwise(q30s_paths):
             S1 = parseSeqQual(R1)
             S2 = parseSeqQual(R2)
-
-            name, temp_pctQ30_dict, temp_uncapped_reads_dict = \
-                generate_q30_based_values(data_dict, R1, S1, R2, S2)
-
-            data_dict[name] = temp_pctQ30_dict
-            data_dict[name] = temp_uncapped_reads_dict
+            insert_q30_based_values(data_dict, R1, S1, R2, S2)
     else:
         print(f"Warning: Unable to run generate percent greater than q30 and "
               f"number of uncapped reads for input type '{se_or_pe}'")
@@ -216,10 +187,9 @@ def gather_sub_map_pct(sub_map_stats_file_list_fp, data_dict):
         reads = parseSubMapStats(sample)  # format: [Mapped, Unmapped]
         pctAligned = _calc_pct_aligned(reads)
 
-        temp_pctAligned_dict = insert_sub_map_pct_in_sample_dict(
-            data_dict, name, pctAligned)
-
-        data_dict[name] = temp_pctAligned_dict
+        temp_sample_dict = data_dict.get(name, dict())
+        temp_sample_dict[SUBSAMPLED_MAPPED_PCT_ALIGNED_KEY] = pctAligned
+        data_dict[name] = temp_sample_dict
 
     return data_dict
 
