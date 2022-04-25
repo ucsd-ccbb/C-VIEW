@@ -94,14 +94,16 @@ runQC () {
     echo -e "subset_csv.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
     cat $PASSING_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-passQC.fas
 
+  # generate file of summary and passQC fas checksums, for record-keeping
+  python $PIPELINEDIR/pipeline/document_file_checksums.py \
+    $WORKSPACE $WORKSPACE/"$SEQ_RUN"_artifact_checksums.csv \
+    "$SEQ_RUN"-summary.csv "$SEQ_RUN"-passQC.fas
+  echo -e "document_file_checksums.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
+
 	# Exit codes
 	echo "Gathering per-sample exit codes."
 	cat $WORKSPACE/*/*error.log > $WORKSPACE/"$SEQ_RUN".error.log
 	grep -v "exit code: 0" $WORKSPACE/"$SEQ_RUN"-qc.exit.log | head -n 1 >> $WORKSPACE/"$SEQ_RUN".error.log
-
-  # generate file of artifact checksums, for record-keeping
-  python $PIPELINEDIR/pipeline/document_file_checksums.py \
-    $WORKSPACE $WORKSPACE/"$SEQ_RUN"_artifact_checksums.csv
 
 	# Upload Results
 	echo "Uploading multiqc and qc-subfolder results."

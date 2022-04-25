@@ -3,12 +3,14 @@ from hashlib import md5
 from sys import argv
 
 
-def generate_input_checksums(workspace_fp):
+def generate_input_checksums(workspace_fp, fnames_to_include=None):
     result = {}
 
     for base_fp, _, fnames in os.walk(workspace_fp):
         for curr_fname in fnames:
             if curr_fname.startswith("."):
+                continue
+            elif fnames_to_include and curr_fname not in fnames_to_include:
                 continue
 
             fpath = os.path.join(base_fp, curr_fname)
@@ -27,8 +29,10 @@ def generate_input_checksums(workspace_fp):
 def generate_checksums_file(args_list):
     input_dir = args_list[1]
     output_fp = args_list[2]
+    fnames_to_include = None if len(args_list) < 4 else args_list[3:]
 
-    fname_and_checksum_dict = generate_input_checksums(input_dir)
+    fname_and_checksum_dict = generate_input_checksums(
+        input_dir, fnames_to_include)
 
     output_lines = ["file_name,md5_hex_checksum\n"]
     output_entries = [f"{k},{fname_and_checksum_dict[k]}\n" for k
