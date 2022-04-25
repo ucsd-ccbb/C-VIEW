@@ -19,6 +19,16 @@ class DocumentInputChecksumsTest(FileTestCase):
             output_is_file = os.path.isfile(out_checksums_fp)
             self.assertTrue(output_is_file)
 
+            # TODO: remove debugging
+            with open(expected_checksums_fp, 'r') as exp_fh:
+                print("expected:")
+                print(exp_fh.read())
+
+            with open(out_checksums_fp, 'r') as out_fh:
+                print("found:")
+                print(out_fh.read())
+            # END TODO:
+
             output_equal = filecmp.cmp(out_checksums_fp, expected_checksums_fp)
             self.assertTrue(output_equal)
         finally:
