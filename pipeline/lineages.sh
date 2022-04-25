@@ -62,7 +62,9 @@ runLineages () {
 
   # generate file of input checksums, for record-keeping
   python $PIPELINEDIR/pipeline/document_file_checksums.py \
-    $WORKSPACE $WORKSPACE/"$PROCESSINGID"_input_checksums.csv
+    $WORKSPACE $WORKSPACE/"$PROCESSINGID"_input_checksums.csv \
+    "_passQC.fas" "-summary.csv"
+  echo -e "document_file_checksums.py: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
 	# start with the reference sequence
 	cat $PIPELINEDIR/reference_files/NC_045512.2.fas > $WORKSPACE/"$PROCESSINGID"_refs_hist.fas
@@ -138,4 +140,4 @@ runLineages () {
 aws s3 cp $WORKSPACE/"$PROCESSINGID"-lineages.log $S3UPLOAD/phylogeny/$PROCESSINGID/\
 
 grep -v "exit code: 0" $WORKSPACE/"$PROCESSINGID"-lineages.exit.log | head -n 1 >> $WORKSPACE/"$PROCESSINGID"-lineages.error.log
-aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$PROCESSINGID/ --recursive --quiet --include "*"  --exclude ".fas" --exclude "*-summary.csv" --include "*_passQC_refs_hist.fas" --include "$PROCESSINGID_passQC.fas"
+aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$PROCESSINGID/ --recursive --quiet --include "*"  --exclude "*.fas" --exclude "*-summary.csv" --include "*_passQC_refs_hist.fas" --include "$PROCESSINGID_passQC.fas"

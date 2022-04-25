@@ -1,17 +1,20 @@
 import os
+import re
 from hashlib import md5
 from sys import argv
 
 
-def generate_input_checksums(workspace_fp, fnames_to_include=None):
+def generate_input_checksums(workspace_fp, fsuffixes_to_include=None):
     result = {}
 
     for base_fp, _, fnames in os.walk(workspace_fp):
         for curr_fname in fnames:
             if curr_fname.startswith("."):
                 continue
-            elif fnames_to_include and curr_fname not in fnames_to_include:
-                continue
+            elif fsuffixes_to_include:
+                matches = [x for x in fsuffixes_to_include if x in curr_fname]
+                if len(matches) == 0:
+                    continue
 
             fpath = os.path.join(base_fp, curr_fname)
             with open(fpath, "rb") as f:

@@ -20,7 +20,7 @@ class DocumentFileChecksumsTest(FileTestCase):
         arg_list = ["document_file_checksums.py", input_dir, out_checksums_fp]
         if limit_fnames:
             arg_list.extend(["2021-02-08-ARTIC-summary.csv",
-                             "multiqc_general_stats.txt"])
+                             "_general_stats.txt"])
 
         output_is_file = False
         output_equal = False
