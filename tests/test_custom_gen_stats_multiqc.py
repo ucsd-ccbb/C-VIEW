@@ -40,7 +40,6 @@ class CustomGenStatsMultiQcTest(FileTestCase):
         input_dict = {}
         expected_dict = {'SEARCH-5329__LIBPLATE1__A01__001002003004': {
             'Pct >=Q30': 'NA', 'Uncapped Reads': 0}}
-        expected_name = 'SEARCH-5329__LIBPLATE1__A01__001002003004'
         insert_q30_based_values(input_dict, r1, s1)
 
         self.assertDictEqual(expected_dict, input_dict)

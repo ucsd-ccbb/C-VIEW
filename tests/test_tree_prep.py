@@ -14,8 +14,8 @@ class TreePrepTest(FileTestCase):
     def _test_tree_prep(self, make_all_empress_out=True):
         incl_all_empress = "_all_empress_test" if make_all_empress_out else ""
         input_qc_and_lineages_fp = f"{self.dummy_dir}/" \
-                                      f"dummy_qc_and_lineages_w_bjorn_" \
-                                      f"for_tree_prep.csv"
+                                   f"dummy_qc_and_lineages_w_bjorn_" \
+                                   f"for_tree_prep.csv"
         input_metadata_fp = f"{self.dummy_dir}/" \
                             f"dummy_inspect_metadata_for_tree_prep.csv"
         in_fas_fp = f"{self.dummy_dir}/dummy.fas"
