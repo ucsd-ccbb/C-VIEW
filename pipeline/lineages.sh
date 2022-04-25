@@ -61,7 +61,7 @@ runLineages () {
   aws s3 cp "$S3INSPECT"/"$INSPECT_METADATA_FNAME" $WORKSPACE/$INSPECT_METADATA_FNAME
 
   # generate file of input checksums, for record-keeping
-  python $PIPELINEDIR/pipeline/document_input_checksums.py \
+  python $PIPELINEDIR/pipeline/document_file_checksums.py \
     $WORKSPACE $WORKSPACE/"$PROCESSINGID"_input_checksums.csv
 
 	# start with the reference sequence

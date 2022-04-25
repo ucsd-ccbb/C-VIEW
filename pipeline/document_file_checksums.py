@@ -31,7 +31,8 @@ def generate_checksums_file(args_list):
     fname_and_checksum_dict = generate_input_checksums(input_dir)
 
     output_lines = ["file_name,md5_hex_checksum\n"]
-    output_entries = [f"{n},{c}\n" for n, c in fname_and_checksum_dict.items()]
+    output_entries = [f"{k},{fname_and_checksum_dict[k]}\n" for k
+                      in sorted(fname_and_checksum_dict)]
     output_lines.extend(output_entries)
 
     with open(output_fp, "w") as f:

@@ -1,7 +1,7 @@
 import os
 import filecmp
 from tests.test_sarscov2_consensus_acceptance import FileTestCase
-from pipeline.document_input_checksums import generate_checksums_file
+from pipeline.document_file_checksums import generate_checksums_file
 
 
 class DocumentInputChecksumsTest(FileTestCase):
@@ -9,7 +9,7 @@ class DocumentInputChecksumsTest(FileTestCase):
         input_dir = self.dummy_qc_dir
         expected_checksums_fp = f"{self.dummy_dir}/dummy_input_checksums.csv"
         out_checksums_fp = f"{self.test_temp_dir}/temp_input_checksums.csv"
-        arg_list = ["document_input_checksums.py", input_dir, out_checksums_fp]
+        arg_list = ["document_file_checksums.py", input_dir, out_checksums_fp]
 
         output_is_file = False
         output_equal = False
