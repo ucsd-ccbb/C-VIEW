@@ -1,9 +1,9 @@
 file_name,md5_hex_checksum
 2021-02-08-ARTIC-depth_lineplot.pdf,170575191e43226886f1f22c6d28cdb2
-2021-02-08-ARTIC-summary.csv,8ac1f08eb4dea05660885bfc9b4ff186
-2021-02-08-ARTIC-acceptance.tsv,6812bd10eb43ce65bec64d6d2c53f174
-2021-02-08-ARTIC-pi_metric.tsv,1283c806214d20e5e0184cafe467f3d0
-2021-02-08-ARTIC-n_metric.tsv,29a0c9154555a2600cb2b38a1105a885
+2021-02-08-ARTIC-summary.csv,f43bc83bb5da2bab9bbc7a5d4ad15427
+2021-02-08-ARTIC-acceptance.tsv,b71a482925c5e324d1b479bfcef3d5fc
+2021-02-08-ARTIC-pi_metric.tsv,96d73a9dcdcfa44d8e468dcbd1ae2ee0
+2021-02-08-ARTIC-n_metric.tsv,0d7f1130ea7a6ed34ebac20668db6f12
 2021-02-08-ARTIC-depth_violin.pdf,f512fb96eb2dc9536820c387df47403a
-2021-02-08-ARTIC-custom_gen_stats_config.yaml,ca440cd05aee25b43fa16e33a1d114ac
-multiqc_general_stats.txt,644013c16bff06b786b5c1f7e7c3e36c
+2021-02-08-ARTIC-custom_gen_stats_config.yaml,304082bdb5fb8c5a844f38ee9ddc61c2
+multiqc_general_stats.txt,dae5540caa512e5b278c0441fc8e715c
