@@ -1,5 +1,4 @@
 import os
-import re
 from hashlib import md5
 from sys import argv
 
