@@ -60,11 +60,13 @@ runLineages () {
   # echo $S3INSPECT/$INSPECT_METADATA_FNAME >> $WORKSPACE/"$PROCESSINGID"-lineages.debug.log
   aws s3 cp "$S3INSPECT"/"$INSPECT_METADATA_FNAME" $WORKSPACE/$INSPECT_METADATA_FNAME
 
+  source $ANACONDADIR/activate covid1.2
   # generate file of input checksums, for record-keeping
   python $PIPELINEDIR/pipeline/document_file_checksums.py \
     $WORKSPACE $WORKSPACE/"$PROCESSINGID"_input_checksums.csv \
     "_passQC.fas" "-summary.csv"
   echo -e "document_file_checksums.py: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
+  source $ANACONDADIR/deactivate covid1.2
 
 	# start with the reference sequence
 	cat $PIPELINEDIR/reference_files/NC_045512.2.fas > $WORKSPACE/"$PROCESSINGID"_refs_hist.fas

@@ -21,10 +21,7 @@ def generate_input_checksums(workspace_fp, fsuffixes_to_include=None):
                 filehash = md5(filebytes)
                 filehash_hex = filehash.hexdigest()
                 if curr_fname in result:
-                    # TODO: remove test print
-                    print(curr_fname)
-                    raise ValueError("filename appears more than once")
-                    # raise ValueError(f"file name {curr_fname} found >1 time")
+                    raise ValueError(f"file name {curr_fname} found >1 time")
                 result[curr_fname] = filehash_hex
 
     return result
