@@ -65,7 +65,7 @@ runLineages () {
   python $PIPELINEDIR/pipeline/document_file_checksums.py \
     $WORKSPACE $WORKSPACE/"$PROCESSINGID"_input_checksums.csv \
     "_passQC.fas" "-summary.csv"
-  echo -e "document_file_checksums.py: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
+  echo -e "document_file_checksums.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
   source $ANACONDADIR/deactivate covid1.2
 
 	# start with the reference sequence
