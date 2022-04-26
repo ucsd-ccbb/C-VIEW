@@ -140,4 +140,4 @@ runLineages () {
 aws s3 cp $WORKSPACE/"$PROCESSINGID"-lineages.log $S3UPLOAD/phylogeny/$PROCESSINGID/\
 
 grep -v "exit code: 0" $WORKSPACE/"$PROCESSINGID"-lineages.exit.log | head -n 1 >> $WORKSPACE/"$PROCESSINGID"-lineages.error.log
-aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$PROCESSINGID/ --recursive --quiet --include "*"  --exclude "*.fas" --exclude "*-summary.csv" --include "*_passQC_refs_hist.fas" --include "$PROCESSINGID_passQC.fas"
+aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$PROCESSINGID/ --recursive --quiet --include "*"  --exclude "*.fas" --exclude "*-summary.csv" --include "*_passQC_refs_hist.fas" --include "*_stringent_refs_hist.fas"
