@@ -18,8 +18,8 @@ sed 1d $INPUT | while IFS=',' read FUNCTION ORGANIZATION SEQ_RUN MERGE_LANES PRI
 do
   # set per-row variables
   INPUT_VALS="$FUNCTION,$ORGANIZATION,$SEQ_RUN,$MERGE_LANES,$PRIMER_SET,$FQ,$READ_CAP,$SAMPLE,$TIMESTAMP,$ISTEST"
-  QSUBSAMPLEPARAMS=''
-  QSUBLINEAGEPARAMS=''
+  SBATCHSAMPLEPARAMS=''
+  SBATCHLINEAGEPARAMS=''
 
 	# echo the inputs to the screen
 	echo " "
@@ -209,17 +209,14 @@ do
             FINAL_INPUT_NAMES+=("$SAMPLE"_"$LANES_COMBINED""$INPUT_DELIMITER")
           done
 
-          qsub -v SEQ_RUN=$SEQ_RUN \
-             -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
-             -v S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq \
-             -wd /shared/workspace/projects/covid/logs \
-             -N m_"$SEQ_RUN" \
-             -pe smp 16 \
-             -S /bin/bash \
-             $PIPELINEDIR/pipeline/merge_lanes.sh
+          M_SLURM_JOB_ID=$(sbatch --export=SEQ_RUN=$SEQ_RUN,WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP,S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq \
+            -D /shared/workspace/projects/covid/logs \
+            -J m_"$SEQ_RUN" \
+            -c 16 \
+            $PIPELINEDIR/pipeline/merge_lanes.sh)
 
           INPUT_NAMES=$(printf '%s\n' "${FINAL_INPUT_NAMES[@]}")
-          QSUBSAMPLEPARAMS=' -hold_jid m_'$SEQ_RUN''
+          SBATCHSAMPLEPARAMS=' --dependency=afterok:${M_SLURM_JOB_ID##* }'
         fi # end if we are merging lanes
       else
         INPUT_NAMES=$INPUT_BASE_NAMES
@@ -235,43 +232,46 @@ do
     fi
 
 		# Run VARIANTS step on each sample
+		V_SLURM_JOB_IDS=""
 		for SAMPLE in $SAMPLE_LIST; do
-			qsub $QSUBSAMPLEPARAMS \
-				-v SEQ_RUN="$SEQ_RUN" \
-				-v SAMPLE=$SAMPLE \
-				-v S3DOWNLOAD=$S3DOWNLOAD \
-        -v PRIMER_BED_FNAME=$PRIMER_BED_FNAME \
-				-v MERGE_LANES=$MERGE_LANES \
-				-v FQ=$FQ \
-				-v TIMESTAMP=$TIMESTAMP \
-				-v VERSION_INFO="$VERSION_INFO" \
-				-v READ_CAP=$READ_CAP \
-        -v INPUT_TYPE=$INPUT_TYPE \
-        -v INPUT_SUFFIX=$INPUT_SUFFIX \
-				-N v_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
-				-wd /shared/workspace/projects/covid/logs \
-				-pe smp 2 \
-				-S /bin/bash \
-				$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
+      V_SLURM_JOB_IDS=$V_SLURM_JOB_IDS:$(sbatch $SBATCHSAMPLEPARAMS \
+        --export=$(echo "SEQ_RUN=$SEQ_RUN,\
+                  SAMPLE=$SAMPLE,\
+                  S3DOWNLOAD=$S3DOWNLOAD,\
+                  PRIMER_BED_FNAME=$PRIMER_BED_FNAME,\
+                  MERGE_LANES=$MERGE_LANES,\
+                  FQ=$FQ,\
+                  TIMESTAMP=$TIMESTAMP,\
+                  VERSION_INFO="$VERSION_INFO",\
+                  READ_CAP=$READ_CAP \
+                  INPUT_TYPE=$INPUT_TYPE \
+                  INPUT_SUFFIX=$INPUT_SUFFIX" | sed 's/ //g') \
+        -J v_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
+        -D /shared/workspace/projects/covid/logs \
+        -c 2 \
+        $PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh)
 		done
 	fi  # end if we are calling variants
 
+  V_SLURM_JOB_IDS=$(echo $V_SLURM_JOB_IDS | sed 's/Submitted batch job //g')
+
+  Q_SLURM_JOB_ID=""
 	if [[ "$QC" == true ]]; then
-    qsub \
-      -hold_jid 'v_'$SEQ_RUN'_'$TIMESTAMP'_*' \
-      -v SEQ_RUN=$SEQ_RUN \
-      -v S3DOWNLOAD=$S3DOWNLOAD \
-      -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
-      -v FQ=$FQ \
-      -v TIMESTAMP=$TIMESTAMP \
-      -v ISTEST=$ISTEST \
-      -v VERSION_INFO="$VERSION_INFO" \
-      -N q_"$SEQ_RUN" \
-      -wd /shared/workspace/projects/covid/logs \
-      -pe smp 32 \
-      -S /bin/bash \
-        $PIPELINEDIR/qc/qc_summary.sh
+	        Q_SLURM_JOB_ID=$Q_SLURM_JOB_ID:$(sbatch \
+        --dependency=afterok$V_SLURM_JOB_IDS \
+        --export=$(echo "SEQ_RUN=$SEQ_RUN,\
+                 S3DOWNLOAD=$S3DOWNLOAD,\
+                 WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP,\
+                 FQ=$FQ,\
+                 TIMESTAMP=$TIMESTAMP,\
+                 VERSION_INFO="$VERSION_INFO",\
+                 ISTEST=$ISTEST" | sed 's/ //g') \
+        -J q_$SEQ_RUN \
+        -D /shared/workspace/projects/covid/logs \
+        -c 32 \
+        $PIPELINEDIR/qc/qc_summary.sh)
 	fi # end if we are running qc
+	Q_SLURM_JOB_ID=${Q_SLURM_JOB_ID##* }
 
   # lineage and tree output is stored to a different location than
   # the outputs of the earlier steps, so it needs a slightly different
@@ -279,40 +279,38 @@ do
   PROCESSINGID="$TIMESTAMP"-"$PHYLO_SEQ_RUN"
 
 	if [[ "$LINEAGE" == true ]]; then
-	    qsub \
-      -hold_jid 'q_'$SEQ_RUN'' \
-      -v ORGANIZATION=$ORGANIZATION \
-			-v PROCESSINGID=$PROCESSINGID \
-			-v SEQ_RUN=$PHYLO_SEQ_RUN \
-			-v ISTEST=$ISTEST \
-			-v WORKSPACE=/scratch/phylogeny/$PROCESSINGID \
-			-v VERSION_INFO="$VERSION_INFO" \
-			-N l_"$PROCESSINGID" \
-			-wd /shared/workspace/projects/covid/logs \
-			-pe smp 16 \
-			-S /bin/bash \
-	    	$PIPELINEDIR/pipeline/lineages.sh
+	    L_SLURM_JOB_ID=$(sbatch \
+      --dependency=afterok:$Q_SLURM_JOB_ID \
+      --export=$(echo "ORGANIZATION=$ORGANIZATION,\
+                      PROCESSINGID=$PROCESSINGID,\
+                      SEQ_RUN=$PHYLO_SEQ_RUN,\
+                      ISTEST=$ISTEST,\
+                      VERSION_INFO="$VERSION_INFO", \
+                      WORKSPACE=/scratch/phylogeny/$PROCESSINGID" | sed 's/ //g') \
+			-J l_"$PROCESSINGID" \
+			-D /shared/workspace/projects/covid/logs \
+			-c 16 \
+	    $PIPELINEDIR/pipeline/lineages.sh)
 
-		QSUBLINEAGEPARAMS=' -hold_jid l_'$PROCESSINGID
+		SBATCHLINEAGEPARAMS=" --dependency=afterok:${L_SLURM_JOB_ID##* }"
 	fi # end if we are calling lineages
 
   if [[ "$TREE_BUILD" == true ]]; then
     # TODO: this is a temporary fix to build only stringent trees
     #  In the future, we will want to make this more tunable
     for DATASET in stringent; do # loose_stringent passQC; do
-      qsub \
-        $QSUBLINEAGEPARAMS \
-        -v ORGANIZATION=$ORGANIZATION \
-        -v PROCESSINGID=$PROCESSINGID \
-        -v DATASET=$DATASET \
-        -v ISTEST=$ISTEST \
-        -v WORKSPACE=/scratch/treebuilding/$PROCESSINGID/$DATASET \
-        -v VERSION_INFO="$VERSION_INFO" \
-        -N t_"$DATASET"_"$PROCESSINGID" \
-        -wd /shared/workspace/projects/covid/logs \
-        -pe smp 16 \
-        -S /bin/bash \
-          $PIPELINEDIR/pipeline/treebuild.sh
+      sbatch \
+        $SBATCHLINEAGEPARAMS \
+        --export=$(echo "ORGANIZATION=$ORGANIZATION,\
+                        PROCESSINGID=$PROCESSINGID,\
+                        DATASET=$DATASET,\
+                        ISTEST=$ISTEST,\
+                        VERSION_INFO="$VERSION_INFO", \
+                        WORKSPACE=/scratch/treebuilding/$PROCESSINGID/$DATASET" | sed 's/ //g') \
+        -J t_"$DATASET"_"$PROCESSINGID" \
+        -D /shared/workspace/projects/covid/logs \
+        -c 16 \
+        $PIPELINEDIR/pipeline/treebuild.sh
     done
   fi # end if we are building trees
 
