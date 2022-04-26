@@ -60,14 +60,6 @@ runLineages () {
   # echo $S3INSPECT/$INSPECT_METADATA_FNAME >> $WORKSPACE/"$PROCESSINGID"-lineages.debug.log
   aws s3 cp "$S3INSPECT"/"$INSPECT_METADATA_FNAME" $WORKSPACE/$INSPECT_METADATA_FNAME
 
-  source $ANACONDADIR/activate covid1.2
-  # generate file of input checksums, for record-keeping
-  python $PIPELINEDIR/pipeline/document_file_checksums.py \
-    $WORKSPACE $WORKSPACE/"$PROCESSINGID"_input_checksums.csv \
-    "_passQC.fas" "-summary.csv"
-  echo -e "document_file_checksums.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
-  source $ANACONDADIR/deactivate covid1.2
-
 	# start with the reference sequence
 	cat $PIPELINEDIR/reference_files/NC_045512.2.fas > $WORKSPACE/"$PROCESSINGID"_refs_hist.fas
 
@@ -100,6 +92,12 @@ runLineages () {
   # deactivate the pangolin environment and re-activate the main pipeline environment
   source $ANACONDADIR/deactivate pangolin
   source $ANACONDADIR/activate covid1.2
+
+  # generate file of input checksums, for record-keeping
+  python $PIPELINEDIR/pipeline/document_file_checksums.py \
+    $WORKSPACE $WORKSPACE/"$PROCESSINGID"_input_checksums.csv \
+    "-passQC.fas" "-summary.csv"
+  echo -e "document_file_checksums.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
   # produce merged qc_and_lineages.csv
   python $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE/added_fa_names.txt $WORKSPACE "-summary.csv" $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv
