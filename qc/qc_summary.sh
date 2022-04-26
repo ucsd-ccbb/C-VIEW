@@ -94,6 +94,12 @@ runQC () {
     echo -e "subset_csv.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
     cat $PASSING_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-passQC.fas
 
+  # generate file of summary and passQC fas checksums, for record-keeping
+  python $PIPELINEDIR/pipeline/document_file_checksums.py \
+    $WORKSPACE $WORKSPACE/"$SEQ_RUN"_artifact_checksums.csv \
+    "$SEQ_RUN-summary.csv" "$SEQ_RUN-passQC.fas"
+  echo -e "document_file_checksums.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
+
 	# Exit codes
 	echo "Gathering per-sample exit codes."
 	cat $WORKSPACE/*/*error.log > $WORKSPACE/"$SEQ_RUN".error.log
@@ -109,7 +115,7 @@ runQC () {
 	# cumulative data folder
 	S3CUMULATIVE=$S3DOWNLOAD
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-passQC.fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
-	aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
+	#aws s3 cp $WORKSPACE/"$SEQ_RUN".fas $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 }
 

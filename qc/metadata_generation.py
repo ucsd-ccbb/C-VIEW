@@ -12,6 +12,7 @@ OVERALL_FAIL = "overall_fail"
 SUBMIT_TO_GISAID = "submit_to_gisaid"
 INDEX_COL_NAME = "Unnamed: 0"
 SUBJ_AGE = "subject_age"
+METADATA_CLEARED = "metadata_cleared"
 
 BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
                    "New sequences ready for release", "Released?",
@@ -29,7 +30,7 @@ BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
                    "Sequenced Pool Component Id", "Variant File S3 URL",
                    "Consensus File S3 URL", "BAM File S3 URL",
                    "Source", "Sequencing Run", "Overall Fail",
-                   "Inspect Submit-to-GISAID"]
+                   "Inspect Submit-to-GISAID", METADATA_CLEARED]
 
 
 def filter_metadata_for_bjorn(full_df):
@@ -72,11 +73,14 @@ def generate_bjorn_df(filtered_df):
     # The metadata reads in as strings (hence 'True') while the qc and lineage
     # data reads in parsed (hence False, not 'False')
     inspect_approval = filtered_df[SUBMIT_TO_GISAID] == 'True'  # noqa 712
+    # NB: if sample's metadata_cleared is NA, sample IS allowed for release.
+    # This is because we have no knowledge about whether that metadata is bad.
+    metadata_bad = filtered_df[METADATA_CLEARED] == 'False'  # noqa 712
     # NB: this check is false for overall_fail values of None, as it should be:
     # don't release items with overall_fail == None since they are unknown
     no_overall_fail = filtered_df[OVERALL_FAIL] == False  # noqa 712
 
-    release_mask = inspect_approval & no_overall_fail
+    release_mask = inspect_approval & no_overall_fail & ~metadata_bad
     output_df.loc[:, "ready_for_release"] = "No"
     output_df.loc[release_mask, "ready_for_release"] = "Yes"
 
@@ -136,6 +140,7 @@ def generate_bjorn_df(filtered_df):
     output_df.loc[:, SEQ_RUN] = filtered_df[SEQ_RUN]
     output_df.loc[:, OVERALL_FAIL] = filtered_df[OVERALL_FAIL]
     output_df.loc[:, SUBMIT_TO_GISAID] = filtered_df[SUBMIT_TO_GISAID]
+    output_df.loc[:, METADATA_CLEARED] = filtered_df[METADATA_CLEARED]
 
     return output_df
 

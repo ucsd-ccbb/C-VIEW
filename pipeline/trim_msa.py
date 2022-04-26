@@ -4,7 +4,8 @@ Niema Moshiri 2021
 Trim the ends of a multiple sequence alignment (FASTA)
 '''
 import argparse
-from sys import stdin,stdout
+from sys import stdin, stdout
+
 
 # parse arguments
 def parseArgs():
@@ -16,22 +17,26 @@ def parseArgs():
     args = parser.parse_args()
     return args.input, args.output, args.start, args.end
 
+
 # main code execution
 infile, outfile, start, end = parseArgs()
 assert start >= 0, "Length to trim from start must be non-negative integer"
 assert end >= 0, "Length to trim from end must be non-negative integer"
-curr_ID = None; curr_seq = None
+curr_ID = None
+curr_seq = None
 for line in infile:
-    l = line.strip()
-    if len(l) == 0:
+    stripped_line = line.strip()
+    if len(stripped_line) == 0:
         continue
-    if l[0] == '>':
+    if stripped_line[0] == '>':
         if curr_ID is not None:
             outfile.write("%s\n%s\n" % (curr_ID, curr_seq[start:-end]))
-        curr_ID = l; curr_seq = ''
+        curr_ID = stripped_line
+        curr_seq = ''
     else:
         assert curr_seq is not None, "Invalid input FASTA"
-        curr_seq += l
+        curr_seq += stripped_line
 if curr_ID is not None:
     outfile.write("%s\n%s\n" % (curr_ID, curr_seq[start:-end]))
-infile.close(); outfile.close()
+infile.close()
+outfile.close()

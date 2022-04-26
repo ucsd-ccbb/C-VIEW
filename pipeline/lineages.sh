@@ -11,8 +11,6 @@ INSPECT_METADATA_PATTERN="all_samples_search_ids_"
 THREADS=8
 rm -rf $WORKSPACE
 mkdir -p $WORKSPACE
-mkdir -p $WORKSPACE/passQC
-# mkdir -p $WORKSPACE/loose_stringent
 mkdir -p $WORKSPACE/stringent
 
 # Based on inputs, decide what to download from where
@@ -83,17 +81,23 @@ runLineages () {
 
   # add the ref and historic fast to the passing fas from all the sequencing runs
   cat $WORKSPACE/*passQC.fas >> $WORKSPACE/"$PROCESSINGID"_passQC.fas
-  cat $WORKSPACE/"$PROCESSINGID"_passQC.fas $WORKSPACE/"$PROCESSINGID"_refs_hist.fas >> $WORKSPACE/passQC/"$PROCESSINGID"_passQC_refs_hist.fas
+  cat $WORKSPACE/"$PROCESSINGID"_passQC.fas $WORKSPACE/"$PROCESSINGID"_refs_hist.fas >> $WORKSPACE/"$PROCESSINGID"_passQC_refs_hist.fas
 
 	# pangolin
 	source $ANACONDADIR/activate pangolin
 	pangolin --update
-	pangolin -t $THREADS --analysis-mode fast --outfile $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/passQC/"$PROCESSINGID"_passQC_refs_hist.fas
+	pangolin -t $THREADS --analysis-mode fast --outfile $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/"$PROCESSINGID"_passQC_refs_hist.fas
   echo -e "pangolin exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
   # deactivate the pangolin environment and re-activate the main pipeline environment
   source $ANACONDADIR/deactivate pangolin
   source $ANACONDADIR/activate covid1.2
+
+  # generate file of input checksums, for record-keeping
+  python $PIPELINEDIR/pipeline/document_file_checksums.py \
+    $WORKSPACE $WORKSPACE/"$PROCESSINGID"_input_checksums.csv \
+    "-passQC.fas" "-summary.csv"
+  echo -e "document_file_checksums.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
   # produce merged qc_and_lineages.csv
   python $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE/added_fa_names.txt $WORKSPACE "-summary.csv" $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv
@@ -122,16 +126,12 @@ runLineages () {
     $WORKSPACE/$INSPECT_METADATA_FNAME \
     $WORKSPACE/"$PROCESSINGID"_passQC.fas \
     $WORKSPACE/stringent/"$PROCESSINGID"_stringent_only.fas \
-    $WORKSPACE/passQC/"$PROCESSINGID"_passQC_refs_hist_empress_metadata.tsv \
     $WORKSPACE/stringent/"$PROCESSINGID"_stringent_refs_hist_empress_metadata.tsv
 
   echo -e "tree_prep.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
   # add the refs_hist.fas to the stringent_only.fas
   cat $WORKSPACE/"$PROCESSINGID"_refs_hist.fas $WORKSPACE/stringent/"$PROCESSINGID"_stringent_only.fas >> $WORKSPACE/stringent/"$PROCESSINGID"_stringent_refs_hist.fas
-
-  # add the loose_only.fas to the stringent_refs_hist.fas
-  # cat $WORKSPACE/stringent/"$PROCESSINGID"_stringent_refs_hist.fas $WORKSPACE/loose_stringent/"$PROCESSINGID"_loose_only.fas >> $WORKSPACE/loose_stringent/"$PROCESSINGID"_loose_stringent_refs_hist.fas
 
   aws s3 cp $WORKSPACE/"$PROCESSINGID".full_summary.csv $S3INSPECT/"$PROCESSINGID".full_summary.csv
 }
@@ -140,4 +140,4 @@ runLineages () {
 aws s3 cp $WORKSPACE/"$PROCESSINGID"-lineages.log $S3UPLOAD/phylogeny/$PROCESSINGID/\
 
 grep -v "exit code: 0" $WORKSPACE/"$PROCESSINGID"-lineages.exit.log | head -n 1 >> $WORKSPACE/"$PROCESSINGID"-lineages.error.log
-aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$PROCESSINGID/ --recursive --quiet
+aws s3 cp $WORKSPACE/ $S3UPLOAD/phylogeny/$PROCESSINGID/ --recursive --quiet --include "*"  --exclude "*.fas" --exclude "*-summary.csv" --include "*_passQC_refs_hist.fas" --include "*_stringent_refs_hist.fas"
