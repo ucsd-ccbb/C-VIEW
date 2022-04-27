@@ -2,13 +2,13 @@
 
 PATH=/shared/workspace/software:/shared/workspace/software/ivar/bin:/shared/workspace/software/q30:/shared/workspace/software/SD-COVID-Sequencing/samhead/:$PATH
 
-# Activate conda env covid1.2
+# Activate conda env cview
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
-source $ANACONDADIR/activate covid1.2
+source $ANACONDADIR/activate cview
 
 # Set variables
 THREADS=2
-PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
+PIPELINEDIR=/shared/workspace/software/cview
 INSPECT_DELIMITER=__
 INTERNAL_DELIMITER=_
 

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
+PIPELINEDIR=/shared/workspace/software/cview
 QCRESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_summary_files
 
-# Activate conda env covid1.2
+# Activate conda env cview
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
-source $ANACONDADIR/activate covid1.2
+source $ANACONDADIR/activate cview
 # clear workspace if node is being reused
 rm -rf $WORKSPACE/*
 mkdir -p $WORKSPACE/qc

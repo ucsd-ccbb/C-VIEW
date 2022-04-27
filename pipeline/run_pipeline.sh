@@ -1,12 +1,12 @@
 #!/bin/bash
 
 INPUT=$1 # Sample Sheet with header
-PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
+PIPELINEDIR=/shared/workspace/software/cview
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
 S3TEST=s3://ucsd-rtl-test
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
-source $ANACONDADIR/activate covid1.2
+source $ANACONDADIR/activate cview
 
 VERSION_INFO=$(bash $PIPELINEDIR/pipeline/show_version.sh)
 
