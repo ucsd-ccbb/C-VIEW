@@ -243,8 +243,8 @@ do
                   FQ=$FQ,\
                   TIMESTAMP=$TIMESTAMP,\
                   VERSION_INFO="$VERSION_INFO",\
-                  READ_CAP=$READ_CAP \
-                  INPUT_TYPE=$INPUT_TYPE \
+                  READ_CAP=$READ_CAP, \
+                  INPUT_TYPE=$INPUT_TYPE, \
                   INPUT_SUFFIX=$INPUT_SUFFIX" | sed 's/ //g') \
         -J v_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
         -D /shared/workspace/projects/covid/logs \
