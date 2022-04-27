@@ -211,7 +211,10 @@ do
             FINAL_INPUT_NAMES+=("$SAMPLE"_"$LANES_COMBINED""$INPUT_DELIMITER")
           done
 
-          M_SLURM_JOB_ID=$(sbatch --export=SEQ_RUN=$SEQ_RUN,WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP,S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq \
+          M_SLURM_JOB_ID=$(sbatch \
+            --export=$(echo "SEQ_RUN=$SEQ_RUN, \
+                      WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP, \
+                      S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq"  | sed 's/ //g') \
             -D /shared/workspace/projects/covid/logs \
             -J m_"$SEQ_RUN" \
             -c 16 \
