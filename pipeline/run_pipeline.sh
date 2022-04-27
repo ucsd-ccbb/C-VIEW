@@ -19,6 +19,8 @@ do
   # set per-row variables
   INPUT_VALS="$FUNCTION,$ORGANIZATION,$SEQ_RUN,$MERGE_LANES,$PRIMER_SET,$FQ,$READ_CAP,$SAMPLE,$TIMESTAMP,$ISTEST"
   SBATCHSAMPLEPARAMS=''
+  V_DEPENDENCY_PARAM=''
+  Q_DEPENDENCY_PARAM=''
   SBATCHLINEAGEPARAMS=''
 
 	# echo the inputs to the screen
@@ -251,14 +253,13 @@ do
         -c 2 \
         $PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh)
 		done
+
+    V_SLURM_JOB_IDS=$(echo $V_SLURM_JOB_IDS | sed 's/Submitted batch job //g')
+  	V_DEPENDENCY_PARAM="--dependency=afterok:$V_SLURM_JOB_IDS"
 	fi  # end if we are calling variants
 
-  V_SLURM_JOB_IDS=$(echo $V_SLURM_JOB_IDS | sed 's/Submitted batch job //g')
-
-  Q_SLURM_JOB_ID=""
 	if [[ "$QC" == true ]]; then
-	        Q_SLURM_JOB_ID=$Q_SLURM_JOB_ID:$(sbatch \
-        --dependency=afterok$V_SLURM_JOB_IDS \
+	        Q_SLURM_JOB_ID=$Q_SLURM_JOB_ID:$(sbatch $V_DEPENDENCY_PARAM \
         --export=$(echo "SEQ_RUN=$SEQ_RUN,\
                  S3DOWNLOAD=$S3DOWNLOAD,\
                  WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP,\
@@ -270,8 +271,9 @@ do
         -D /shared/workspace/projects/covid/logs \
         -c 32 \
         $PIPELINEDIR/qc/qc_summary.sh)
+
+        Q_DEPENDENCY_PARAM="--dependency=afterok:${Q_SLURM_JOB_ID##* }"
 	fi # end if we are running qc
-	Q_SLURM_JOB_ID=${Q_SLURM_JOB_ID##* }
 
   # lineage and tree output is stored to a different location than
   # the outputs of the earlier steps, so it needs a slightly different
@@ -279,8 +281,7 @@ do
   PROCESSINGID="$TIMESTAMP"-"$PHYLO_SEQ_RUN"
 
 	if [[ "$LINEAGE" == true ]]; then
-	    L_SLURM_JOB_ID=$(sbatch \
-      --dependency=afterok:$Q_SLURM_JOB_ID \
+	    L_SLURM_JOB_ID=$(sbatch $Q_DEPENDENCY_PARAM \
       --export=$(echo "ORGANIZATION=$ORGANIZATION,\
                       PROCESSINGID=$PROCESSINGID,\
                       SEQ_RUN=$PHYLO_SEQ_RUN,\
