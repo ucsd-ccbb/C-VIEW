@@ -255,7 +255,10 @@ do
 		done
 
     V_SLURM_JOB_IDS=$(echo $V_SLURM_JOB_IDS | sed 's/Submitted batch job //g')
-  	V_DEPENDENCY_PARAM="--dependency=afterok:$V_SLURM_JOB_IDS"
+    # NB: other dependency param declarations include a ":" after "afterok"
+    # but this one does NOT, because the leading ":" is already included in the
+    # $V_SLURM_JOB_IDS contents
+  	V_DEPENDENCY_PARAM="--dependency=afterok$V_SLURM_JOB_IDS"
 	fi  # end if we are calling variants
 
 	if [[ "$QC" == true ]]; then
