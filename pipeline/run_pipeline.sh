@@ -221,7 +221,7 @@ do
             $PIPELINEDIR/pipeline/merge_lanes.sh)
 
           INPUT_NAMES=$(printf '%s\n' "${FINAL_INPUT_NAMES[@]}")
-          SBATCHSAMPLEPARAMS=' --dependency=afterok:${M_SLURM_JOB_ID##* }'
+          SBATCHSAMPLEPARAMS=' --dependency=afterok:'${M_SLURM_JOB_ID##* }
         fi # end if we are merging lanes
       else
         INPUT_NAMES=$INPUT_BASE_NAMES
