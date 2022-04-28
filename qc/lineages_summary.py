@@ -41,7 +41,7 @@ def merge_summaries(run_summaries_fp, run_summary_suffix):
     for fp in matching_fps:
         curr_df = pd.read_csv(fp)  # , dtype=str)
         matching_dfs.append(curr_df)
-    merged_summaries_df = pd.concat(matching_dfs)
+    merged_summaries_df = pd.concat(matching_dfs, join="outer")
     return merged_summaries_df
 
 
