@@ -37,8 +37,22 @@ def merge_summaries(run_summaries_fp, run_summary_suffix):
     summaries_pattern = os.path.join(run_summaries_fp,
                                      f"*{run_summary_suffix}")
     matching_fps = glob.glob(summaries_pattern)
+    # Sort here is in reverse order as a poor-man's way to put the newest
+    # summary files first, as the production run names start with a date (e.g.
+    # 220314 or 220401).  Whatever df is first in the list of dfs to concat
+    # appears to set the order of the columns in the resulting concatted df.
+    # The older summary files don't necessarily hold all the same metrics as
+    # the newer summary files ... and if one of those old files is the "base"
+    # df that all the others are concatted to, then the columns that don't
+    # exist in the base df but do in the others get tacked on to the very end
+    # of the concatted df.  Generally, we'd rather have them in whatever place
+    # in the df they are in the latest summary files, since those probably
+    # represent the most current use cases.  This is a way to make that likely
+    # to happen without adding the fragility of explicitly forcing the column
+    # order.
+    sorted_matching_fps = sorted(matching_fps, reverse=True)
     matching_dfs = []
-    for fp in matching_fps:
+    for fp in sorted_matching_fps:
         curr_df = pd.read_csv(fp)  # , dtype=str)
         matching_dfs.append(curr_df)
     merged_summaries_df = pd.concat(matching_dfs)
