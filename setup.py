@@ -5,7 +5,7 @@ setup(
     author="UCSD Center for Computational Biology and Bioinformatics",
     author_email="ccbb@health.ucsd.edu ",
     packages=find_packages(),
-    version='0.4.0',
+    version='4.0.0',
     url="https://github.com/ucsd-ccbb/cview",
     description="A high-throughput data processing pipeline for SARS-CoV-2 variant identification",
     license='MIT License',
