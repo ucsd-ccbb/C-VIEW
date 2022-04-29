@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PATH=/shared/workspace/software:/shared/workspace/software/ivar/bin:/shared/workspace/software/q30:/shared/workspace/software/SD-COVID-Sequencing/samhead/:$PATH
+PATH=/shared/workspace/software:/shared/workspace/software/q30:/shared/workspace/software/SD-COVID-Sequencing/samhead/:$PATH
 
 # Activate conda env cview
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
