@@ -215,7 +215,7 @@ do
             --export=$(echo "SEQ_RUN=$SEQ_RUN, \
                       WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP, \
                       S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq"  | sed 's/ //g') \
-            -D /shared/workspace/projects/covid/logs \
+            -D /shared/logs \
             -J m_"$SEQ_RUN" \
             -c 16 \
             $PIPELINEDIR/pipeline/merge_lanes.sh)
@@ -252,7 +252,7 @@ do
                   INPUT_TYPE=$INPUT_TYPE, \
                   INPUT_SUFFIX=$INPUT_SUFFIX" | sed 's/ //g') \
         -J v_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
-        -D /shared/workspace/projects/covid/logs \
+        -D /shared/logs \
         -c 2 \
         $PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh)
 		done
@@ -274,7 +274,7 @@ do
                  VERSION_INFO="$VERSION_INFO",\
                  ISTEST=$ISTEST" | sed 's/ //g') \
         -J q_$SEQ_RUN \
-        -D /shared/workspace/projects/covid/logs \
+        -D /shared/logs \
         -c 32 \
         $PIPELINEDIR/qc/qc_summary.sh)
 
@@ -295,7 +295,7 @@ do
                       VERSION_INFO="$VERSION_INFO", \
                       WORKSPACE=/scratch/phylogeny/$PROCESSINGID" | sed 's/ //g') \
 			-J l_"$PROCESSINGID" \
-			-D /shared/workspace/projects/covid/logs \
+			-D /shared/logs \
 			-c 16 \
 	    $PIPELINEDIR/pipeline/lineages.sh)
 
@@ -315,7 +315,7 @@ do
                         VERSION_INFO="$VERSION_INFO", \
                         WORKSPACE=/scratch/treebuilding/$PROCESSINGID/$DATASET" | sed 's/ //g') \
         -J t_"$DATASET"_"$PROCESSINGID" \
-        -D /shared/workspace/projects/covid/logs \
+        -D /shared/logs \
         -c 16 \
         $PIPELINEDIR/pipeline/treebuild.sh
     done
