@@ -85,10 +85,16 @@ if [[ "$INPUT_TYPE" == fastq ]]; then
   { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$SAMPLE"*$INPUT_SUFFIX | samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
   echo -e "$SAMPLEID\tminimap2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
+  source $ANACONDADIR/deactivate
+  source $ANACONDADIR/activate ivar
+
   # Step 2: Trim Sorted BAM
   { time ( ivar trim -x 5 -e -i $WORKSPACE/"$SAMPLEID".sorted.bam -b $SCRATCH_PRIMER_FP -p $WORKSPACE/"$SAMPLEID".trimmed ) ; } > $WORKSPACE/"$SAMPLEID".log.2.trim.log 2>&1
   echo -e "$SAMPLEID\tivar trim exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
   QUALIMAP_BAM=$WORKSPACE/"$SAMPLEID".sorted.bam
+
+  source $ANACONDADIR/deactivate
+  source $ANACONDADIR/activate cview
 
   # Step 3: Sort Trimmed BAM
   { time ( samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam $WORKSPACE/"$SAMPLEID".trimmed.bam && samtools index $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam && rm $WORKSPACE/"$SAMPLEID".trimmed.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log
@@ -117,6 +123,10 @@ echo -e "$SAMPLEID\ttrimmed bam read count exit code: $?" >> $WORKSPACE/"$SAMPLE
 { time ( samtools mpileup -B -A -aa -d 0 -Q 0 --reference $REF_FAS $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt 2> $WORKSPACE/"$SAMPLEID".log.4.pileup.log
 echo -e "$SAMPLEID\tsamtools mpileup exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
+source $ANACONDADIR/deactivate
+source $ANACONDADIR/activate ivar
+IVAR_VER=$(ivar version)
+
 # Step 5: Call Variants
 { time ( cat $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt | ivar variants -r $REF_FAS -g $REF_GFF -p $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.variants.tsv -m 10 ) ; } 2> $WORKSPACE/"$SAMPLEID".log.5.variants.log
 echo -e "$SAMPLEID\tivar variants exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
@@ -124,6 +134,9 @@ echo -e "$SAMPLEID\tivar variants exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.
 # Step 6: Call Consensus
 { time ( cat $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt | ivar consensus -p $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.consensus -m 10 -n N -t 0.5 ) ; } > $WORKSPACE/"$SAMPLEID".log.6.consensus.log 2>&1
 echo -e "$SAMPLEID\tivar consensus exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
+
+source $ANACONDADIR/deactivate
+source $ANACONDADIR/activate cview
 
 # Step 7: Call Depth
 { time ( samtools depth -J -d 0 -Q 0 -q 0 -aa $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLEID".trimmed.sorted.depth.txt 2> $WORKSPACE/"$SAMPLEID".log.7.depth.log
@@ -134,7 +147,6 @@ echo -e "$SAMPLEID\tsamtools depth exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit
 echo -e "$SAMPLEID\tqualimap exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 9: Acceptance
-IVAR_VER=$(ivar version)
 { time ( python $PIPELINEDIR/pipeline/sarscov2_consensus_acceptance.py $SEQ_RUN $TIMESTAMP $FQ "$IVAR_VER" $SAMPLEID $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLEID".trimmed.sorted.depth.txt $REF_FAS "$SAMPLEID".trimmed.sorted.bam "$SAMPLEID".trimmed.sorted.pileup.variants.tsv $RESULTS $WORKSPACE/"$SAMPLEID".acceptance.tsv $WORKSPACE/"$SAMPLEID".align.json ) ; } 2> $WORKSPACE/"$SAMPLEID".log.9.acceptance.log
 echo -e "$SAMPLEID\tacceptance.py exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
