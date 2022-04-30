@@ -36,8 +36,8 @@ git clone https://github.com/artnasamran/q30.git $SOFTWAREDIR/q30
 chmod u+x SOFTWAREDIR/q30/q30.py
 
 # ------- samhead -------
-git clone https://github.com/niemasd/SD-COVID-Sequencing.git $SOFTWAREDIR/SD-COVID-Sequencing
-cd $SOFTWAREDIR/SD-COVID-Sequencing/samhead
+git clone https://github.com/niemasd/samhead.git
+cd $SOFTWAREDIR/samhead
 make
 cd ~
 
