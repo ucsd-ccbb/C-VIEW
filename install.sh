@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# ------ this should happen before this script ------
+# ------ BEFORE this script ------
 # create a clean t2.medium ubuntu 20.04 instance
+# [NB: it MUST be version 20.04, NOT the latest version (e.g. 22.04)
+# because 20.04 is the latest version supported by AWS ParallelCluster]
 # with a 35 GB root drive and a 300 GB data drive,
 # and security group allowing:
 # SSH	via TCP	on port 22
@@ -9,10 +11,12 @@
 #
 # ssh onto new instance to set up file system and mount:
 # lsblk
-# sudo file -s /dev/<300 gb vol>
-# sudo mkfs -t xfs /dev/<300 gb vol>
+# for the remainder, assume lsblk shows that the name of the
+# 300 gb volume is xvdb:
+# sudo file -s /dev/xvdb
+# sudo mkfs -t xfs /dev/xvdb
 # sudo mkdir /shared
-# sudo mount /dev/<300 gb vol> /shared
+# sudo mount /dev/xvdb /shared
 # sudo chown `whoami` /shared
 #
 # install anaconda and python:
@@ -22,8 +26,12 @@
 # (NB: install anaconda into /shared/workspace/software/anaconda3
 # and say "yes" to having the installer initialize anaconda
 # by running conda init)
+
+# THEN EXIT THE TERMINAL
+# and re-enter it
 # ------------------------------------
 
+# cd /shared
 # then run this script:
 # bash install.sh
 
@@ -54,6 +62,7 @@ sudo apt install awscli
 
 # ------- Make log and software directories ------
 mkdir -p /shared/logs
+mkdir -p /shared/runfiles
 mkdir -p $SOFTWAREDIR
 
 # ------- cview -------
@@ -61,10 +70,10 @@ git clone https://github.com/ucsd-ccbb/C-VIEW.git $SOFTWAREDIR/cview
 
 # ------- q30 -------
 git clone https://github.com/artnasamran/q30.git $SOFTWAREDIR/q30
-chmod u+x SOFTWAREDIR/q30/q30.py
+chmod u+x $SOFTWAREDIR/q30/q30.py
 
 # ------- samhead -------
-git clone https://github.com/niemasd/samhead.git
+git clone https://github.com/niemasd/samhead.git $SOFTWAREDIR/samhead
 cd $SOFTWAREDIR/samhead
 make
 cd ~
@@ -74,46 +83,47 @@ wget "https://raw.githubusercontent.com/Niema-Docker/pi_from_pileup/main/pi_from
 g++ -O3 --std=c++11 -o $SOFTWAREDIR/pi_from_pileup pi_from_pileup.cpp
 rm pi_from_pileup.cpp
 
+source $ANACONDADIR/bin/deactivate
+
 # ------- iVar -------
 conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
 
 conda create --name ivar
-conda activate ivar
+source $ANACONDADIR/bin/activate ivar
 conda install ivar
-conda deactivate
+source $ANACONDADIR/bin/deactivate
 
 # ------- cview env (not: not C-VIEW itself, which was cloned above) -------
 conda create --name cview
-conda activate cview
+source $ANACONDADIR/bin/activate cview
 
 conda install samtools numpy qualimap minimap2 pandas
 pip install multiqc
 pip install nwalign3
 pip install fastaparser
 
-conda deactivate
+source $ANACONDADIR/bin/deactivate
 
 # ------- Pangolin -------
-cd $SOFTWAREDIR
-git clone https://github.com/cov-lineages/pangolin.git
+git clone https://github.com/cov-lineages/pangolin.git $SOFTWAREDIR/pangolin
 
 cd $SOFTWAREDIR/pangolin
 conda env create -f environment.yml
 
-conda activate pangolin
+source $ANACONDADIR/bin/activate pangolin
 pip install .
-conda deactivate
+source $ANACONDADIR/bin/deactivate
 
 # ------- ViralMSA (instructions from Niema) -------
-cd ~
+mkdir $SOFTWAREDIR/viralMSA
+cd $SOFTWAREDIR/viralMSA
 
-conda activate base
+source $ANACONDADIR/bin/activate base
 conda install -y -c anaconda biopython
 
 wget "https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py"
 chmod a+x ViralMSA.py
-sudo mv ViralMSA.py /usr/local/bin/ViralMSA.py # optional step to install globally
 
-conda deactivate
+source $ANACONDADIR/bin/deactivate
