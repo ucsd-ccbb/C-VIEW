@@ -96,14 +96,9 @@ conda install ivar
 source $ANACONDADIR/bin/deactivate
 
 # ------- cview env (not: not C-VIEW itself, which was cloned above) -------
-conda create --name cview
+conda env create -f $SOFTWAREDIR/cview/cview_environment.yml
 source $ANACONDADIR/bin/activate cview
-
-conda install samtools numpy qualimap minimap2 pandas
-pip install multiqc
 pip install nwalign3
-pip install fastaparser
-
 source $ANACONDADIR/bin/deactivate
 
 # ------- Pangolin -------
