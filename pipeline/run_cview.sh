@@ -276,7 +276,7 @@ do
         -J q_$SEQ_RUN \
         -D /shared/logs \
         -c 32 \
-        $PIPELINEDIR/qc_summary.sh)
+        $PIPELINEDIR/pipeline/qc_summary.sh)
 
         Q_DEPENDENCY_PARAM="--dependency=afterok:${Q_SLURM_JOB_ID##* }"
 	fi # end if we are running qc
