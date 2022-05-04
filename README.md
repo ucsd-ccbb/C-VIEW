@@ -27,7 +27,7 @@ If a fresh installation *is* required, take the following steps:
    2. Run `sudo mkfs -t xfs /dev/xvdb` to make a filesystem on the new drive 
    3. Run `sudo mkdir /shared` to create a location for the installation 
    4. Run `sudo mount /dev/xvdb /shared` to mount the 300 GB volume to the new location
-   5. Run `sudo chown `whoami` /shared` to grant the current user permissions to the new location
+   5. Run ``sudo chown `whoami` /shared`` to grant the current user permissions to the new location
 3. Install anaconda and python
    1. Run `cd /shared`
    2. Run `wget https://repo.anaconda.com/archive/Anaconda3-2020.11-Linux-x86_64.sh`
