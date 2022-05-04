@@ -94,17 +94,17 @@ runLineages () {
   source $ANACONDADIR/activate cview
 
   # generate file of input checksums, for record-keeping
-  python $CVIEWDIR/qc/document_file_checksums.py \
+  python $CVIEWDIR/src/document_file_checksums.py \
     $WORKSPACE $WORKSPACE/"$PROCESSINGID"_input_checksums.csv \
     "-passQC.fas" "-summary.csv"
   echo -e "document_file_checksums.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
   # produce merged qc_and_lineages.csv
-  python $CVIEWDIR/qc/lineages_summary.py $WORKSPACE/added_fa_names.txt $WORKSPACE "-summary.csv" $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv
+  python $CVIEWDIR/src/lineages_summary.py $WORKSPACE/added_fa_names.txt $WORKSPACE "-summary.csv" $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv
   echo -e "lineages_summary.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
   # merge with inspect metadata to produce full summary and bjorn summary
-  python $CVIEWDIR/qc/metadata_generation.py \
+  python $CVIEWDIR/src/metadata_generation.py \
     $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv \
     $WORKSPACE/$INSPECT_METADATA_FNAME \
     $WORKSPACE/"$PROCESSINGID".full_summary.csv \
@@ -113,7 +113,7 @@ runLineages () {
   echo -e "metadata_generation.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
   # generate customized summary file slices for RTL constituents
-  python $CVIEWDIR/qc/custom_reports_generation.py \
+  python $CVIEWDIR/src/custom_reports_generation.py \
     $WORKSPACE/"$PROCESSINGID".full_summary.csv \
     $WORKSPACE/"$PROCESSINGID"_summary-report
 
@@ -121,7 +121,7 @@ runLineages () {
 
   # generate empress metadata and winnowed fastas in preparation for
   # (possible) tree building
-  python $CVIEWDIR/qc/tree_prep.py \
+  python $CVIEWDIR/src/tree_prep.py \
     $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv \
     $WORKSPACE/$INSPECT_METADATA_FNAME \
     $WORKSPACE/"$PROCESSINGID"_passQC.fas \
