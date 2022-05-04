@@ -95,7 +95,7 @@ runQC () {
     cat $PASSING_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-passQC.fas
 
   # generate file of summary and passQC fas checksums, for record-keeping
-  python $CVIEWDIR/pipeline/document_file_checksums.py \
+  python $CVIEWDIR/qc/document_file_checksums.py \
     $WORKSPACE $WORKSPACE/"$SEQ_RUN"_artifact_checksums.csv \
     "$SEQ_RUN-summary.csv" "$SEQ_RUN-passQC.fas"
   echo -e "document_file_checksums.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log

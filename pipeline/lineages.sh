@@ -94,7 +94,7 @@ runLineages () {
   source $ANACONDADIR/activate cview
 
   # generate file of input checksums, for record-keeping
-  python $CVIEWDIR/pipeline/document_file_checksums.py \
+  python $CVIEWDIR/qc/document_file_checksums.py \
     $WORKSPACE $WORKSPACE/"$PROCESSINGID"_input_checksums.csv \
     "-passQC.fas" "-summary.csv"
   echo -e "document_file_checksums.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
