@@ -37,7 +37,7 @@ def merge_multiqc_and_acceptance(arg_list):
     # remove unwanted column
     multiqc_df = multiqc_df.drop("general_error_rate", axis=1)
 
-    # *outer* merge all fields in combined metric df into qc df
+    # *outer* merge all fields in combined metric df into src df
     output_df = multiqc_df.merge(combined_df,
                                  left_on=MULTIQC_SEQ_POOL_COMP_ID,
                                  right_on=METRIC_SEQ_POOL_COMP_ID,

@@ -1,7 +1,7 @@
 import os
 import filecmp
 from tests.test_sarscov2_consensus_acceptance import FileTestCase
-from qc.integrate_bjorn_coverage import integrate_bjorn_coverage
+from src.integrate_bjorn_coverage import integrate_bjorn_coverage
 
 
 class IntegrateBjornCoverageTests(FileTestCase):

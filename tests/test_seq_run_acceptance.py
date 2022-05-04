@@ -1,7 +1,7 @@
 import os
 import filecmp
 from tests.test_sarscov2_consensus_acceptance import FileTestCase
-from qc.seq_run_acceptance import make_collected_acceptances_tsv
+from src.seq_run_acceptance import make_collected_acceptances_tsv
 
 
 class SeqRunAcceptanceTest(FileTestCase):

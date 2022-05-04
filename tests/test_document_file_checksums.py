@@ -1,7 +1,7 @@
 import os
 import filecmp
 from tests.test_sarscov2_consensus_acceptance import FileTestCase
-from qc.document_file_checksums import generate_checksums_file
+from src.document_file_checksums import generate_checksums_file
 
 
 class DocumentFileChecksumsTest(FileTestCase):

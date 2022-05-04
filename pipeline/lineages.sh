@@ -75,7 +75,7 @@ runLineages () {
   # find every fasta header line in the "$PROCESSINGID"_refs_hist.fas,
   # cut off its first char (the >),
   # then put it into the added_fa_names.txt file
-  # (we'll use this later for the qc and lineages file creation)
+  # (we'll use this later for the src and lineages file creation)
   echo "fasta_id" > $WORKSPACE/added_fa_names.txt
   grep "^>" $WORKSPACE/"$PROCESSINGID"_refs_hist.fas | cut -c 2- >> $WORKSPACE/added_fa_names.txt
 

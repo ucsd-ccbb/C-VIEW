@@ -1,7 +1,7 @@
 import os
 import filecmp
 from tests.test_sarscov2_consensus_acceptance import FileTestCase
-from qc.tree_prep import prep_files_for_tree_building
+from src.tree_prep import prep_files_for_tree_building
 
 
 class TreePrepTest(FileTestCase):

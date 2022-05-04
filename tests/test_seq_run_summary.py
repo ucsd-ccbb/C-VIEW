@@ -1,7 +1,7 @@
 import os
 import filecmp
 from tests.test_sarscov2_consensus_acceptance import FileTestCase
-from qc.seq_run_summary import merge_multiqc_and_acceptance
+from src.seq_run_summary import merge_multiqc_and_acceptance
 
 
 class SeqRunSummaryTest(FileTestCase):

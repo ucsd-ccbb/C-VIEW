@@ -224,7 +224,7 @@ def create_lineages_summary(arg_list):
     output_df.loc[gte_70_and_passes_pangolin, USABLE_NAME] = VARIANT_VAL
     output_df.loc[gt_95_and_passes_pangolin, USABLE_NAME] = VARIANT_AND_EP_VAL
 
-    # add additional qc filter columns
+    # add additional src filter columns
     add_final_qc_filters_inplace(output_df)
 
     # sort to ensure deterministic output order

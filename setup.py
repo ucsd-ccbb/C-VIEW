@@ -12,7 +12,7 @@ setup(
     package_data={'cview':
                   [
                       'pipeline/*.*',
-                      'qc/*.*',
+                      'src/*.*',
                       'reference_files/*.*',
                       'tests/data/*.*'
                   ]}

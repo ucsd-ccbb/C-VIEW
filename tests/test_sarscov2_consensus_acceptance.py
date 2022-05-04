@@ -2,7 +2,7 @@ import os
 from io import StringIO
 from filecmp import cmp
 from unittest import TestCase
-from qc.sarscov2_consensus_acceptance import \
+from src.sarscov2_consensus_acceptance import \
     _read_input_fps, \
     check_acceptance, _pairwise_align, get_search_id, \
     _generate_header_and_data_lines, _read_depths, _read_input_files, \
