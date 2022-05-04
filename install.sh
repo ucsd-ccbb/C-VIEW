@@ -120,7 +120,8 @@ source $ANACONDADIR/bin/deactivate
 mkdir $SOFTWAREDIR/viralMSA
 cd $SOFTWAREDIR/viralMSA
 
-source $ANACONDADIR/bin/activate base
+conda create --name biopy
+source $ANACONDADIR/bin/activate biopy
 conda install -y -c anaconda biopython
 
 wget "https://raw.githubusercontent.com/niemasd/ViralMSA/master/ViralMSA.py"
