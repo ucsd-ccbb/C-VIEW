@@ -39,6 +39,8 @@ buildTree () {
 
 	python $PIPELINEDIR/pipeline/trim_msa.py -i $WORKSPACE/viralmsa_out/"$PROCESSINGID"_"$DATASET"_refs_hist.fas.aln -s 100 -e 50 -o $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist.trimmed.aln
     echo -e "trim_msa.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-phylogeny.exit.log
+
+	source $ANACONDADIR/deactivate
 }
 
 { time ( buildTree ) ; } > $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-treebuild.log 2>&1
