@@ -8,7 +8,7 @@ source $ANACONDADIR/activate cview
 
 # Set variables
 THREADS=2
-PIPELINEDIR=/shared/workspace/software/cview
+CVIEWDIR=/shared/workspace/software/cview
 INSPECT_DELIMITER=__
 INTERNAL_DELIMITER=_
 
@@ -46,8 +46,8 @@ echo "$VERSION_INFO" >> $WORKSPACE/"$SAMPLEID".version.log
 # Move reference files to compute node once
 if [[ ! -f "$REF_FAS" ]]; then
 	mkdir -p /scratch/reference/
-    cp $PIPELINEDIR/reference_files/$REF_NAME.fas $REF_FAS
-    cp $PIPELINEDIR/reference_files/$REF_NAME.gff3 $REF_GFF
+    cp $CVIEWDIR/reference_files/$REF_NAME.fas $REF_FAS
+    cp $CVIEWDIR/reference_files/$REF_NAME.gff3 $REF_GFF
 fi
 
 if [[ "$INPUT_TYPE" == fastq ]]; then
@@ -55,12 +55,12 @@ if [[ "$INPUT_TYPE" == fastq ]]; then
   mkdir -p $WORKSPACE/fastq
 
   # will also need an MMI file for the reference; get it now
-  cp $PIPELINEDIR/reference_files/$REF_NAME.fas.mmi $REF_MMI
+  cp $CVIEWDIR/reference_files/$REF_NAME.fas.mmi $REF_MMI
 
   # ensure that primer file is downloaded
   SCRATCH_PRIMER_FP=/scratch/reference/$PRIMER_BED_FNAME
   if [[ ! -f "$SCRATCH_PRIMER_FP" ]]; then
-    cp $PIPELINEDIR/reference_files/$PRIMER_BED_FNAME $SCRATCH_PRIMER_FP
+    cp $CVIEWDIR/reference_files/$PRIMER_BED_FNAME $SCRATCH_PRIMER_FP
   fi
 
   if [[ "$MERGE_LANES" == true ]]; then
@@ -147,7 +147,7 @@ echo -e "$SAMPLEID\tsamtools depth exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit
 echo -e "$SAMPLEID\tqualimap exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 9: Acceptance
-{ time ( python $PIPELINEDIR/pipeline/sarscov2_consensus_acceptance.py $SEQ_RUN $TIMESTAMP $FQ "$IVAR_VER" $SAMPLEID $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLEID".trimmed.sorted.depth.txt $REF_FAS "$SAMPLEID".trimmed.sorted.bam "$SAMPLEID".trimmed.sorted.pileup.variants.tsv $RESULTS $WORKSPACE/"$SAMPLEID".acceptance.tsv $WORKSPACE/"$SAMPLEID".align.json ) ; } 2> $WORKSPACE/"$SAMPLEID".log.9.acceptance.log
+{ time ( python $CVIEWDIR/pipeline/sarscov2_consensus_acceptance.py $SEQ_RUN $TIMESTAMP $FQ "$IVAR_VER" $SAMPLEID $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLEID".trimmed.sorted.depth.txt $REF_FAS "$SAMPLEID".trimmed.sorted.bam "$SAMPLEID".trimmed.sorted.pileup.variants.tsv $RESULTS $WORKSPACE/"$SAMPLEID".acceptance.tsv $WORKSPACE/"$SAMPLEID".align.json ) ; } 2> $WORKSPACE/"$SAMPLEID".log.9.acceptance.log
 echo -e "$SAMPLEID\tacceptance.py exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 10: Coverage

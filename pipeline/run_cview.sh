@@ -1,14 +1,14 @@
 #!/bin/bash
 
 INPUT=$1 # Sample Sheet with header
-PIPELINEDIR=/shared/workspace/software/cview
+CVIEWDIR=/shared/workspace/software/cview
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
 S3TEST=s3://ucsd-rtl-test
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate cview
 
-VERSION_INFO=$(bash $PIPELINEDIR/pipeline/show_version.sh)
+VERSION_INFO=$(bash $CVIEWDIR/pipeline/show_version.sh)
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
 INPUT_FIELDS="FUNCTION,ORGANIZATION,SEQ_RUN,MERGE_LANES,PRIMER_SET,FQ,READ_CAP,SAMPLE,TIMESTAMP,ISTEST"
@@ -218,7 +218,7 @@ do
             -D /shared/logs \
             -J m_"$SEQ_RUN" \
             -c 16 \
-            $PIPELINEDIR/pipeline/merge_lanes.sh)
+            $CVIEWDIR/pipeline/merge_lanes.sh)
 
           INPUT_NAMES=$(printf '%s\n' "${FINAL_INPUT_NAMES[@]}")
           SBATCHSAMPLEPARAMS=' --dependency=afterok:'${M_SLURM_JOB_ID##* }
@@ -254,7 +254,7 @@ do
         -J v_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
         -D /shared/logs \
         -c 2 \
-        $PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh)
+        $CVIEWDIR/pipeline/sarscov2_consensus_pipeline.sh)
 		done
 
     V_SLURM_JOB_IDS=$(echo $V_SLURM_JOB_IDS | sed 's/Submitted batch job //g')
@@ -276,7 +276,7 @@ do
         -J q_$SEQ_RUN \
         -D /shared/logs \
         -c 32 \
-        $PIPELINEDIR/pipeline/qc_summary.sh)
+        $CVIEWDIR/pipeline/qc_summary.sh)
 
         Q_DEPENDENCY_PARAM="--dependency=afterok:${Q_SLURM_JOB_ID##* }"
 	fi # end if we are running qc
@@ -297,7 +297,7 @@ do
 			-J l_"$PROCESSINGID" \
 			-D /shared/logs \
 			-c 16 \
-	    $PIPELINEDIR/pipeline/lineages.sh)
+	    $CVIEWDIR/pipeline/lineages.sh)
 
 		SBATCHLINEAGEPARAMS=" --dependency=afterok:${L_SLURM_JOB_ID##* }"
 	fi # end if we are calling lineages
@@ -317,7 +317,7 @@ do
         -J t_"$DATASET"_"$PROCESSINGID" \
         -D /shared/logs \
         -c 16 \
-        $PIPELINEDIR/pipeline/treebuild.sh
+        $CVIEWDIR/pipeline/treebuild.sh
     done
   fi # end if we are building trees
 

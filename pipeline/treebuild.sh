@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export PATH=$PATH:/shared/workspace/software/viralMSA:/shared/workspace/software/MinVar-Rooting-master:/shared/workspace/software/anaconda3/envs/cview/bin
-PIPELINEDIR=/shared/workspace/software/cview
+CVIEWDIR=/shared/workspace/software/cview
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
@@ -37,7 +37,7 @@ buildTree () {
 	ViralMSA.py -s $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist.fas -r SARS-CoV-2 -o $WORKSPACE/viralmsa_out -t $THREADS -e aws-CCBB@health.ucsd.edu
     echo -e "ViralMSA.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-phylogeny.exit.log
 
-	python $PIPELINEDIR/pipeline/trim_msa.py -i $WORKSPACE/viralmsa_out/"$PROCESSINGID"_"$DATASET"_refs_hist.fas.aln -s 100 -e 50 -o $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist.trimmed.aln
+	python $CVIEWDIR/pipeline/trim_msa.py -i $WORKSPACE/viralmsa_out/"$PROCESSINGID"_"$DATASET"_refs_hist.fas.aln -s 100 -e 50 -o $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist.trimmed.aln
     echo -e "trim_msa.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"_"$DATASET"_refs_hist-phylogeny.exit.log
 
 	source $ANACONDADIR/deactivate

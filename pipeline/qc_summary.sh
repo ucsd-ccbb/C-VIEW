@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PIPELINEDIR=/shared/workspace/software/cview
+CVIEWDIR=/shared/workspace/software/cview
 QCRESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_summary_files
 
 # Activate conda env cview
@@ -43,11 +43,11 @@ runQC () {
 
 	# summary figures and stats
 	# echo "Generating a violin plot of mapping depth across all samples and line plots of mapping depth per sample."
-	# python $PIPELINEDIR/qc/samtools_depth_plots.py $WORKSPACE/qc/"$SEQ_RUN"-depth_lineplot.pdf $WORKSPACE/qc/"$SEQ_RUN"-depth_violin.pdf $WORKSPACE/*.depth.txt
+	# python $CVIEWDIR/qc/samtools_depth_plots.py $WORKSPACE/qc/"$SEQ_RUN"-depth_lineplot.pdf $WORKSPACE/qc/"$SEQ_RUN"-depth_violin.pdf $WORKSPACE/*.depth.txt
 	# mv depth_violin.pdf $WORKSPACE/qc/"$SEQ_RUN"-depth_violin.pdf
 	# mv depth_lineplot.pdf $WORKSPACE/qc/"$SEQ_RUN"-depth_lineplot.pdf
 	echo "Summarizing consensus QC."
-	python $PIPELINEDIR/qc/seq_run_acceptance.py $WORKSPACE $WORKSPACE/"$SEQ_RUN"-acceptance.tsv
+	python $CVIEWDIR/qc/seq_run_acceptance.py $WORKSPACE $WORKSPACE/"$SEQ_RUN"-acceptance.tsv
     echo -e "seq_run_acceptance.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
 	# Multiqc
@@ -56,10 +56,10 @@ runQC () {
 	find $WORKSPACE -name "*q30_reads.txt" | sort -n > $WORKSPACE/qc/q30_reads_paths.txt
 	find $WORKSPACE -name "*_subsampled_mapping_stats.tsv" | sort -n > $WORKSPACE/qc/subsampled_mapping_stats_paths.txt
 
-	python $PIPELINEDIR/qc/custom_gen_stats_multiqc.py $WORKSPACE/qc/qualimapReport_paths.txt $WORKSPACE/qc/q30_reads_paths.txt $WORKSPACE/qc/subsampled_mapping_stats_paths.txt $FQ $WORKSPACE/multiqc_custom_gen_stats.yaml
+	python $CVIEWDIR/qc/custom_gen_stats_multiqc.py $WORKSPACE/qc/qualimapReport_paths.txt $WORKSPACE/qc/q30_reads_paths.txt $WORKSPACE/qc/subsampled_mapping_stats_paths.txt $FQ $WORKSPACE/multiqc_custom_gen_stats.yaml
   echo -e "custom_gen_stats_multiqc.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
-	cat $PIPELINEDIR/qc/cview_multiqc_config.yaml $WORKSPACE/multiqc_custom_gen_stats.yaml > $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml
+	cat $CVIEWDIR/qc/cview_multiqc_config.yaml $WORKSPACE/multiqc_custom_gen_stats.yaml > $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml
 	multiqc --config $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml --module qualimap --module custom_content $WORKSPACE
     echo -e "multiqc exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
@@ -80,9 +80,9 @@ runQC () {
 	# Make summary table
 	echo "Making run summary table."
 	# TODO: would be nice to use the same list of per-sample metrics here as above to avoid having to remember to add new ones in two places
-	python $PIPELINEDIR/qc/seq_run_summary.py $WORKSPACE/"$SEQ_RUN"-temp-summary.csv $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-trimmed_bam_read_count.tsv $WORKSPACE/"$SEQ_RUN"-pi_metric.tsv $WORKSPACE/"$SEQ_RUN"-n_metric.tsv
+	python $CVIEWDIR/qc/seq_run_summary.py $WORKSPACE/"$SEQ_RUN"-temp-summary.csv $WORKSPACE/multiqc_data/multiqc_general_stats.txt $WORKSPACE/"$SEQ_RUN"-acceptance.tsv $WORKSPACE/"$SEQ_RUN"-trimmed_bam_read_count.tsv $WORKSPACE/"$SEQ_RUN"-pi_metric.tsv $WORKSPACE/"$SEQ_RUN"-n_metric.tsv
     echo -e "seq_run_summary.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
-	python $PIPELINEDIR/qc/integrate_bjorn_coverage.py $WORKSPACE/"$SEQ_RUN"-temp-summary.csv $WORKSPACE/"$SEQ_RUN"-coverage.tsv $WORKSPACE/"$SEQ_RUN"-summary.csv
+	python $CVIEWDIR/qc/integrate_bjorn_coverage.py $WORKSPACE/"$SEQ_RUN"-temp-summary.csv $WORKSPACE/"$SEQ_RUN"-coverage.tsv $WORKSPACE/"$SEQ_RUN"-summary.csv
     echo -e "integrate_bjorn_coverage.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
 	# Concatenate all consensus files to a .fas file
@@ -90,12 +90,12 @@ runQC () {
 
     # Id only passing consensus files and write them to a *-passQC.fas file
     echo "Merging passing consensus files."
-    PASSING_CONS_FNAMES=$(python $PIPELINEDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv not_na_cons_fnames $WORKSPACE)
+    PASSING_CONS_FNAMES=$(python $CVIEWDIR/qc/subset_csv.py $WORKSPACE/"$SEQ_RUN"-summary.csv not_na_cons_fnames $WORKSPACE)
     echo -e "subset_csv.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
     cat $PASSING_CONS_FNAMES > $WORKSPACE/"$SEQ_RUN"-passQC.fas
 
   # generate file of summary and passQC fas checksums, for record-keeping
-  python $PIPELINEDIR/pipeline/document_file_checksums.py \
+  python $CVIEWDIR/pipeline/document_file_checksums.py \
     $WORKSPACE $WORKSPACE/"$SEQ_RUN"_artifact_checksums.csv \
     "$SEQ_RUN-summary.csv" "$SEQ_RUN-passQC.fas"
   echo -e "document_file_checksums.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log

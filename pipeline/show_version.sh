@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PIPELINEDIR=/shared/workspace/software/cview
+CVIEWDIR=/shared/workspace/software/cview
 
 # Some string handling done here to remove spaces from result so that it
 # can safely be passed as a variable to slurm's sbatch :-/
@@ -14,6 +14,6 @@ PIPELINEDIR=/shared/workspace/software/cview
 # for \n. With the second search and replace pattern, the last comma will be
 # replaced with \n.
 
-cd $PIPELINEDIR && (git describe --tags && git log | head -n 1  && git checkout) | tr ' ' '_' | tr '\t' '_' | sed -z 's/\n/./g;s/.$/\n/'
+cd $CVIEWDIR && (git describe --tags && git log | head -n 1  && git checkout) | tr ' ' '_' | tr '\t' '_' | sed -z 's/\n/./g;s/.$/\n/'
 
 

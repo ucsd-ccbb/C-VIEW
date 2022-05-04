@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export PATH=$PATH:/shared/workspace/software/IQTree/iqtree-2.1.2-Linux/bin:/shared/workspace/software/viralMSA:/shared/workspace/software/MinVar-Rooting-master:/shared/workspace/software/anaconda3/envs/cview/bin
-PIPELINEDIR=/shared/workspace/software/cview
+CVIEWDIR=/shared/workspace/software/cview
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
@@ -61,13 +61,13 @@ runLineages () {
   aws s3 cp "$S3INSPECT"/"$INSPECT_METADATA_FNAME" $WORKSPACE/$INSPECT_METADATA_FNAME
 
 	# start with the reference sequence
-	cat $PIPELINEDIR/reference_files/NC_045512.2.fas > $WORKSPACE/"$PROCESSINGID"_refs_hist.fas
+	cat $CVIEWDIR/reference_files/NC_045512.2.fas > $WORKSPACE/"$PROCESSINGID"_refs_hist.fas
 
 	# add a bat coronavirus sequence that is used as the outgroup for tree rooting
-	cat $PIPELINEDIR/reference_files/RmYN02.fas >> $WORKSPACE/"$PROCESSINGID"_refs_hist.fas
+	cat $CVIEWDIR/reference_files/RmYN02.fas >> $WORKSPACE/"$PROCESSINGID"_refs_hist.fas
 
 	# add B.1.1.7 sequence
-	cat $PIPELINEDIR/reference_files/hCoV-19_USA_CA-SEARCH-5574_2020.fasta >> $WORKSPACE/"$PROCESSINGID"_refs_hist.fas
+	cat $CVIEWDIR/reference_files/hCoV-19_USA_CA-SEARCH-5574_2020.fasta >> $WORKSPACE/"$PROCESSINGID"_refs_hist.fas
 
   # add the historic fas sequences
 	cat $WORKSPACE/*historic.fas >> $WORKSPACE/"$PROCESSINGID"_refs_hist.fas
@@ -94,17 +94,17 @@ runLineages () {
   source $ANACONDADIR/activate cview
 
   # generate file of input checksums, for record-keeping
-  python $PIPELINEDIR/pipeline/document_file_checksums.py \
+  python $CVIEWDIR/pipeline/document_file_checksums.py \
     $WORKSPACE $WORKSPACE/"$PROCESSINGID"_input_checksums.csv \
     "-passQC.fas" "-summary.csv"
   echo -e "document_file_checksums.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
   # produce merged qc_and_lineages.csv
-  python $PIPELINEDIR/qc/lineages_summary.py $WORKSPACE/added_fa_names.txt $WORKSPACE "-summary.csv" $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv
+  python $CVIEWDIR/qc/lineages_summary.py $WORKSPACE/added_fa_names.txt $WORKSPACE "-summary.csv" $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv
   echo -e "lineages_summary.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
   # merge with inspect metadata to produce full summary and bjorn summary
-  python $PIPELINEDIR/qc/metadata_generation.py \
+  python $CVIEWDIR/qc/metadata_generation.py \
     $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv \
     $WORKSPACE/$INSPECT_METADATA_FNAME \
     $WORKSPACE/"$PROCESSINGID".full_summary.csv \
@@ -113,7 +113,7 @@ runLineages () {
   echo -e "metadata_generation.py exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
   # generate customized summary file slices for RTL constituents
-  python $PIPELINEDIR/qc/custom_reports_generation.py \
+  python $CVIEWDIR/qc/custom_reports_generation.py \
     $WORKSPACE/"$PROCESSINGID".full_summary.csv \
     $WORKSPACE/"$PROCESSINGID"_summary-report
 
@@ -121,7 +121,7 @@ runLineages () {
 
   # generate empress metadata and winnowed fastas in preparation for
   # (possible) tree building
-  python $PIPELINEDIR/qc/tree_prep.py \
+  python $CVIEWDIR/qc/tree_prep.py \
     $WORKSPACE/"$PROCESSINGID".qc_and_lineages.csv \
     $WORKSPACE/$INSPECT_METADATA_FNAME \
     $WORKSPACE/"$PROCESSINGID"_passQC.fas \
