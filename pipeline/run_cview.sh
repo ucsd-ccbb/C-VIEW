@@ -254,7 +254,7 @@ do
         -J v_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
         -D /shared/logs \
         -c 2 \
-        $CVIEWDIR/pipeline/sarscov2_consensus_pipeline.sh)
+        $CVIEWDIR/pipeline/process_sample.sh)
 		done
 
     V_SLURM_JOB_IDS=$(echo $V_SLURM_JOB_IDS | sed 's/Submitted batch job //g')
@@ -276,7 +276,7 @@ do
         -J q_$SEQ_RUN \
         -D /shared/logs \
         -c 32 \
-        $CVIEWDIR/pipeline/qc_summary.sh)
+        $CVIEWDIR/pipeline/summarize_seqrun_qc.sh)
 
         Q_DEPENDENCY_PARAM="--dependency=afterok:${Q_SLURM_JOB_ID##* }"
 	fi # end if we are running src
@@ -297,7 +297,7 @@ do
 			-J l_"$PROCESSINGID" \
 			-D /shared/logs \
 			-c 16 \
-	    $CVIEWDIR/pipeline/lineages.sh)
+	    $CVIEWDIR/pipeline/call_lineages.sh)
 
 		SBATCHLINEAGEPARAMS=" --dependency=afterok:${L_SLURM_JOB_ID##* }"
 	fi # end if we are calling lineages
@@ -317,7 +317,7 @@ do
         -J t_"$DATASET"_"$PROCESSINGID" \
         -D /shared/logs \
         -c 16 \
-        $CVIEWDIR/pipeline/treebuild.sh
+        $CVIEWDIR/pipeline/build_alignment.sh
     done
   fi # end if we are building trees
 
