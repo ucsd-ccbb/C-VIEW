@@ -141,9 +141,9 @@ necessary AWS S3 resources.
 ## Running the Pipeline
 
 The pipeline is initiated on the head node of the cluster by calling the 
-`run_pipeline.sh` script with an input csv file provided by the user, e.g.:
+`run_cview.sh` script with an input csv file provided by the user, e.g.:
 
-`bash /shared/workspace/software/cview/pipeline/run_pipeline.sh /shared/runfiles/cview_test_run.csv`
+`bash /shared/workspace/software/cview/pipeline/run_cview.sh /shared/runfiles/cview_test_run.csv`
 
 This file should have a header line in the following format:
 
