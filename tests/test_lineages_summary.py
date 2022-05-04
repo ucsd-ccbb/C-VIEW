@@ -1,7 +1,7 @@
 import os
 import filecmp
 from tests.test_sarscov2_consensus_acceptance import FileTestCase
-from qc.lineages_summary import create_lineages_summary
+from src.lineages_summary import create_lineages_summary
 
 
 class LineagesSummaryTest(FileTestCase):

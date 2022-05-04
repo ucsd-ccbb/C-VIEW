@@ -1,7 +1,7 @@
 import os
 import filecmp
 from tests.test_sarscov2_consensus_acceptance import FileTestCase
-from qc.metadata_generation import merge_metadata
+from src.metadata_generation import merge_metadata
 
 
 class MetadataGenerationTest(FileTestCase):

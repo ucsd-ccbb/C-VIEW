@@ -1,7 +1,7 @@
 import os
 import filecmp
 from tests.test_sarscov2_consensus_acceptance import FileTestCase
-from qc.subset_csv import filter_csv
+from src.subset_csv import filter_csv
 
 
 class SubsetCsvTest(FileTestCase):

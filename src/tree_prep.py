@@ -89,7 +89,7 @@ def prep_files_for_tree_building(arg_list):
 
     # Note: metadata file includes records for historical or reference seqs,
     # while fasta file does NOT--those hist_or_ref fasta records are added
-    # in treebuild.sh
+    # in build_alignment.sh
     stringent_plus_hist_or_ref_mask = (stringent_mask | is_hist_or_ref)
     stringent_plus_hist_or_ref_empress_df = base_empress_df[
         stringent_plus_hist_or_ref_mask].copy()

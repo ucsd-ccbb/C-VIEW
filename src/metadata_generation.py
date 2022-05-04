@@ -70,7 +70,7 @@ def generate_bjorn_df(filtered_df):
     output_df.loc[:, 'sample_id'] = filtered_df['sample_id']
     output_df.loc[:, 'search_id'] = filtered_df['search_id']
 
-    # The metadata reads in as strings (hence 'True') while the qc and lineage
+    # The metadata reads in as strings (hence 'True') while the src and lineage
     # data reads in parsed (hence False, not 'False')
     inspect_approval = filtered_df[SUBMIT_TO_GISAID] == 'True'  # noqa 712
     # NB: if sample's metadata_cleared is NA, sample IS allowed for release.

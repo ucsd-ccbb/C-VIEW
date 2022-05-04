@@ -1,7 +1,7 @@
 import os
 import filecmp
 from tests.test_sarscov2_consensus_acceptance import FileTestCase
-from qc.custom_reports_generation import make_bespoke_outputs
+from src.custom_reports_generation import make_bespoke_outputs
 
 
 class CustomReportsGenerationTest(FileTestCase):

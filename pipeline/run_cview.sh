@@ -1,14 +1,14 @@
 #!/bin/bash
 
 INPUT=$1 # Sample Sheet with header
-PIPELINEDIR=/shared/workspace/software/covid_sequencing_analysis_pipeline
+CVIEWDIR=/shared/workspace/software/cview
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
 S3TEST=s3://ucsd-rtl-test
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
-source $ANACONDADIR/activate covid1.2
+source $ANACONDADIR/activate cview
 
-VERSION_INFO=$(bash $PIPELINEDIR/pipeline/show_version.sh)
+VERSION_INFO=$(bash $CVIEWDIR/pipeline/show_version.sh)
 
 [ ! -f $INPUT ] && { echo "Error: $INPUT file not found"; exit 99; }
 INPUT_FIELDS="FUNCTION,ORGANIZATION,SEQ_RUN,MERGE_LANES,PRIMER_SET,FQ,READ_CAP,SAMPLE,TIMESTAMP,ISTEST"
@@ -18,8 +18,10 @@ sed 1d $INPUT | while IFS=',' read FUNCTION ORGANIZATION SEQ_RUN MERGE_LANES PRI
 do
   # set per-row variables
   INPUT_VALS="$FUNCTION,$ORGANIZATION,$SEQ_RUN,$MERGE_LANES,$PRIMER_SET,$FQ,$READ_CAP,$SAMPLE,$TIMESTAMP,$ISTEST"
-  QSUBSAMPLEPARAMS=''
-  QSUBLINEAGEPARAMS=''
+  SBATCHSAMPLEPARAMS=''
+  V_DEPENDENCY_PARAM=''
+  Q_DEPENDENCY_PARAM=''
+  SBATCHLINEAGEPARAMS=''
 
 	# echo the inputs to the screen
 	echo " "
@@ -46,7 +48,7 @@ do
   # validate the inputs
   # --------------------
 
-  if [ "$FUNCTION" != pipeline ] && [ "$FUNCTION" != cumulative_pipeline ] && [ "$FUNCTION" != variants_qc ] && [ "$FUNCTION" != variants ] &&  [ "$FUNCTION" != sample ] &&  [ "$FUNCTION" != qc ] &&  [ "$FUNCTION" != lineages ] &&  [ "$FUNCTION" != phylogeny ] &&  [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ]; then
+  if [ "$FUNCTION" != pipeline ] && [ "$FUNCTION" != cumulative_pipeline ] && [ "$FUNCTION" != variants_qc ] && [ "$FUNCTION" != variants ] &&  [ "$FUNCTION" != sample ] &&  [ "$FUNCTION" != src ] &&  [ "$FUNCTION" != lineages ] &&  [ "$FUNCTION" != phylogeny ] &&  [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ]; then
 		echo "Error: Parameter FUNCTION must be one of pipeline, cumulative_pipeline, variants_qc, variants, sample, qc, lineages, phylogeny, cummulative_lineages, or cumulative_phylogeny"
 		exit 1
 	fi
@@ -61,7 +63,7 @@ do
 	  exit 1
 	fi
 
-	if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants_qc ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
+	if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants_qc ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == src ]; then
     if [[ ! "$FQ" =~ ^(se|pe|bam)$ ]]; then
       echo "Error: FQ must be one of se, pe, or bam"
       exit 1
@@ -117,7 +119,7 @@ do
     fi
   fi
 
-  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants_qc ] || [ "$FUNCTION" == qc ]; then
+  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants_qc ] || [ "$FUNCTION" == src ]; then
     QC=true
   fi
 
@@ -133,7 +135,7 @@ do
     PHYLO_SEQ_RUN=all
   fi
 
-  if [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
+  if [ "$FUNCTION" == sample ] || [ "$FUNCTION" == src ]; then
     unset FIELD_IGNORED[TIMESTAMP]
   else
 	  TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
@@ -209,17 +211,17 @@ do
             FINAL_INPUT_NAMES+=("$SAMPLE"_"$LANES_COMBINED""$INPUT_DELIMITER")
           done
 
-          qsub -v SEQ_RUN=$SEQ_RUN \
-             -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
-             -v S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq \
-             -wd /shared/workspace/projects/covid/logs \
-             -N m_"$SEQ_RUN" \
-             -pe smp 16 \
-             -S /bin/bash \
-             $PIPELINEDIR/pipeline/merge_lanes.sh
+          M_SLURM_JOB_ID=$(sbatch \
+            --export=$(echo "SEQ_RUN=$SEQ_RUN, \
+                      WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP, \
+                      S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq"  | sed 's/ //g') \
+            -D /shared/logs \
+            -J m_"$SEQ_RUN" \
+            -c 16 \
+            $CVIEWDIR/pipeline/merge_lanes.sh)
 
           INPUT_NAMES=$(printf '%s\n' "${FINAL_INPUT_NAMES[@]}")
-          QSUBSAMPLEPARAMS=' -hold_jid m_'$SEQ_RUN''
+          SBATCHSAMPLEPARAMS=' --dependency=afterok:'${M_SLURM_JOB_ID##* }
         fi # end if we are merging lanes
       else
         INPUT_NAMES=$INPUT_BASE_NAMES
@@ -235,43 +237,49 @@ do
     fi
 
 		# Run VARIANTS step on each sample
+		V_SLURM_JOB_IDS=""
 		for SAMPLE in $SAMPLE_LIST; do
-			qsub $QSUBSAMPLEPARAMS \
-				-v SEQ_RUN="$SEQ_RUN" \
-				-v SAMPLE=$SAMPLE \
-				-v S3DOWNLOAD=$S3DOWNLOAD \
-        -v PRIMER_BED_FNAME=$PRIMER_BED_FNAME \
-				-v MERGE_LANES=$MERGE_LANES \
-				-v FQ=$FQ \
-				-v TIMESTAMP=$TIMESTAMP \
-				-v VERSION_INFO="$VERSION_INFO" \
-				-v READ_CAP=$READ_CAP \
-        -v INPUT_TYPE=$INPUT_TYPE \
-        -v INPUT_SUFFIX=$INPUT_SUFFIX \
-				-N v_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
-				-wd /shared/workspace/projects/covid/logs \
-				-pe smp 2 \
-				-S /bin/bash \
-				$PIPELINEDIR/pipeline/sarscov2_consensus_pipeline.sh
+      V_SLURM_JOB_IDS=$V_SLURM_JOB_IDS:$(sbatch $SBATCHSAMPLEPARAMS \
+        --export=$(echo "SEQ_RUN=$SEQ_RUN,\
+                  SAMPLE=$SAMPLE,\
+                  S3DOWNLOAD=$S3DOWNLOAD,\
+                  PRIMER_BED_FNAME=$PRIMER_BED_FNAME,\
+                  MERGE_LANES=$MERGE_LANES,\
+                  FQ=$FQ,\
+                  TIMESTAMP=$TIMESTAMP,\
+                  VERSION_INFO="$VERSION_INFO",\
+                  READ_CAP=$READ_CAP, \
+                  INPUT_TYPE=$INPUT_TYPE, \
+                  INPUT_SUFFIX=$INPUT_SUFFIX" | sed 's/ //g') \
+        -J v_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
+        -D /shared/logs \
+        -c 2 \
+        $CVIEWDIR/pipeline/process_sample.sh)
 		done
+
+    V_SLURM_JOB_IDS=$(echo $V_SLURM_JOB_IDS | sed 's/Submitted batch job //g')
+    # NB: other dependency param declarations include a ":" after "afterok"
+    # but this one does NOT, because the leading ":" is already included in the
+    # $V_SLURM_JOB_IDS contents
+  	V_DEPENDENCY_PARAM="--dependency=afterok$V_SLURM_JOB_IDS"
 	fi  # end if we are calling variants
 
 	if [[ "$QC" == true ]]; then
-    qsub \
-      -hold_jid 'v_'$SEQ_RUN'_'$TIMESTAMP'_*' \
-      -v SEQ_RUN=$SEQ_RUN \
-      -v S3DOWNLOAD=$S3DOWNLOAD \
-      -v WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP \
-      -v FQ=$FQ \
-      -v TIMESTAMP=$TIMESTAMP \
-      -v ISTEST=$ISTEST \
-      -v VERSION_INFO="$VERSION_INFO" \
-      -N q_"$SEQ_RUN" \
-      -wd /shared/workspace/projects/covid/logs \
-      -pe smp 32 \
-      -S /bin/bash \
-        $PIPELINEDIR/qc/qc_summary.sh
-	fi # end if we are running qc
+	        Q_SLURM_JOB_ID=$Q_SLURM_JOB_ID:$(sbatch $V_DEPENDENCY_PARAM \
+        --export=$(echo "SEQ_RUN=$SEQ_RUN,\
+                 S3DOWNLOAD=$S3DOWNLOAD,\
+                 WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP,\
+                 FQ=$FQ,\
+                 TIMESTAMP=$TIMESTAMP,\
+                 VERSION_INFO="$VERSION_INFO",\
+                 ISTEST=$ISTEST" | sed 's/ //g') \
+        -J q_$SEQ_RUN \
+        -D /shared/logs \
+        -c 32 \
+        $CVIEWDIR/pipeline/summarize_seqrun_qc.sh)
+
+        Q_DEPENDENCY_PARAM="--dependency=afterok:${Q_SLURM_JOB_ID##* }"
+	fi # end if we are running src
 
   # lineage and tree output is stored to a different location than
   # the outputs of the earlier steps, so it needs a slightly different
@@ -279,44 +287,41 @@ do
   PROCESSINGID="$TIMESTAMP"-"$PHYLO_SEQ_RUN"
 
 	if [[ "$LINEAGE" == true ]]; then
-	    qsub \
-      -hold_jid 'q_'$SEQ_RUN'' \
-      -v ORGANIZATION=$ORGANIZATION \
-			-v PROCESSINGID=$PROCESSINGID \
-			-v SEQ_RUN=$PHYLO_SEQ_RUN \
-			-v ISTEST=$ISTEST \
-			-v WORKSPACE=/scratch/phylogeny/$PROCESSINGID \
-			-v VERSION_INFO="$VERSION_INFO" \
-			-N l_"$PROCESSINGID" \
-			-wd /shared/workspace/projects/covid/logs \
-			-pe smp 16 \
-			-S /bin/bash \
-	    	$PIPELINEDIR/pipeline/lineages.sh
+	    L_SLURM_JOB_ID=$(sbatch $Q_DEPENDENCY_PARAM \
+      --export=$(echo "ORGANIZATION=$ORGANIZATION,\
+                      PROCESSINGID=$PROCESSINGID,\
+                      SEQ_RUN=$PHYLO_SEQ_RUN,\
+                      ISTEST=$ISTEST,\
+                      VERSION_INFO="$VERSION_INFO", \
+                      WORKSPACE=/scratch/phylogeny/$PROCESSINGID" | sed 's/ //g') \
+			-J l_"$PROCESSINGID" \
+			-D /shared/logs \
+			-c 16 \
+	    $CVIEWDIR/pipeline/call_lineages.sh)
 
-		QSUBLINEAGEPARAMS=' -hold_jid l_'$PROCESSINGID
+		SBATCHLINEAGEPARAMS=" --dependency=afterok:${L_SLURM_JOB_ID##* }"
 	fi # end if we are calling lineages
 
   if [[ "$TREE_BUILD" == true ]]; then
     # TODO: this is a temporary fix to build only stringent trees
     #  In the future, we will want to make this more tunable
     for DATASET in stringent; do # loose_stringent passQC; do
-      qsub \
-        $QSUBLINEAGEPARAMS \
-        -v ORGANIZATION=$ORGANIZATION \
-        -v PROCESSINGID=$PROCESSINGID \
-        -v DATASET=$DATASET \
-        -v ISTEST=$ISTEST \
-        -v WORKSPACE=/scratch/treebuilding/$PROCESSINGID/$DATASET \
-        -v VERSION_INFO="$VERSION_INFO" \
-        -N t_"$DATASET"_"$PROCESSINGID" \
-        -wd /shared/workspace/projects/covid/logs \
-        -pe smp 16 \
-        -S /bin/bash \
-          $PIPELINEDIR/pipeline/treebuild.sh
+      sbatch \
+        $SBATCHLINEAGEPARAMS \
+        --export=$(echo "ORGANIZATION=$ORGANIZATION,\
+                        PROCESSINGID=$PROCESSINGID,\
+                        DATASET=$DATASET,\
+                        ISTEST=$ISTEST,\
+                        VERSION_INFO="$VERSION_INFO", \
+                        WORKSPACE=/scratch/treebuilding/$PROCESSINGID/$DATASET" | sed 's/ //g') \
+        -J t_"$DATASET"_"$PROCESSINGID" \
+        -D /shared/logs \
+        -c 16 \
+        $CVIEWDIR/pipeline/build_alignment.sh
     done
   fi # end if we are building trees
 
-  # if we did variant or qc processing, write a file of the
+  # if we did variant or src processing, write a file of the
   # settings used into the results directory for this seq_run/timestamp
   if [ "$VARIANTS" == true ] || [ "$QC" == true ]; then
     SETTINGS_FNAME="$SEQ_RUN"-"$TIMESTAMP"-"$FUNCTION"-$(date +'%Y-%m-%d_%H-%M-%S').csv

@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import yaml
 from tests.test_sarscov2_consensus_acceptance import FileTestCase
-from qc.custom_gen_stats_multiqc import write_custom_multiqc_yaml, \
+from src.custom_gen_stats_multiqc import write_custom_multiqc_yaml, \
     insert_q30_based_values, _calc_pct_aligned
 
 
