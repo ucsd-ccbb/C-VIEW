@@ -2,10 +2,49 @@
 
 This software implements a high-throughput data processing pipeline to identify and charaterize SARS-CoV-2 variant sequences in specimens from COVID-19 positive hosts or environments.  It is based on https://github.com/niemasd/SD-COVID-Sequencing and built for use with Amazon Web Services (AWS) EC2 machine instances and S3 data storage.
 
-Pipeline version 3.0.0 is pre-installed on the so-labeled Amazon Web Services snapshot in region us-west-2 (Oregon).  
+# Table of Contents
+1. [Installing the Pipeline](#Installing-the-Pipeline)
+2. [Creating a Cluster](#Creating-a-Cluster)
+3. [Running the Pipeline](#Running-the-Pipeline)
 
-## Installing the pipeline
-The pipeline uses the following external software programs:
+
+## Installing the Pipeline
+
+**Note: Usually it will NOT be necessary to install the pipeline from scratch.**  The most
+current version of the pipeline is pre-installed on the so-labeled
+Amazon Web Services snapshot in region us-west-2 (Oregon),
+and this snapshot can be used directly to [create a cluster](#Creating-a-Cluster).
+
+If a fresh installation *is* required, take the following steps:
+
+1. On AWS, launch a new ubuntu 20.04 instance
+   1. Note that it MUST be version 20.04, not the latest available ubuntu version (e.g. 22.04) because 20.04 is the latest version supported by AWS ParallelCluster.
+   2. Select type t2.medium
+   3. Add a 35 GB root drive and a 300 GB EBS drive
+   4. Set the security group to allow SSH via TCP on port 22 and all traffic via all protocols on all ports
+2. `ssh` onto new instance to set up file system and mount
+   1. Run `lsblk` to find the name of the 300 GB EBS drive. For the remainder, of this section, assume `lsblk` shows that the name of the 300 GB volume is `xvdb`. 
+   2. Run `sudo mkfs -t xfs /dev/xvdb` to make a filesystem on the new drive 
+   3. Run `sudo mkdir /shared` to create a location for the installation 
+   4. Run `sudo mount /dev/xvdb /shared` to mount the 300 GB volume to the new location
+   5. Run `sudo chown `whoami` /shared` to grant the current user permissions to the new location
+3. Install anaconda and python
+   1. Run `cd /shared`
+   2. Run `wget https://repo.anaconda.com/archive/Anaconda3-2020.11-Linux-x86_64.sh`
+   3. Run `bash Anaconda3-2020.11-Linux-x86_64.sh`
+   4. Answer `yes` when asked to accept the license agreement
+   5. Enter `/shared/workspace/software/anaconda3` when asked for the install location
+   6. Answer `yes` when asked whether to have the installer run conda init
+   7. Log out of the `ssh` session and then back in to allow the conda install to take effect
+4. Install C-VIEW
+   1. Run `cd /shared`
+   2. Download `install.sh`
+   3. Run `bash install.sh`
+   4. Answer yes whenever asked for permission to proceed
+5. On AWS, make a snapshot of the newly installed 300 GB volume
+
+Note that the pipeline uses the following external software programs, which are 
+installed via the `install.sh` script:
 
 * [Minimap2 2.17-r941](https://github.com/lh3/minimap2/releases/tag/v2.17)
 * [samtools 1.11](https://github.com/samtools/samtools/releases/tag/1.11)
@@ -18,30 +57,95 @@ The pipeline uses the following external software programs:
 * [pi_from_pileup 1.0.3](https://github.com/Niema-Docker/pi_from_pileup/releases/tag/1.0.3)
 * git 2.7.4 or higher
 
-Should one wish to set up the pipeline on a fresh AWS ubuntu instance, download the `install.sh` script from this repository, set the 
-necessary variables at the top of the script, and run it. Sudo permissions are required.
 
-## Specifying the pipeline cluster
+## Creating a Cluster
 
-The pipeline is optimized to run on an AWS EC2 cluster with the following characteristics:
+The pipeline is designed to run on a version 3 or later AWS ParallelCluster. 
+Begin by ensuring that ParallelCluster is installed on your local machine; if it
+is not, take these steps:
+
+1. Set up a `conda` environment and and install ParallelCluster 
+   1. Run `conda create --name parallelcluster3 python=3`
+   2. Run `conda activate parallelcluster3`
+   3. Run `python3 -m pip install --upgrade aws-parallelcluster`
+2. In the `parallelcluster3` environment, install Node Version Manager and Node.js, which are (apparently) required by AWS Cloud Development Kit (CDK)
+   1. Run `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash`
+   2. Run `chmod ug+x ~/.nvm/nvm.sh`
+   3. Run `source ~/.nvm/nvm.sh`
+   4. Run `nvm install --lts`
+   5. Check your install by running `node --version` and `pcluster version`
+
+Next, ensure you have a pem file registered with AWS and that you have run `aws configure`
+locally to set up AWS command line access from your local machine.  Then 
+prepare a cluster configuration yaml file using the below template:
+
 ```
-master_instance_type = t2.medium
-compute_instance_type = r5d.24xlarge
-cluster_type = ondemand
-ebs_settings = custom
-base_os = ubuntu1604
-scheduler = sge
-compute_root_volume_size = 500
+Region: us-west-2
+Image:
+  Os: ubuntu2004
+SharedStorage:
+  - MountDir: /shared
+    Name: custom
+    StorageType: Ebs
+    EbsSettings:
+      Size: 300
+      SnapshotId: <snapshot of current cview release, e.g. snap-09264bf02660b54ad >
+HeadNode:
+  InstanceType: t2.medium
+  Networking:
+    SubnetId: subnet-06ff527fa2d5827a3
+# subnet-06ff527fa2d5827a3 is parallelcluster:public-subnet
+  Ssh:
+    KeyName: <name of your pem file>
+Scheduling:
+  Scheduler: slurm
+  SlurmQueues:
+    - Name: default-queue
+      ComputeSettings:
+        LocalStorage:
+          RootVolume:
+            Size: 500
+      Networking:
+        SubnetIds:
+          - subnet-06ff527fa2d5827a3
+# subnet-06ff527fa2d5827a3 is parallelcluster:public-subnet
+      ComputeResources:
+        - Name: default-resource
+          MaxCount: 15
+          InstanceType: r5d.24xlarge
 ```
 
-Note that, after creating a new cluster, 
-the `aws cli` software must be configured on the head node with credentials for accessing the 
+To create a new cluster from the command line, run
+
+```
+pcluster create-cluster \
+    --cluster-name <your-cluster-name> \
+    --cluster-configuration <your-config-file-name>.yaml
+```
+
+(If you experience an error referencing Node.js, you may need to once again
+run `source ~/.nvm/nvm.sh` to ensure it is accessible from your shell.)  The 
+cluster creation progress can be monitored from the `CloudFormation`->`Stacks` section of the AWS Console.
+
+Once the cluster is successfully created, log in to the head node.  To avoid 
+having to use its public IPv4 DNS, one can run
+
+`pcluster ssh --cluster-name <your_cluster_name> -i /path/to/keyfile.pem`
+
+which fills in the cluster IP address and username automatically.
+
+From the head node, run `aws configure` to set up the head node with credentials for accessing the 
 necessary AWS S3 resources.
 
 
-## Running the pipeline
+## Running the Pipeline
 
-The pipeline is initiated on the head node of the cluster by calling the `run_pipeline.sh` script with an input csv file provided by the user.  This file should have a header line in the following format:
+The pipeline is initiated on the head node of the cluster by calling the 
+`run_pipeline.sh` script with an input csv file provided by the user, e.g.:
+
+`bash /shared/workspace/software/cview/pipeline/run_pipeline.sh /shared/runfiles/cview_test_run.csv`
+
+This file should have a header line in the following format:
 
 `function,organization,seq_run,merge_lanes,primer_set,fq,read_cap,sample,timestamp,istest`
 
@@ -92,7 +196,7 @@ For all functions except `sample`, some of the input fields are ignored, as show
 | cumulative_lineages  |ucsd or helix|ignored|ignored|ignored|ignored|ignored|ignored|ignored|true or false|
 | cumulative_phylogeny |ucsd or helix|ignored|ignored|ignored|ignored|ignored|ignored|ignored|true or false|
 
-An example input for `run_pipeline.sh` might look like:
+An example input file might look like:
 
 ```
 function,organization,seq_run,merge_lanes,primer_set,fq,read_cap,sample,timestamp,istest
