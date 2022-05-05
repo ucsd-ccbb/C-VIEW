@@ -96,7 +96,7 @@ HeadNode:
     SubnetId: subnet-06ff527fa2d5827a3
 # subnet-06ff527fa2d5827a3 is parallelcluster:public-subnet
   Ssh:
-    KeyName: <name of your pem file>
+    KeyName: <name of your pem file without extension, e.g. my_key for a file named my_key.pem >
 Scheduling:
   Scheduler: slurm
   SlurmQueues:
