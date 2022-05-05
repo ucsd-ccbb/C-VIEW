@@ -158,7 +158,7 @@ echo -e "$SAMPLEID\tcoverage exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 # Step 11: Heterogeneity scores
 { time (
 pi_from_pileup $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt > $WORKSPACE/"$SAMPLEID".pi_from_pileup.tsv
-echo -e "$SAMPLEID\t"$(cat $WORKSPACE/"$SAMPLEID".pi_from_pileup.tsv | tail -1 | cut -f3) > $WORKSPACE/"$SAMPLEID".pi-metric.tsv
+echo -e "$SAMPLEID\t"$(cat $WORKSPACE/"$SAMPLEID".pi_from_pileup.tsv | tail -1 | cut -f3) > $WORKSPACE/"$SAMPLEID".pi_metric.tsv
 echo -e "$SAMPLEID\tpi metric exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 echo -e "$SAMPLEID\t"$(cat $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.variants.tsv | awk '$11 != "ALT_FREQ" && $11 >= 0.05 && $11 <= 0.95' | grep -v "ALT_FREQ" | cut -f2,4 | sort | uniq | wc -l) >> $WORKSPACE/"$SAMPLEID".n_metric.tsv ) ;
 } > $WORKSPACE/"$SAMPLEID".log.11.diversity.log 2>&1
