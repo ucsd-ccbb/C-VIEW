@@ -48,7 +48,7 @@ do
   # validate the inputs
   # --------------------
 
-  if [ "$FUNCTION" != pipeline ] && [ "$FUNCTION" != cumulative_pipeline ] && [ "$FUNCTION" != variants_qc ] && [ "$FUNCTION" != variants ] &&  [ "$FUNCTION" != sample ] &&  [ "$FUNCTION" != src ] &&  [ "$FUNCTION" != lineages ] &&  [ "$FUNCTION" != phylogeny ] &&  [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ]; then
+  if [ "$FUNCTION" != pipeline ] && [ "$FUNCTION" != cumulative_pipeline ] && [ "$FUNCTION" != variants_qc ] && [ "$FUNCTION" != variants ] &&  [ "$FUNCTION" != sample ] &&  [ "$FUNCTION" != qc ] &&  [ "$FUNCTION" != lineages ] &&  [ "$FUNCTION" != phylogeny ] &&  [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ]; then
 		echo "Error: Parameter FUNCTION must be one of pipeline, cumulative_pipeline, variants_qc, variants, sample, qc, lineages, phylogeny, cummulative_lineages, or cumulative_phylogeny"
 		exit 1
 	fi
@@ -63,7 +63,7 @@ do
 	  exit 1
 	fi
 
-	if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants_qc ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == src ]; then
+	if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants_qc ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
     if [[ ! "$FQ" =~ ^(se|pe|bam)$ ]]; then
       echo "Error: FQ must be one of se, pe, or bam"
       exit 1
@@ -119,7 +119,7 @@ do
     fi
   fi
 
-  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants_qc ] || [ "$FUNCTION" == src ]; then
+  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants_qc ] || [ "$FUNCTION" == qc ]; then
     QC=true
   fi
 
@@ -135,7 +135,7 @@ do
     PHYLO_SEQ_RUN=all
   fi
 
-  if [ "$FUNCTION" == sample ] || [ "$FUNCTION" == src ]; then
+  if [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
     unset FIELD_IGNORED[TIMESTAMP]
   else
 	  TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
@@ -279,7 +279,7 @@ do
         $CVIEWDIR/pipeline/summarize_seqrun_qc.sh)
 
         Q_DEPENDENCY_PARAM="--dependency=afterok:${Q_SLURM_JOB_ID##* }"
-	fi # end if we are running src
+	fi # end if we are running qc
 
   # lineage and tree output is stored to a different location than
   # the outputs of the earlier steps, so it needs a slightly different
@@ -321,7 +321,7 @@ do
     done
   fi # end if we are building trees
 
-  # if we did variant or src processing, write a file of the
+  # if we did variant or qc processing, write a file of the
   # settings used into the results directory for this seq_run/timestamp
   if [ "$VARIANTS" == true ] || [ "$QC" == true ]; then
     SETTINGS_FNAME="$SEQ_RUN"-"$TIMESTAMP"-"$FUNCTION"-$(date +'%Y-%m-%d_%H-%M-%S').csv
