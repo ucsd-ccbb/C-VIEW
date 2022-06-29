@@ -13,6 +13,7 @@ SUBMIT_TO_GISAID = "submit_to_gisaid"
 INDEX_COL_NAME = "Unnamed: 0"
 SUBJ_AGE = "subject_age"
 METADATA_CLEARED = "metadata_cleared"
+SEQUENCING_TECH_KEY = "sequencing_tech"
 
 BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
                    "New sequences ready for release", "Released?",
@@ -115,7 +116,7 @@ def generate_bjorn_df(filtered_df):
     output_df.loc[:, "outbreak"] = "N/A"
     output_df.loc[:, "last_vaccinated"] = "N/A"
     output_df.loc[:, "treatment"] = "N/A"
-    output_df.loc[:, "sequencing_tech"] = "Illumina"
+    output_df.loc[:, SEQUENCING_TECH_KEY] = filtered_df[SEQUENCING_TECH_KEY]
     output_df.loc[:, "assembly_method"] = filtered_df[
         "assembly_method"].str.replace(" version", "")
     output_df.loc[:, "bjorn_coverage"] = filtered_df["bjorn_coverage"]

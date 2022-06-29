@@ -1,7 +1,10 @@
 import pandas as pd
 from sys import argv
+import datetime
 import glob
 import os
+import re
+import warnings
 
 TAXON_KEY = "taxon"
 PANGOLIN_STATUS_KEY = "qc_status"
@@ -19,6 +22,15 @@ VARIANT_AND_EP_VAL = "variant_and_epidemiology"
 IS_HIST_OR_REF = "is_hist_or_ref"
 OVERALL_FAIL_KEY = "overall_fail"
 ANY_FAIL_KEY = "any_fail"
+SE_OR_PE_KEY = "se_or_pe"
+SE_VALUE = "se"
+PE_VALUE = "pe"
+BAM_VALUE = "bam"
+SEQUENCING_TECH_KEY = "sequencing_tech"
+ILLUMINA_TECH = "Illumina"
+GENEXUS_TECH = "Genexus"
+SAMPLE_SEQ_DATETIME = "sample_sequencing_datetime"
+SEQ_RUN_KEY = "seq_run"
 
 
 # recreate un-reversable pangolin name munge;
@@ -57,6 +69,55 @@ def merge_summaries(run_summaries_fp, run_summary_suffix):
         matching_dfs.append(curr_df)
     merged_summaries_df = pd.concat(matching_dfs)
     return merged_summaries_df
+
+
+def _parse_seq_run_date(seq_run):
+    # run date is expressed as 6 digits (YYMMDD)
+    # (but check of whether the individual digits are valid for a date
+    # comes later)
+    seq_run_datetime_str = None
+    run_date_regex = r"(\d{6})_.*"
+
+    try:
+        re_match = re.match(run_date_regex, seq_run)
+        seq_run_date_str = re_match.group(1)
+        seq_run_date = datetime.datetime.strptime(
+            seq_run_date_str, "%y%m%d")
+        seq_run_datetime_str = seq_run_date.strftime("%Y-%m-%d") + \
+                               " 00:00:00+00:00"
+    except Exception as ex:
+        warnings.warn(f"Unable to parse date from seq_run '{seq_run}")
+
+    return seq_run_datetime_str
+
+
+def _add_sequencing_info_inplace(merged_summaries_df):
+    num_rows = len(merged_summaries_df)
+    no_existing_info_mask = pd.Series(True, index=range(num_rows))
+
+    if SEQUENCING_TECH_KEY in merged_summaries_df.columns:
+        no_existing_tech_mask = merged_summaries_df[SEQUENCING_TECH_KEY].isna()
+    else:
+        no_existing_tech_mask = no_existing_info_mask
+
+    se_or_pe_mask = merged_summaries_df[SE_OR_PE_KEY].isin(
+        [SE_VALUE, PE_VALUE]) & no_existing_tech_mask
+    merged_summaries_df.loc[se_or_pe_mask, SEQUENCING_TECH_KEY] = \
+        ILLUMINA_TECH
+
+    bam_mask = (merged_summaries_df[SE_OR_PE_KEY] == BAM_VALUE) & \
+               no_existing_tech_mask
+    merged_summaries_df.loc[bam_mask, SEQUENCING_TECH_KEY] = \
+        GENEXUS_TECH
+
+    if SAMPLE_SEQ_DATETIME in merged_summaries_df.columns:
+        no_existing_run_date_mask = merged_summaries_df[SAMPLE_SEQ_DATETIME].isna()
+    else:
+        no_existing_run_date_mask = no_existing_info_mask
+    seq_runs = merged_summaries_df.loc[:, SEQ_RUN_KEY]
+    run_dates = seq_runs.map(_parse_seq_run_date)
+    merged_summaries_df.loc[no_existing_run_date_mask, SAMPLE_SEQ_DATETIME] = \
+        run_dates[no_existing_run_date_mask]
 
 
 def expand_with_added_fa_names(merged_summaries_df, added_fa_names_fp):
@@ -199,6 +260,11 @@ def create_lineages_summary(arg_list):
     out_summary_fp = arg_list[5]
 
     merged_summaries_df = merge_summaries(run_summaries_fp, run_summary_suffix)
+    # infer sequencing tech and sequencing run date from summary info
+    # TODO: implicit is bad, explicit is good.  This info should really be
+    #  generated when the summaries are generated, from explicit inputs
+    _add_sequencing_info_inplace(merged_summaries_df)
+
     expanded_summaries_df = expand_with_added_fa_names(
         merged_summaries_df, added_fa_names_fp)
 
