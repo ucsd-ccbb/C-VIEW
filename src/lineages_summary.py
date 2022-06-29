@@ -83,9 +83,9 @@ def _parse_seq_run_date(seq_run):
         seq_run_date_str = re_match.group(1)
         seq_run_date = datetime.datetime.strptime(
             seq_run_date_str, "%y%m%d")
-        seq_run_datetime_str = seq_run_date.strftime("%Y-%m-%d") + \
-                               " 00:00:00+00:00"
-    except Exception as ex:
+        seq_run_datetime_str = f"{seq_run_date.strftime('%Y-%m-%d')} " \
+                               f"00:00:00+00:00"
+    except:  # noqa: E722
         warnings.warn(f"Unable to parse date from seq_run '{seq_run}")
 
     return seq_run_datetime_str
@@ -105,8 +105,8 @@ def _add_sequencing_info_inplace(merged_summaries_df):
     merged_summaries_df.loc[se_or_pe_mask, SEQUENCING_TECH_KEY] = \
         ILLUMINA_TECH
 
-    bam_mask = (merged_summaries_df[SE_OR_PE_KEY] == BAM_VALUE) & \
-               no_existing_tech_mask
+    bam_mask = ((merged_summaries_df[SE_OR_PE_KEY] == BAM_VALUE) &
+                no_existing_tech_mask)
     merged_summaries_df.loc[bam_mask, SEQUENCING_TECH_KEY] = \
         GENEXUS_TECH
 
