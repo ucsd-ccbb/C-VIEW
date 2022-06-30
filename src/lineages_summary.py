@@ -260,6 +260,7 @@ def create_lineages_summary(arg_list):
     out_summary_fp = arg_list[5]
 
     merged_summaries_df = merge_summaries(run_summaries_fp, run_summary_suffix)
+    merged_summaries_df.reset_index(inplace=True, drop=True)
     # infer sequencing tech and sequencing run date from summary info
     # TODO: implicit is bad, explicit is good.  This info should really be
     #  generated when the summaries are generated, from explicit inputs
