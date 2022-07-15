@@ -8,7 +8,7 @@ ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate cview
 # clear workspace if node is being reused
 rm -rf $WORKSPACE/*
-mkdir -p $WORKSPACE/src
+mkdir -p $WORKSPACE/qc
 
 runQC () {
   echo "$VERSION_INFO" >> $WORKSPACE/"$SEQ_RUN".version.log
@@ -39,24 +39,24 @@ runQC () {
 
 	# summary figures and stats
 	# echo "Generating a violin plot of mapping depth across all samples and line plots of mapping depth per sample."
-	# python $CVIEWDIR/src/samtools_depth_plots.py $WORKSPACE/src/"$SEQ_RUN"-depth_lineplot.pdf $WORKSPACE/src/"$SEQ_RUN"-depth_violin.pdf $WORKSPACE/*.depth.txt
-	# mv depth_violin.pdf $WORKSPACE/src/"$SEQ_RUN"-depth_violin.pdf
-	# mv depth_lineplot.pdf $WORKSPACE/src/"$SEQ_RUN"-depth_lineplot.pdf
+	# python $CVIEWDIR/src/samtools_depth_plots.py $WORKSPACE/qc/"$SEQ_RUN"-depth_lineplot.pdf $WORKSPACE/qc/"$SEQ_RUN"-depth_violin.pdf $WORKSPACE/*.depth.txt
+	# mv depth_violin.pdf $WORKSPACE/qc/"$SEQ_RUN"-depth_violin.pdf
+	# mv depth_lineplot.pdf $WORKSPACE/qc/"$SEQ_RUN"-depth_lineplot.pdf
 	echo "Summarizing consensus QC."
 	python $CVIEWDIR/src/seq_run_acceptance.py $WORKSPACE $WORKSPACE/"$SEQ_RUN"-acceptance.tsv
     echo -e "seq_run_acceptance.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
 	# Multiqc
 	echo "Configuring Multiqc"
-	find $WORKSPACE -name "qualimapReport.html" | sort -n > $WORKSPACE/src/qualimapReport_paths.txt
-	find $WORKSPACE -name "*q30_reads.txt" | sort -n > $WORKSPACE/src/q30_reads_paths.txt
-	find $WORKSPACE -name "*_subsampled_mapping_stats.tsv" | sort -n > $WORKSPACE/src/subsampled_mapping_stats_paths.txt
+	find $WORKSPACE -name "qualimapReport.html" | sort -n > $WORKSPACE/qc/qualimapReport_paths.txt
+	find $WORKSPACE -name "*q30_reads.txt" | sort -n > $WORKSPACE/qc/q30_reads_paths.txt
+	find $WORKSPACE -name "*_subsampled_mapping_stats.tsv" | sort -n > $WORKSPACE/qc/subsampled_mapping_stats_paths.txt
 
-	python $CVIEWDIR/src/custom_gen_stats_multiqc.py $WORKSPACE/src/qualimapReport_paths.txt $WORKSPACE/src/q30_reads_paths.txt $WORKSPACE/src/subsampled_mapping_stats_paths.txt $FQ $WORKSPACE/multiqc_custom_gen_stats.yaml
+	python $CVIEWDIR/src/custom_gen_stats_multiqc.py $WORKSPACE/qc/qualimapReport_paths.txt $WORKSPACE/qc/q30_reads_paths.txt $WORKSPACE/qc/subsampled_mapping_stats_paths.txt $FQ $WORKSPACE/multiqc_custom_gen_stats.yaml
   echo -e "custom_gen_stats_multiqc.py exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
-	cat $CVIEWDIR/src/cview_multiqc_config.yaml $WORKSPACE/multiqc_custom_gen_stats.yaml > $WORKSPACE/src/"$SEQ_RUN"-custom_gen_stats_config.yaml
-	multiqc --config $WORKSPACE/src/"$SEQ_RUN"-custom_gen_stats_config.yaml --module qualimap --module custom_content $WORKSPACE
+	cat $CVIEWDIR/src/cview_multiqc_config.yaml $WORKSPACE/multiqc_custom_gen_stats.yaml > $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml
+	multiqc --config $WORKSPACE/qc/"$SEQ_RUN"-custom_gen_stats_config.yaml --module qualimap --module custom_content $WORKSPACE
     echo -e "multiqc exit code: $?" >> $WORKSPACE/"$SEQ_RUN"-qc.exit.log
 
     # Concatenate coverage files
@@ -106,7 +106,7 @@ runQC () {
 	# summary files folder
 	aws s3 cp $WORKSPACE/multiqc_data/ $QCRESULTS/"$SEQ_RUN"_multiqc_data/ --recursive --quiet
 	aws s3 cp $WORKSPACE/multiqc_report.html $QCRESULTS/"$SEQ_RUN"_multiqc_report.html
-	aws s3 cp $WORKSPACE/src/ $QCRESULTS/ --recursive --quiet
+	aws s3 cp $WORKSPACE/qc/ $QCRESULTS/ --recursive --quiet
 
 	# cumulative data folder
 	S3CUMULATIVE=$S3DOWNLOAD
@@ -115,9 +115,9 @@ runQC () {
 	aws s3 cp $WORKSPACE/"$SEQ_RUN"-summary.csv $S3CUMULATIVE/phylogeny/cumulative_data/consensus/
 }
 
-{ time ( runQC ) ; } > $WORKSPACE/src/"$SEQ_RUN"-qc_summary.log 2>&1
+{ time ( runQC ) ; } > $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log 2>&1
 
 # upload only top-level results here
 aws s3 cp $WORKSPACE $QCRESULTS/ --recursive --include "*.*" --exclude "*/*.*" --exclude "*.consensus.fa" --exclude "*.acceptance.tsv" --exclude "*.depth.txt"
-aws s3 cp $WORKSPACE/src/"$SEQ_RUN"-qc_summary.log $QCRESULTS/
+aws s3 cp $WORKSPACE/qc/"$SEQ_RUN"-qc_summary.log $QCRESULTS/
 
