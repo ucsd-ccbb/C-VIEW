@@ -31,10 +31,6 @@ runQC () {
 		--include "*error.log"
 		# TODO: would be nice if the three per-sample metrics were defined in just one place in this script rather than 3
 
-	# Exit codes
-	echo "Gathering per-sample exit codes."
-	cat $WORKSPACE/*/*error.log > $WORKSPACE/"$SEQ_RUN".error.log
-
 	## Zip files
 	mv $WORKSPACE/*/*.depth.txt $WORKSPACE
 	mv $WORKSPACE/*/*.consensus.fa $WORKSPACE/*/*.acceptance.tsv $WORKSPACE
