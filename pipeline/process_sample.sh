@@ -69,22 +69,22 @@ if [[ "$INPUT_TYPE" == fastq ]]; then
   fi
 
   # Step 0: Download input data
-  { time ( aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R1_001$INPUT_SUFFIX" ) ; } 2> $WORKSPACE/"$SAMPLEID"_R1.log.0.download.log
+  { time ( aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R1_001$INPUT_SUFFIX" ) ; } > $WORKSPACE/"$SAMPLEID"_R1.log.0.download.log 2>&1
   echo -e "$SAMPLEID\tdownload R1 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
-  { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R1_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R1_q30_reads.txt ) ; } 2>> $WORKSPACE/"$SAMPLEID"_R1.log.0a.q30.log
+  { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R1_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R1_q30_reads.txt ) ; } >> $WORKSPACE/"$SAMPLEID"_R1.log.0a.q30.log 2>&1
   echo -e "$SAMPLEID\tq30 R1 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
   if [[ "$FQ" == pe ]]; then
-    { time ( aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R2_001$INPUT_SUFFIX" ) ; } 2> $WORKSPACE/"$SAMPLEID"_R2.log.0.download.log
+    { time ( aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R2_001$INPUT_SUFFIX" ) ; } > $WORKSPACE/"$SAMPLEID"_R2.log.0.download.log 2>&1
     echo -e "$SAMPLEID\tdownload R2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
-    { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R2_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R2_q30_reads.txt ) ; } 2>> $WORKSPACE/"$SAMPLEID"_R2.log.0a.q30.log
+    { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R2_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R2_q30_reads.txt ) ; } >> $WORKSPACE/"$SAMPLEID"_R2.log.0a.q30.log 2>&1
     echo -e "$SAMPLEID\tq30 R2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
   fi
 
   # Step 1: Map Reads + Sort
-  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$SAMPLE"*$INPUT_SUFFIX | samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.1.map.log
+  { time ( minimap2 -t $THREADS -a -x sr $REF_MMI $WORKSPACE/fastq/"$SAMPLE"*$INPUT_SUFFIX | samtools view -h | samhead $READ_CAP successful 2> $WORKSPACE/"$SAMPLEID"_subsampled_mapping_stats.tsv | samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".sorted.bam) ; } > $WORKSPACE/"$SAMPLEID".log.1.map.log 2>&1
   echo -e "$SAMPLEID\tminimap2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
   source $ANACONDADIR/deactivate
@@ -99,7 +99,7 @@ if [[ "$INPUT_TYPE" == fastq ]]; then
   source $ANACONDADIR/activate cview
 
   # Step 3: Sort Trimmed BAM
-  { time ( samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam $WORKSPACE/"$SAMPLEID".trimmed.bam && samtools index $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam && rm $WORKSPACE/"$SAMPLEID".trimmed.bam) ; } 2> $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log
+  { time ( samtools sort --threads $THREADS -o $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam $WORKSPACE/"$SAMPLEID".trimmed.bam && samtools index $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam && rm $WORKSPACE/"$SAMPLEID".trimmed.bam) ; } > $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log 2>&1
   echo -e "$SAMPLEID\tsamtools sort exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 fi # end if the input is fastq
 
@@ -107,15 +107,15 @@ if [[ "$INPUT_TYPE" == bam ]]; then
   # if genexus bam, download just one file and rename it to have the same naming convention as
   # trimmed sorted bam produced by the above step
   TBAM=$WORKSPACE/"$SAMPLE$INPUT_SUFFIX"
-  { time ( aws s3 cp $S3DOWNLOAD/"$SAMPLE$INPUT_SUFFIX" $TBAM ) ; } 2> $WORKSPACE/"$SAMPLEID".log.0.download.log
+  { time ( aws s3 cp $S3DOWNLOAD/"$SAMPLE$INPUT_SUFFIX" $TBAM ) ; } > $WORKSPACE/"$SAMPLEID".log.0.download.log 2>&1
   echo -e "$SAMPLEID\tdownload bam exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 
   # filter out bogus empty records in the genexus bam for other "chromosomes"--other reference sequences
   # that they align everything against
-  { time ( samtools reheader <(samtools view -H $TBAM | grep -P "^@HD\t" && samtools view -H $TBAM | grep -P "^@SQ\tSN:$REF_NAME\t") $TBAM > $WORKSPACE/"$SAMPLEID.trimmed.sorted.bam") ; } 2> $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log
+  { time ( samtools reheader <(samtools view -H $TBAM | grep -P "^@HD\t" && samtools view -H $TBAM | grep -P "^@SQ\tSN:$REF_NAME\t") $TBAM > $WORKSPACE/"$SAMPLEID.trimmed.sorted.bam") ; } > $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log 2>&1
   # Note >> here--adding to log made above, not making new one
-  { time ( samtools index $WORKSPACE/"$SAMPLEID.trimmed.sorted.bam") ; } 2>> $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log
+  { time ( samtools index $WORKSPACE/"$SAMPLEID.trimmed.sorted.bam") ; } >> $WORKSPACE/"$SAMPLEID".log.3.sorttrimmed.log 2>&1
   QUALIMAP_BAM=$WORKSPACE/"$SAMPLEID.trimmed.sorted.bam"
 fi # end if the input is a genexus pre-processed bam
 
@@ -124,7 +124,7 @@ fi # end if the input is a genexus pre-processed bam
 echo -e "$SAMPLEID\ttrimmed bam read count exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 4: Generate Pile-Up
-{ time ( samtools mpileup -B -A -aa -d 0 -Q 0 --reference $REF_FAS $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt 2> $WORKSPACE/"$SAMPLEID".log.4.pileup.log
+{ time ( samtools mpileup -B -A -aa -d 0 -Q 0 --reference $REF_FAS $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt > $WORKSPACE/"$SAMPLEID".log.4.pileup.log 2>&1
 echo -e "$SAMPLEID\tsamtools mpileup exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 source $ANACONDADIR/deactivate
@@ -132,7 +132,7 @@ source $ANACONDADIR/activate ivar
 IVAR_VER=$(ivar version)
 
 # Step 5: Call Variants
-{ time ( cat $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt | ivar variants -r $REF_FAS -g $REF_GFF -p $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.variants.tsv -m 10 ) ; } 2> $WORKSPACE/"$SAMPLEID".log.5.variants.log
+{ time ( cat $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt | ivar variants -r $REF_FAS -g $REF_GFF -p $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.variants.tsv -m 10 ) ; } > $WORKSPACE/"$SAMPLEID".log.5.variants.log 2>&1
 echo -e "$SAMPLEID\tivar variants exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 6: Call Consensus
@@ -143,7 +143,7 @@ source $ANACONDADIR/deactivate
 source $ANACONDADIR/activate cview
 
 # Step 7: Call Depth
-{ time ( samtools depth -J -d 0 -Q 0 -q 0 -aa $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLEID".trimmed.sorted.depth.txt 2> $WORKSPACE/"$SAMPLEID".log.7.depth.log
+{ time ( samtools depth -J -d 0 -Q 0 -q 0 -aa $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLEID".trimmed.sorted.depth.txt > $WORKSPACE/"$SAMPLEID".log.7.depth.log 2>&1
 echo -e "$SAMPLEID\tsamtools depth exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # # Step 8: Qualimap
@@ -151,12 +151,12 @@ echo -e "$SAMPLEID\tsamtools depth exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit
 echo -e "$SAMPLEID\tqualimap exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 9: Acceptance
-{ time ( python $CVIEWDIR/src/sarscov2_consensus_acceptance.py $SEQ_RUN $TIMESTAMP $FQ "$IVAR_VER" $SAMPLEID $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLEID".trimmed.sorted.depth.txt $REF_FAS "$SAMPLEID".trimmed.sorted.bam "$SAMPLEID".trimmed.sorted.pileup.variants.tsv $RESULTS $WORKSPACE/"$SAMPLEID".acceptance.tsv $WORKSPACE/"$SAMPLEID".align.json ) ; } 2> $WORKSPACE/"$SAMPLEID".log.9.acceptance.log
+{ time ( python $CVIEWDIR/src/sarscov2_consensus_acceptance.py $SEQ_RUN $TIMESTAMP $FQ "$IVAR_VER" $SAMPLEID $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.consensus.fa $WORKSPACE/"$SAMPLEID".trimmed.sorted.depth.txt $REF_FAS "$SAMPLEID".trimmed.sorted.bam "$SAMPLEID".trimmed.sorted.pileup.variants.tsv $RESULTS $WORKSPACE/"$SAMPLEID".acceptance.tsv $WORKSPACE/"$SAMPLEID".align.json ) ; } > $WORKSPACE/"$SAMPLEID".log.9.acceptance.log 2>&1
 echo -e "$SAMPLEID\tacceptance.py exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 10: Coverage
 { time ( samtools depth -r $REF_NAME:$REF_ORF_LIMITS -d 0 -a $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam | \
-  awk -v b="$SAMPLEID.trimmed.sorted.bam" 'BEGIN{MIN=10000000000;MAX=0;NUC=0;COV=0;DEPTH=0;NUCZERO=0;}{if(MIN > $3){MIN=$3;};if(MAX < $3){MAX=$3;};if($3==0){NUCZERO+=1};if($3 >= 10){COV+=1;}NUC+=1;DEPTH+=$3;}END{if(NUC>0){print b"\t"(COV/NUC)*100"\t"DEPTH/NUC"\t"MIN"\t"MAX"\t"NUCZERO}else{print b"\t"0"\t"0"\t"MIN"\t"MAX"\t"NUCZERO}}' ) ; } >> $WORKSPACE/"$SAMPLEID".coverage.tsv 2> $WORKSPACE/"$SAMPLEID".log.10.coverage.log
+  awk -v b="$SAMPLEID.trimmed.sorted.bam" 'BEGIN{MIN=10000000000;MAX=0;NUC=0;COV=0;DEPTH=0;NUCZERO=0;}{if(MIN > $3){MIN=$3;};if(MAX < $3){MAX=$3;};if($3==0){NUCZERO+=1};if($3 >= 10){COV+=1;}NUC+=1;DEPTH+=$3;}END{if(NUC>0){print b"\t"(COV/NUC)*100"\t"DEPTH/NUC"\t"MIN"\t"MAX"\t"NUCZERO}else{print b"\t"0"\t"0"\t"MIN"\t"MAX"\t"NUCZERO}}' ) ; } >> $WORKSPACE/"$SAMPLEID".coverage.tsv > $WORKSPACE/"$SAMPLEID".log.10.coverage.log 2>&1
 echo -e "$SAMPLEID\tcoverage exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 11: Heterogeneity scores
