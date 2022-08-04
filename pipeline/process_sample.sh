@@ -72,14 +72,14 @@ if [[ "$INPUT_TYPE" == fastq ]]; then
   { time ( aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R1_001$INPUT_SUFFIX" ) ; } > $WORKSPACE/"$SAMPLEID"_R1.log.0.download.log 2>&1
   echo -e "$SAMPLEID\tdownload R1 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
-  { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R1_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R1_q30_reads.txt ) ; } >> $WORKSPACE/"$SAMPLEID"_R1.log.0a.q30.log 2>&1
+  { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R1_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R1_q30_reads.txt ) ; } > $WORKSPACE/"$SAMPLEID"_R1.log.0a.q30.log 2>&1
   echo -e "$SAMPLEID\tq30 R1 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
   if [[ "$FQ" == pe ]]; then
     { time ( aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R2_001$INPUT_SUFFIX" ) ; } > $WORKSPACE/"$SAMPLEID"_R2.log.0.download.log 2>&1
     echo -e "$SAMPLEID\tdownload R2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
-    { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R2_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R2_q30_reads.txt ) ; } >> $WORKSPACE/"$SAMPLEID"_R2.log.0a.q30.log 2>&1
+    { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R2_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R2_q30_reads.txt ) ; } > $WORKSPACE/"$SAMPLEID"_R2.log.0a.q30.log 2>&1
     echo -e "$SAMPLEID\tq30 R2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
   fi
 
@@ -124,7 +124,8 @@ fi # end if the input is a genexus pre-processed bam
 echo -e "$SAMPLEID\ttrimmed bam read count exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 4: Generate Pile-Up
-{ time ( samtools mpileup -B -A -aa -d 0 -Q 0 --reference $REF_FAS $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt > $WORKSPACE/"$SAMPLEID".log.4.pileup.log 2>&1
+# NB: don't capture stdout to log bc stdout needs to go to the *trimmed.sorted.pileup.txt file
+{ time ( samtools mpileup -B -A -aa -d 0 -Q 0 --reference $REF_FAS $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLEID".trimmed.sorted.pileup.txt 2> $WORKSPACE/"$SAMPLEID".log.4.pileup.log
 echo -e "$SAMPLEID\tsamtools mpileup exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 source $ANACONDADIR/deactivate
@@ -143,7 +144,8 @@ source $ANACONDADIR/deactivate
 source $ANACONDADIR/activate cview
 
 # Step 7: Call Depth
-{ time ( samtools depth -J -d 0 -Q 0 -q 0 -aa $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) ; } > $WORKSPACE/"$SAMPLEID".trimmed.sorted.depth.txt > $WORKSPACE/"$SAMPLEID".log.7.depth.log 2>&1
+# NB: don't capture stdout to log bc stdout needs to go to the *trimmed.sorted.depth.txt file
+{ time ( samtools depth -J -d 0 -Q 0 -q 0 -aa $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam ) ; }> $WORKSPACE/"$SAMPLEID".trimmed.sorted.depth.txt 2> $WORKSPACE/"$SAMPLEID".log.7.depth.log
 echo -e "$SAMPLEID\tsamtools depth exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # # Step 8: Qualimap
@@ -155,8 +157,9 @@ echo -e "$SAMPLEID\tqualimap exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 echo -e "$SAMPLEID\tacceptance.py exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 10: Coverage
+# NB: don't capture stdout to log bc stdout needs to go to the *.coverage.tsv file
 { time ( samtools depth -r $REF_NAME:$REF_ORF_LIMITS -d 0 -a $WORKSPACE/"$SAMPLEID".trimmed.sorted.bam | \
-  awk -v b="$SAMPLEID.trimmed.sorted.bam" 'BEGIN{MIN=10000000000;MAX=0;NUC=0;COV=0;DEPTH=0;NUCZERO=0;}{if(MIN > $3){MIN=$3;};if(MAX < $3){MAX=$3;};if($3==0){NUCZERO+=1};if($3 >= 10){COV+=1;}NUC+=1;DEPTH+=$3;}END{if(NUC>0){print b"\t"(COV/NUC)*100"\t"DEPTH/NUC"\t"MIN"\t"MAX"\t"NUCZERO}else{print b"\t"0"\t"0"\t"MIN"\t"MAX"\t"NUCZERO}}' ) ; } >> $WORKSPACE/"$SAMPLEID".coverage.tsv > $WORKSPACE/"$SAMPLEID".log.10.coverage.log 2>&1
+  awk -v b="$SAMPLEID.trimmed.sorted.bam" 'BEGIN{MIN=10000000000;MAX=0;NUC=0;COV=0;DEPTH=0;NUCZERO=0;}{if(MIN > $3){MIN=$3;};if(MAX < $3){MAX=$3;};if($3==0){NUCZERO+=1};if($3 >= 10){COV+=1;}NUC+=1;DEPTH+=$3;}END{if(NUC>0){print b"\t"(COV/NUC)*100"\t"DEPTH/NUC"\t"MIN"\t"MAX"\t"NUCZERO}else{print b"\t"0"\t"0"\t"MIN"\t"MAX"\t"NUCZERO}}' ) ; } >> $WORKSPACE/"$SAMPLEID".coverage.tsv 2> $WORKSPACE/"$SAMPLEID".log.10.coverage.log
 echo -e "$SAMPLEID\tcoverage exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
 # Step 11: Heterogeneity scores
