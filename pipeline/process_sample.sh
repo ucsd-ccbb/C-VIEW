@@ -69,15 +69,17 @@ if [[ "$INPUT_TYPE" == fastq ]]; then
   fi
 
   # Step 0: Download input data
-  aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R1_001$INPUT_SUFFIX"
+  { time ( aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R1_001$INPUT_SUFFIX" ) ; } 2> $WORKSPACE/"$SAMPLEID"_R1.log.0.download.log
+  echo -e "$SAMPLEID\tdownload R1 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
-  { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R1_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R1_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R1.log.0.q30.log
+  { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R1_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R1_q30_reads.txt ) ; } 2>> $WORKSPACE/"$SAMPLEID"_R1.log.0a.q30.log
   echo -e "$SAMPLEID\tq30 R1 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
   if [[ "$FQ" == pe ]]; then
-    aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R2_001$INPUT_SUFFIX"
+    { time ( aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R2_001$INPUT_SUFFIX" ) ; } 2> $WORKSPACE/"$SAMPLEID"_R2.log.0.download.log
+    echo -e "$SAMPLEID\tdownload R2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
-    { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R2_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R2_q30_reads.txt ) ; } 2> $WORKSPACE/"$SAMPLEID"_R2.log.0.q30.log
+    { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R2_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R2_q30_reads.txt ) ; } 2>> $WORKSPACE/"$SAMPLEID"_R2.log.0a.q30.log
     echo -e "$SAMPLEID\tq30 R2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
   fi
 
@@ -105,7 +107,9 @@ if [[ "$INPUT_TYPE" == bam ]]; then
   # if genexus bam, download just one file and rename it to have the same naming convention as
   # trimmed sorted bam produced by the above step
   TBAM=$WORKSPACE/"$SAMPLE$INPUT_SUFFIX"
-  aws s3 cp $S3DOWNLOAD/"$SAMPLE$INPUT_SUFFIX" $TBAM
+  { time ( aws s3 cp $S3DOWNLOAD/"$SAMPLE$INPUT_SUFFIX" $TBAM ) ; } 2> $WORKSPACE/"$SAMPLEID".log.0.download.log
+  echo -e "$SAMPLEID\tdownload bam exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
+
 
   # filter out bogus empty records in the genexus bam for other "chromosomes"--other reference sequences
   # that they align everything against
