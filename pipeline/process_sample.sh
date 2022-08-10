@@ -40,6 +40,7 @@ S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_$INPUT_TYPE
 
 # Clear input data directory if node is being reused
 rm -rf $WORKSPACE/*
+mkdir -p $WORKSPACE
 
 echo "$VERSION_INFO" >> $WORKSPACE/"$SAMPLEID".version.log
 
@@ -109,7 +110,6 @@ if [[ "$INPUT_TYPE" == bam ]]; then
   TBAM=$WORKSPACE/"$SAMPLE$INPUT_SUFFIX"
   { time ( aws s3 cp $S3DOWNLOAD/"$SAMPLE$INPUT_SUFFIX" $TBAM ) ; } > $WORKSPACE/"$SAMPLEID".log.0.download.log 2>&1
   echo -e "$SAMPLEID\tdownload bam exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
-
 
   # filter out bogus empty records in the genexus bam for other "chromosomes"--other reference sequences
   # that they align everything against
