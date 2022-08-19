@@ -51,6 +51,34 @@ if [[ ! -f "$REF_FAS" ]]; then
     cp $CVIEWDIR/reference_files/$REF_NAME.gff3 $REF_GFF
 fi
 
+# lightly modified from https://stackoverflow.com/a/35977842
+# Retries a command on failure.
+# $1 - the max number of attempts
+# $2... - the command to run
+# example usage:
+# retry 5 ls -ltr foo
+retry() {
+    local -r -i max_attempts="$1"; shift
+    local -i attempt_num=1
+    echo "$@"
+
+    # $@ is all of the parameters passed to the script--EXCEPT that the shift
+    # command above popped off the max attempts parameter, leaving in $@ only
+    # the command to be run.
+    # 'until' runs till that command evaluates to false--e.g., exit code 0
+    until "$@"
+    do
+        if ((attempt_num==max_attempts))
+        then
+            echo "Attempt $attempt_num failed and there are no more attempts left!"
+            return 1
+        else
+            echo "Attempt $attempt_num failed! Trying again in $attempt_num seconds..."
+            sleep $((attempt_num++))
+        fi
+    done
+}
+
 if [[ "$INPUT_TYPE" == fastq ]]; then
   # make working directory to hold the fastqs
   mkdir -p $WORKSPACE/fastq
@@ -70,14 +98,14 @@ if [[ "$INPUT_TYPE" == fastq ]]; then
   fi
 
   # Step 0: Download input data
-  { time ( aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R1_001$INPUT_SUFFIX" ) ; } > $WORKSPACE/"$SAMPLEID"_R1.log.0.download.log 2>&1
+  { time ( retry 3 aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R1_001$INPUT_SUFFIX" ) ; } > $WORKSPACE/"$SAMPLEID"_R1.log.0.download.log 2>&1
   echo -e "$SAMPLEID\tdownload R1 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
   { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R1_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R1_q30_reads.txt ) ; } > $WORKSPACE/"$SAMPLEID"_R1.log.0a.q30.log 2>&1
   echo -e "$SAMPLEID\tq30 R1 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
   if [[ "$FQ" == pe ]]; then
-    { time ( aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R2_001$INPUT_SUFFIX" ) ; } > $WORKSPACE/"$SAMPLEID"_R2.log.0.download.log 2>&1
+    { time ( retry 3 aws s3 cp $S3DOWNLOAD/ $WORKSPACE/fastq/ --recursive --exclude "*" --include "$SAMPLE*R2_001$INPUT_SUFFIX" ) ; } > $WORKSPACE/"$SAMPLEID"_R2.log.0.download.log 2>&1
     echo -e "$SAMPLEID\tdownload R2 exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
     { time ( q30.py $WORKSPACE/fastq/"$SAMPLE"*R2_001$INPUT_SUFFIX $WORKSPACE/"$SAMPLEID"_R2_q30_reads.txt ) ; } > $WORKSPACE/"$SAMPLEID"_R2.log.0a.q30.log 2>&1
@@ -108,7 +136,7 @@ if [[ "$INPUT_TYPE" == bam ]]; then
   # if genexus bam, download just one file and rename it to have the same naming convention as
   # trimmed sorted bam produced by the above step
   TBAM=$WORKSPACE/"$SAMPLE$INPUT_SUFFIX"
-  { time ( aws s3 cp $S3DOWNLOAD/"$SAMPLE$INPUT_SUFFIX" $TBAM ) ; } > $WORKSPACE/"$SAMPLEID".log.0.download.log 2>&1
+  { time ( retry 3 aws s3 cp $S3DOWNLOAD/"$SAMPLE$INPUT_SUFFIX" $TBAM ) ; } > $WORKSPACE/"$SAMPLEID".log.0.download.log 2>&1
   echo -e "$SAMPLEID\tdownload bam exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
 
   # filter out bogus empty records in the genexus bam for other "chromosomes"--other reference sequences
