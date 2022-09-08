@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# Variables that need to be input to this script, with **example** values:
+# SEQ_RUN=220902_A01535_0186_BH5JWKDSX5
+# SAMPLE=SEARCH-204597__E0003364__I09__220902_A01535_0186_BH5JWKDSX5__S346_L003
+# S3DOWNLOAD=s3://ucsd-all
+# PRIMER_BED_FNAME=sarscov2_v2_primers.bed
+# MERGE_LANES=false
+# FQ=pe
+# TIMESTAMP=fake_timestamp
+# VERSION_INFO=fake_version_info
+# READ_CAP=2000000
+# INPUT_TYPE=fastq
+# INPUT_SUFFIX=.fastq.gz
+# LOCAL_FOLDER=scratch
+
 PATH=/shared/workspace/software:/shared/workspace/software/q30:/shared/workspace/software/samhead/:$PATH
 
 # Activate conda env cview
@@ -29,11 +43,11 @@ if [[ "$INPUT_TYPE" == bam ]]; then
   REF_ORF_LIMITS="266-29674"  # not a typo, really identical to the limits for se/pe--genexus uses a different label for its reference sequence but the sequence itself is identical
 fi
 
-REF_FAS="/scratch/reference/"$REF_NAME".fas"
-REF_MMI="/scratch/reference/$REF_NAME.mmi"
-REF_GFF="/scratch/reference/$REF_NAME.gff3"
+REF_FAS="/$LOCAL_FOLDER/reference/"$REF_NAME".fas"
+REF_MMI="/$LOCAL_FOLDER/reference/$REF_NAME.mmi"
+REF_GFF="/$LOCAL_FOLDER/reference/$REF_NAME.gff3"
 
-WORKSPACE=/scratch/$SAMPLEID/$TIMESTAMP
+WORKSPACE=/$LOCAL_FOLDER/$SAMPLEID/$TIMESTAMP
 RESULTS=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_results/"$TIMESTAMP"_"$FQ"/"$SEQ_RUN"_samples/$SAMPLEID
 # NB: do NOT put this line before the previous RESULTS= line, since this line is *redefining* S3DOWNLOAD
 S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_$INPUT_TYPE
@@ -46,7 +60,7 @@ echo "$VERSION_INFO" >> $WORKSPACE/"$SAMPLEID".version.log
 
 # Move reference files to compute node once
 if [[ ! -f "$REF_FAS" ]]; then
-	mkdir -p /scratch/reference/
+	mkdir -p /$LOCAL_FOLDER/reference/
     cp $CVIEWDIR/reference_files/$REF_NAME.fas $REF_FAS
     cp $CVIEWDIR/reference_files/$REF_NAME.gff3 $REF_GFF
 fi
@@ -87,9 +101,9 @@ if [[ "$INPUT_TYPE" == fastq ]]; then
   cp $CVIEWDIR/reference_files/$REF_NAME.fas.mmi $REF_MMI
 
   # ensure that primer file is downloaded
-  SCRATCH_PRIMER_FP=/scratch/reference/$PRIMER_BED_FNAME
-  if [[ ! -f "$SCRATCH_PRIMER_FP" ]]; then
-    cp $CVIEWDIR/reference_files/$PRIMER_BED_FNAME $SCRATCH_PRIMER_FP
+  REF_PRIMER_FP=/$LOCAL_FOLDER/reference/$PRIMER_BED_FNAME
+  if [[ ! -f "$REF_PRIMER_FP" ]]; then
+    cp $CVIEWDIR/reference_files/$PRIMER_BED_FNAME $REF_PRIMER_FP
   fi
 
   if [[ "$MERGE_LANES" == true ]]; then
@@ -120,7 +134,7 @@ if [[ "$INPUT_TYPE" == fastq ]]; then
   source $ANACONDADIR/activate ivar
 
   # Step 2: Trim Sorted BAM
-  { time ( ivar trim -x 5 -e -i $WORKSPACE/"$SAMPLEID".sorted.bam -b $SCRATCH_PRIMER_FP -p $WORKSPACE/"$SAMPLEID".trimmed ) ; } > $WORKSPACE/"$SAMPLEID".log.2.trim.log 2>&1
+  { time ( ivar trim -x 5 -e -i $WORKSPACE/"$SAMPLEID".sorted.bam -b $REF_PRIMER_FP -p $WORKSPACE/"$SAMPLEID".trimmed ) ; } > $WORKSPACE/"$SAMPLEID".log.2.trim.log 2>&1
   echo -e "$SAMPLEID\tivar trim exit code: $?" >> $WORKSPACE/"$SAMPLEID".exit.log
   QUALIMAP_BAM=$WORKSPACE/"$SAMPLEID".sorted.bam
 

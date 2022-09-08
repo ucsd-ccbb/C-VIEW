@@ -5,6 +5,7 @@ CVIEWDIR=/shared/workspace/software/cview
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
 S3TEST=s3://ucsd-rtl-test
+LOCAL_FOLDER=scratch
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate cview
 
@@ -213,7 +214,7 @@ do
 
           M_SLURM_JOB_ID=$(sbatch \
             --export=$(echo "SEQ_RUN=$SEQ_RUN, \
-                      WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP, \
+                      WORKSPACE=/$LOCAL_FOLDER/$SEQ_RUN/$TIMESTAMP, \
                       S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq"  | sed 's/ //g') \
             -D /shared/logs \
             -J m_"$SEQ_RUN" \
@@ -250,7 +251,8 @@ do
                   VERSION_INFO="$VERSION_INFO",\
                   READ_CAP=$READ_CAP, \
                   INPUT_TYPE=$INPUT_TYPE, \
-                  INPUT_SUFFIX=$INPUT_SUFFIX" | sed 's/ //g') \
+                  INPUT_SUFFIX=$INPUT_SUFFIX, \
+                  LOCAL_FOLDER=$LOCAL_FOLDER" | sed 's/ //g') \
         -J v_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
         -D /shared/logs \
         -c 2 \
@@ -268,7 +270,7 @@ do
 	        Q_SLURM_JOB_ID=$Q_SLURM_JOB_ID:$(sbatch $V_DEPENDENCY_PARAM \
         --export=$(echo "SEQ_RUN=$SEQ_RUN,\
                  S3DOWNLOAD=$S3DOWNLOAD,\
-                 WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP,\
+                 WORKSPACE=/$LOCAL_FOLDER/$SEQ_RUN/$TIMESTAMP,\
                  FQ=$FQ,\
                  TIMESTAMP=$TIMESTAMP,\
                  VERSION_INFO="$VERSION_INFO",\
@@ -293,7 +295,7 @@ do
                       SEQ_RUN=$PHYLO_SEQ_RUN,\
                       ISTEST=$ISTEST,\
                       VERSION_INFO="$VERSION_INFO", \
-                      WORKSPACE=/scratch/phylogeny/$PROCESSINGID" | sed 's/ //g') \
+                      WORKSPACE=/$LOCAL_FOLDER/phylogeny/$PROCESSINGID" | sed 's/ //g') \
 			-J l_"$PROCESSINGID" \
 			-D /shared/logs \
 			-c 16 \
@@ -313,7 +315,7 @@ do
                         DATASET=$DATASET,\
                         ISTEST=$ISTEST,\
                         VERSION_INFO="$VERSION_INFO", \
-                        WORKSPACE=/scratch/treebuilding/$PROCESSINGID/$DATASET" | sed 's/ //g') \
+                        WORKSPACE=/$LOCAL_FOLDER/treebuilding/$PROCESSINGID/$DATASET" | sed 's/ //g') \
         -J t_"$DATASET"_"$PROCESSINGID" \
         -D /shared/logs \
         -c 16 \
