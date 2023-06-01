@@ -189,7 +189,7 @@ For all functions except `sample`, some of the input fields are ignored, as show
 | pipeline             |ucsd or helix|e.g 210409_A00953_0272_AH57WJDRXY|true or false|artic or swift_v2|se or pe|all or positive integer|ignored|ignored|true or false|
 | variants_qc          |ucsd or helix|e.g 210409_A00953_0272_AH57WJDRXY|true or false|artic or swift_v2|se or pe|all or positive integer|ignored|ignored|true or false|
 | variants             |ucsd or helix|e.g 210409_A00953_0272_AH57WJDRXY|true or false|artic or swift_v2|se or pe|all or positive integer|ignored|ignored|true or false|
-| sample               |ucsd or helix|e.g 210409_A00953_0272_AH57WJDRXY|true or false|artic or swift_v2|se or pe|all or positive integer|e.g. SEARCH-17043__D101859__L01__210409_A00953_0272_AH57WJDRXY__S82_L001_R1_001.fastq.gz|e.g. 2021-04-15_16-13-59|true or false|
+| sample               |ucsd or helix|e.g 210409_A00953_0272_AH57WJDRXY|true or false|artic or swift_v2|se or pe|all or positive integer|e.g. SEARCH-17043__D101859__L01__210409_A00953_0272_AH57WJDRXY__S82_L001|e.g. 2021-04-15_16-13-59|true or false|
 | qc                   |ucsd or helix|e.g 210409_A00953_0272_AH57WJDRXY|ignored|ignored|se or pe|ignored|ignored|e.g. 2021-04-15_16-13-59|true or false|
 | lineages             |ucsd or helix|e.g 210409_A00953_0272_AH57WJDRXY|ignored|ignored|ignored|ignored|ignored|ignored|true or false|
 | phylogeny            |ucsd or helix|e.g 210409_A00953_0272_AH57WJDRXY|ignored|ignored|ignored|ignored|ignored|ignored|true or false|
