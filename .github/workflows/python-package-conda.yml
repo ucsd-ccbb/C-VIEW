@@ -30,7 +30,7 @@ jobs:
         conda install -c bioconda samtools
         pip install multiqc
         pip install nwalign3
-        pip install pandas=1.4.1
+        pip install pandas==1.4.1
         # pip install seaborn
         pip install fastaparser
     - name: Lint with flake8
