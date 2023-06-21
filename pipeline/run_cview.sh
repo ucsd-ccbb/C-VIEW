@@ -50,7 +50,7 @@ do
   # --------------------
 
   if [ "$FUNCTION" != pipeline ] && [ "$FUNCTION" != cumulative_pipeline ] && [ "$FUNCTION" != variants_qc ] && [ "$FUNCTION" != variants ] &&  [ "$FUNCTION" != sample ] &&  [ "$FUNCTION" != qc ] &&  [ "$FUNCTION" != lineages ] &&  [ "$FUNCTION" != phylogeny ] &&  [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ]; then
-		echo "Error: Parameter FUNCTION must be one of pipeline, cumulative_pipeline, variants_qc, variants, sample, qc, lineages, phylogeny, cummulative_lineages, or cumulative_phylogeny"
+		echo "Error: Parameter FUNCTION must be one of pipeline, cumulative_pipeline, variants_qc, variants, sample, qc, lineages, phylogeny, cumulative_lineages, or cumulative_phylogeny"
 		exit 1
 	fi
 
