@@ -86,7 +86,7 @@ runLineages () {
 	# pangolin
 	source $ANACONDADIR/activate pangolin
 	pangolin --update
-	pangolin -t $THREADS --analysis-mode fast --outfile $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/"$PROCESSINGID"_passQC_refs_hist.fas
+	pangolin -t $THREADS --outfile $WORKSPACE/"$PROCESSINGID".lineage_report.csv $WORKSPACE/"$PROCESSINGID"_passQC_refs_hist.fas
   echo -e "pangolin exit code: $?" >> $WORKSPACE/"$PROCESSINGID"-lineages.exit.log
 
   # deactivate the pangolin environment and re-activate the main pipeline environment

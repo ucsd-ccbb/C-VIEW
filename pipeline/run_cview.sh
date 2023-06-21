@@ -5,6 +5,7 @@ CVIEWDIR=/shared/workspace/software/cview
 S3HELIX=s3://helix-all
 S3UCSD=s3://ucsd-all
 S3TEST=s3://ucsd-rtl-test
+LOCAL_FOLDER=scratch
 ANACONDADIR=/shared/workspace/software/anaconda3/bin
 source $ANACONDADIR/activate cview
 
@@ -48,8 +49,8 @@ do
   # validate the inputs
   # --------------------
 
-  if [ "$FUNCTION" != pipeline ] && [ "$FUNCTION" != cumulative_pipeline ] && [ "$FUNCTION" != variants_qc ] && [ "$FUNCTION" != variants ] &&  [ "$FUNCTION" != sample ] &&  [ "$FUNCTION" != src ] &&  [ "$FUNCTION" != lineages ] &&  [ "$FUNCTION" != phylogeny ] &&  [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ]; then
-		echo "Error: Parameter FUNCTION must be one of pipeline, cumulative_pipeline, variants_qc, variants, sample, qc, lineages, phylogeny, cummulative_lineages, or cumulative_phylogeny"
+  if [ "$FUNCTION" != pipeline ] && [ "$FUNCTION" != cumulative_pipeline ] && [ "$FUNCTION" != variants_qc ] && [ "$FUNCTION" != variants ] &&  [ "$FUNCTION" != sample ] &&  [ "$FUNCTION" != qc ] &&  [ "$FUNCTION" != lineages ] &&  [ "$FUNCTION" != phylogeny ] &&  [ "$FUNCTION" != cumulative_lineages ] && [ "$FUNCTION" != cumulative_phylogeny ]; then
+		echo "Error: Parameter FUNCTION must be one of pipeline, cumulative_pipeline, variants_qc, variants, sample, qc, lineages, phylogeny, cumulative_lineages, or cumulative_phylogeny"
 		exit 1
 	fi
 
@@ -63,7 +64,7 @@ do
 	  exit 1
 	fi
 
-	if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants_qc ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == src ]; then
+	if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants_qc ] || [ "$FUNCTION" == variants ] || [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
     if [[ ! "$FQ" =~ ^(se|pe|bam)$ ]]; then
       echo "Error: FQ must be one of se, pe, or bam"
       exit 1
@@ -119,7 +120,7 @@ do
     fi
   fi
 
-  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants_qc ] || [ "$FUNCTION" == src ]; then
+  if [ "$FUNCTION" == pipeline ] || [ "$FUNCTION" == cumulative_pipeline ] || [ "$FUNCTION" == variants_qc ] || [ "$FUNCTION" == qc ]; then
     QC=true
   fi
 
@@ -135,7 +136,7 @@ do
     PHYLO_SEQ_RUN=all
   fi
 
-  if [ "$FUNCTION" == sample ] || [ "$FUNCTION" == src ]; then
+  if [ "$FUNCTION" == sample ] || [ "$FUNCTION" == qc ]; then
     unset FIELD_IGNORED[TIMESTAMP]
   else
 	  TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')
@@ -213,7 +214,7 @@ do
 
           M_SLURM_JOB_ID=$(sbatch \
             --export=$(echo "SEQ_RUN=$SEQ_RUN, \
-                      WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP, \
+                      WORKSPACE=/$LOCAL_FOLDER/$SEQ_RUN/$TIMESTAMP, \
                       S3DOWNLOAD=$S3DOWNLOAD/$SEQ_RUN/"$SEQ_RUN"_fastq"  | sed 's/ //g') \
             -D /shared/logs \
             -J m_"$SEQ_RUN" \
@@ -250,7 +251,8 @@ do
                   VERSION_INFO="$VERSION_INFO",\
                   READ_CAP=$READ_CAP, \
                   INPUT_TYPE=$INPUT_TYPE, \
-                  INPUT_SUFFIX=$INPUT_SUFFIX" | sed 's/ //g') \
+                  INPUT_SUFFIX=$INPUT_SUFFIX, \
+                  LOCAL_FOLDER=$LOCAL_FOLDER" | sed 's/ //g') \
         -J v_"$SEQ_RUN"_"$TIMESTAMP"_"$SAMPLE" \
         -D /shared/logs \
         -c 2 \
@@ -268,7 +270,7 @@ do
 	        Q_SLURM_JOB_ID=$Q_SLURM_JOB_ID:$(sbatch $V_DEPENDENCY_PARAM \
         --export=$(echo "SEQ_RUN=$SEQ_RUN,\
                  S3DOWNLOAD=$S3DOWNLOAD,\
-                 WORKSPACE=/scratch/$SEQ_RUN/$TIMESTAMP,\
+                 WORKSPACE=/$LOCAL_FOLDER/$SEQ_RUN/$TIMESTAMP,\
                  FQ=$FQ,\
                  TIMESTAMP=$TIMESTAMP,\
                  VERSION_INFO="$VERSION_INFO",\
@@ -279,7 +281,7 @@ do
         $CVIEWDIR/pipeline/summarize_seqrun_qc.sh)
 
         Q_DEPENDENCY_PARAM="--dependency=afterok:${Q_SLURM_JOB_ID##* }"
-	fi # end if we are running src
+	fi # end if we are running qc
 
   # lineage and tree output is stored to a different location than
   # the outputs of the earlier steps, so it needs a slightly different
@@ -293,7 +295,7 @@ do
                       SEQ_RUN=$PHYLO_SEQ_RUN,\
                       ISTEST=$ISTEST,\
                       VERSION_INFO="$VERSION_INFO", \
-                      WORKSPACE=/scratch/phylogeny/$PROCESSINGID" | sed 's/ //g') \
+                      WORKSPACE=/$LOCAL_FOLDER/phylogeny/$PROCESSINGID" | sed 's/ //g') \
 			-J l_"$PROCESSINGID" \
 			-D /shared/logs \
 			-c 16 \
@@ -313,7 +315,7 @@ do
                         DATASET=$DATASET,\
                         ISTEST=$ISTEST,\
                         VERSION_INFO="$VERSION_INFO", \
-                        WORKSPACE=/scratch/treebuilding/$PROCESSINGID/$DATASET" | sed 's/ //g') \
+                        WORKSPACE=/$LOCAL_FOLDER/treebuilding/$PROCESSINGID/$DATASET" | sed 's/ //g') \
         -J t_"$DATASET"_"$PROCESSINGID" \
         -D /shared/logs \
         -c 16 \
@@ -321,7 +323,7 @@ do
     done
   fi # end if we are building trees
 
-  # if we did variant or src processing, write a file of the
+  # if we did variant or qc processing, write a file of the
   # settings used into the results directory for this seq_run/timestamp
   if [ "$VARIANTS" == true ] || [ "$QC" == true ]; then
     SETTINGS_FNAME="$SEQ_RUN"-"$TIMESTAMP"-"$FUNCTION"-$(date +'%Y-%m-%d_%H-%M-%S').csv

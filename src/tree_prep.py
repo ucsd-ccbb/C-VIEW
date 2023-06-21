@@ -6,7 +6,7 @@ import fastaparser
 SEARCH_ID_KEY = "search_id"
 CONS_NAME = "consensus_seq_name"
 USABLE_NAME = "usable_for"
-STRINGENT_TEST_COL = "any_fail"
+STRINGENT_TEST_COL = "overall_fail"
 STRINGENT_INCLUDE_VAL = False
 IS_HIST_OR_REF = "is_hist_or_ref"
 INDEX_COL_NAME = "Unnamed: 0"

@@ -13,6 +13,7 @@ SUBMIT_TO_GISAID = "submit_to_gisaid"
 INDEX_COL_NAME = "Unnamed: 0"
 SUBJ_AGE = "subject_age"
 METADATA_CLEARED = "metadata_cleared"
+SEQUENCING_TECH_KEY = "sequencing_tech"
 
 BJORN_COL_NAMES = ["Sample ID", "SEARCH SampleID", "Ready for release?",
                    "New sequences ready for release", "Released?",
@@ -59,12 +60,26 @@ def filter_metadata_for_bjorn(full_df):
 
 
 def generate_bjorn_df(filtered_df):
-    filtered_df[["sample_collection_date", "sample_collection_time"]] = \
-        filtered_df["sample_collection_datetime"].str.split(expand=True)
-    filtered_df[["sample_collection_year",
-                 "sample_collection_month",
-                 "sample_collection_day"]] = filtered_df[
-        "sample_collection_date"].str.split("-", expand=True)
+    datetime_key = "sample_collection_datetime"
+    date_key = "sample_collection_date"
+    time_key = "sample_collection_time"
+    year_key = "sample_collection_year"
+    month_key = "sample_collection_month"
+    day_key = "sample_collection_day"
+
+    na_datetime_mask = filtered_df[datetime_key].isna()
+    # if ALL the datetimes are NA, can't split
+    if na_datetime_mask.all():
+        filtered_df[date_key] = ""
+        filtered_df[time_key] = ""
+        filtered_df[year_key] = ""
+        filtered_df[month_key] = ""
+        filtered_df[day_key] = ""
+    else:
+        filtered_df[[date_key, time_key]] = \
+            filtered_df[datetime_key].str.split(expand=True)
+        filtered_df[[year_key, month_key, day_key]] = \
+            filtered_df[date_key].str.split("-", expand=True)
 
     output_df = pd.DataFrame()
     output_df.loc[:, 'sample_id'] = filtered_df['sample_id']
@@ -98,11 +113,10 @@ def generate_bjorn_df(filtered_df):
                                      + filtered_df["state_code"] \
                                      + "-" + filtered_df["search_id"] \
                                      + "/" \
-                                     + filtered_df["sample_collection_year"]
+                                     + filtered_df[year_key]
     output_df.loc[:, "type"] = "betacoronavirus"
     output_df.loc[:, "passage_details"] = filtered_df["passage_details"]
-    output_df.loc[:, "sample_collection_date"] = filtered_df[
-        "sample_collection_date"]
+    output_df.loc[:, date_key] = filtered_df[date_key]
     output_df.loc[:, "sample_collection_location"] = filtered_df[
         "sample_collection_location"]
     output_df.loc[:, "zip"] = filtered_df["zip"]
@@ -115,7 +129,7 @@ def generate_bjorn_df(filtered_df):
     output_df.loc[:, "outbreak"] = "N/A"
     output_df.loc[:, "last_vaccinated"] = "N/A"
     output_df.loc[:, "treatment"] = "N/A"
-    output_df.loc[:, "sequencing_tech"] = "Illumina"
+    output_df.loc[:, SEQUENCING_TECH_KEY] = filtered_df[SEQUENCING_TECH_KEY]
     output_df.loc[:, "assembly_method"] = filtered_df[
         "assembly_method"].str.replace(" version", "")
     output_df.loc[:, "bjorn_coverage"] = filtered_df["bjorn_coverage"]
