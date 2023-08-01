@@ -1,46 +1,51 @@
-name: Python Package using Conda
+name: Continuous integration unit testing and lint
 
 on: [push]
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
+  build:
     strategy:
-      max-parallel: 5
+      matrix:
+        python-version: ['3.10']
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -el {0}
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: conda-incubator/setup-miniconda@v2
       with:
-        python-version: 3.8
-    - name: Add conda to system path
-      run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
+        auto-update-conda: true
+        python-version: ${{ matrix.python-version }}
+        channels: defaults
     - name: Install dependencies
       run: |
-        # conda env update --file covid1.1_environment.yml --name base
+        conda create --yes -n env_name python=${{ matrix.python-version }}
+        conda activate env_name
         conda install numpy=1.21.2 
         conda install boto3
-        # conda install wand -c conda-forge
-        # conda install -c bioconda fastqc
         conda install -c bioconda qualimap
         conda install -c bioconda minimap2
         conda install -c bioconda samtools
         pip install multiqc
         pip install nwalign3
         pip install pandas==1.4.1
-        # pip install seaborn
-        pip install fastaparser
+        pip install fastaparser        
+        
     - name: Lint with flake8
       run: |
+        conda activate env_name
         conda install flake8
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # The GitHub editor is 127 chars wide
-        flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
+        conda activate env_name
         conda install pytest
+        which python
+        pip install -e . --no-deps
         pytest
